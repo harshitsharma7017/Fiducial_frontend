@@ -1,6 +1,5 @@
 'use client';
 
-import { OccupancyListResponseSchema, type Occupancy } from '@property-erp/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronsUpDown } from 'lucide-react';
 import { useId, useState, type KeyboardEvent, type Ref } from 'react';
@@ -10,6 +9,7 @@ import { apiFetch } from '@/lib/api-client';
 import { riskTypeLabel } from '@/lib/display';
 import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
+import { OccupancyListResponseSchema, type Occupancy } from '@/shared';
 
 const RESULT_LIMIT = 10;
 

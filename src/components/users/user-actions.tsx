@@ -1,12 +1,5 @@
 'use client';
 
-import {
-  UserRolesSchema,
-  UserSchema,
-  type Role,
-  type UpdateUserRequest,
-  type User,
-} from '@property-erp/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { LoaderCircle, Pencil, UserCheck, UserX } from 'lucide-react';
 import { useState } from 'react';
@@ -25,6 +18,13 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
+import {
+  UserRolesSchema,
+  UserSchema,
+  type Role,
+  type UpdateUserRequest,
+  type User,
+} from '@/shared';
 import { RolesFieldset } from './roles-fieldset';
 
 function useUpdateUser(user: User, onDone: () => void) {

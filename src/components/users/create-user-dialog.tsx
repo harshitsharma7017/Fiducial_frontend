@@ -1,12 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  CreateUserRequestSchema,
-  PASSWORD_MIN_LENGTH,
-  UserSchema,
-  type CreateUserRequest,
-} from '@property-erp/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { LoaderCircle, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -36,6 +30,12 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { ApiError, apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
+import {
+  CreateUserRequestSchema,
+  PASSWORD_MIN_LENGTH,
+  UserSchema,
+  type CreateUserRequest,
+} from '@/shared';
 import { RolesFieldset } from './roles-fieldset';
 
 const EMPTY: CreateUserRequest = { name: '', email: '', password: '', roles: [] };

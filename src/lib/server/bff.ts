@@ -1,6 +1,6 @@
-import { ERROR_CODES, type ApiErrorBody } from '@property-erp/shared';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { ERROR_CODES, type ApiErrorBody } from '@/shared';
 
 /**
  * Helpers for the backend-for-frontend route handlers. Server only: these read API_URL, which

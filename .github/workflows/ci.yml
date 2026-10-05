@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # src/shared is a copy of Fiducial_backend/src/shared. This fails when the backend's main branch
+  # has contract changes that were not synced here (run `npm run shared:sync`).
+  shared-contracts:
+    name: Shared contracts match Fiducial_backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          path: frontend
+          persist-credentials: false
+
+      - name: Check out Fiducial_backend
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/Fiducial_backend
+          path: backend
+          sparse-checkout: src/shared
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.nvmrc
+
+      - name: Compare src/shared
+        working-directory: frontend
+        env:
+          FIDUCIAL_BACKEND_DIR: ../backend
+        run: npm run shared:check

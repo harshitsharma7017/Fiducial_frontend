@@ -1,13 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  ApiErrorSchema,
-  INVALID_CREDENTIALS_MESSAGE,
-  LOGIN_LOCKOUT_MINUTES,
-  LOGIN_MAX_FAILED_ATTEMPTS,
-  LoginRequestSchema,
-} from '@property-erp/shared';
 import { CircleAlert, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -24,6 +17,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { safeNextPath } from '@/lib/api-client';
+import {
+  ApiErrorSchema,
+  INVALID_CREDENTIALS_MESSAGE,
+  LOGIN_LOCKOUT_MINUTES,
+  LOGIN_MAX_FAILED_ATTEMPTS,
+  LoginRequestSchema,
+} from '@/shared';
 
 async function failureMessage(response: Response): Promise<string> {
   if (response.status === 401) {

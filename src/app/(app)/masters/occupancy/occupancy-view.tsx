@@ -1,6 +1,5 @@
 'use client';
 
-import { OccupancyListResponseSchema, type Occupancy } from '@property-erp/shared';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { LoaderCircle, Search } from 'lucide-react';
 import { useId, useState } from 'react';
@@ -31,6 +30,7 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { apiFetch } from '@/lib/api-client';
 import { displayRate, riskTypeLabel } from '@/lib/display';
 import { queryKeys } from '@/lib/query-keys';
+import { OccupancyListResponseSchema, type Occupancy } from '@/shared';
 
 const PAGE_SIZE = 50;
 const COLUMNS = 6;

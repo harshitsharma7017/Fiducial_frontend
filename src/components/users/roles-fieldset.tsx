@@ -1,9 +1,9 @@
 'use client';
 
-import { ROLES, ROLE_LABELS, type Role } from '@property-erp/shared';
 import { useId } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { ROLES, ROLE_LABELS, type Role } from '@/shared';
 
 const ROLE_HINTS: Record<Role, string> = {
   ADMIN: 'Users, master data activation; passes every role check',

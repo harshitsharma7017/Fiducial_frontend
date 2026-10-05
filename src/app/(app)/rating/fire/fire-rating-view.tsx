@@ -1,16 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  EQ_ZONE_LABELS,
-  FireRatingResponseSchema,
-  PerMilleRateSchema,
-  PincodeValueSchema,
-  SumInsuredSchema,
-  TacCodeSchema,
-  type FireRatingRequest,
-  type Occupancy,
-} from '@property-erp/shared';
 import { useMutation } from '@tanstack/react-query';
 import { Calculator, LoaderCircle } from 'lucide-react';
 import { useState, type Ref } from 'react';
@@ -38,6 +28,16 @@ import { Input } from '@/components/ui/input';
 import { isCompletePincode, usePincode } from '@/hooks/use-pincode';
 import { ApiError, apiFetch } from '@/lib/api-client';
 import { displayRate, riskTypeLabel } from '@/lib/display';
+import {
+  EQ_ZONE_LABELS,
+  FireRatingResponseSchema,
+  PerMilleRateSchema,
+  PincodeValueSchema,
+  SumInsuredSchema,
+  TacCodeSchema,
+  type FireRatingRequest,
+  type Occupancy,
+} from '@/shared';
 
 /** The request schema from the shared package, with an empty terrorism rate allowed in the form. */
 const FireRatingFormSchema = z.object({

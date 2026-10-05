@@ -1,10 +1,3 @@
-import {
-  ApiErrorSchema,
-  ERROR_CODES,
-  LoginRequestSchema,
-  LoginResponseSchema,
-  type SessionResponse,
-} from '@property-erp/shared';
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   errorResponse,
@@ -14,6 +7,13 @@ import {
   upstreamUnavailable,
 } from '@/lib/server/bff';
 import { SESSION_COOKIE, sessionCookieOptions } from '@/lib/session';
+import {
+  ApiErrorSchema,
+  ERROR_CODES,
+  LoginRequestSchema,
+  LoginResponseSchema,
+  type SessionResponse,
+} from '@/shared';
 
 /**
  * Signs in against the Express API and stores the access token in an httpOnly cookie.

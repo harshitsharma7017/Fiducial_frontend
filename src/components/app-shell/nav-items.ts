@@ -1,4 +1,3 @@
-import type { Role } from '@property-erp/shared';
 import {
   Briefcase,
   Building,
@@ -12,6 +11,7 @@ import {
   UserCog,
   type LucideIcon,
 } from 'lucide-react';
+import type { Role } from '@/shared';
 
 export interface NavItem {
   label: string;

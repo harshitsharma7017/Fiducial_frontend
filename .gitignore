@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Next.js build output and generated types
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Test output
+coverage/
+
+# Environment files (commit only the example)
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/

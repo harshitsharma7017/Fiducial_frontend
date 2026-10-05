@@ -1,9 +1,9 @@
 'use client';
 
-import { hasRole, type Role } from '@property-erp/shared';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { hasRole, type Role } from '@/shared';
 import { NAV_SECTIONS, type NavItem } from './nav-items';
 
 function isActive(pathname: string, href: string): boolean {

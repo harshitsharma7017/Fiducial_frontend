@@ -1,4 +1,3 @@
-import { ERROR_CODES } from '@property-erp/shared';
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   errorResponse,
@@ -9,6 +8,7 @@ import {
 } from '@/lib/server/bff';
 import { isAllowedProxyPath } from '@/lib/server/proxy-paths';
 import { SESSION_COOKIE, clearedSessionCookieOptions } from '@/lib/session';
+import { ERROR_CODES } from '@/shared';
 
 /**
  * Forwards browser calls to the Express API (/api/proxy/<path> -> /api/v1/<path>), adding the

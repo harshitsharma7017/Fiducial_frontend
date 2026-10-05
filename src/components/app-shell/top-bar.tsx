@@ -1,6 +1,5 @@
 'use client';
 
-import { ROLE_LABELS, type User } from '@property-erp/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
@@ -14,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
+import { ROLE_LABELS, type User } from '@/shared';
 
 export function rolesLabel(user: Pick<User, 'roles'>): string {
   return user.roles.map((role) => ROLE_LABELS[role]).join(', ');

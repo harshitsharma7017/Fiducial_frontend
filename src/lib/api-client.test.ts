@@ -1,5 +1,5 @@
-import { UserSchema } from '@property-erp/shared';
 import { describe, expect, it, vi } from 'vitest';
+import { UserSchema } from '@/shared';
 import { ApiError, apiFetch, safeNextPath } from './api-client';
 
 function jsonResponse(status: number, body: unknown): Response {

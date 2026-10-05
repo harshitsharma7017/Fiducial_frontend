@@ -1,4 +1,4 @@
-import { groupIndianDigits } from '@property-erp/shared';
+import { groupIndianDigits } from '@/shared';
 
 const MAX_INTEGER_DIGITS = 15;
 const MAX_FRACTION_DIGITS = 2;

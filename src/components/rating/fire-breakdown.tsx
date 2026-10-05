@@ -1,11 +1,3 @@
-import {
-  EQ_ZONE_LABELS,
-  RISK_TYPE_LABELS,
-  formatAmount,
-  formatDate,
-  formatDateTime,
-  type FireRatingResponse,
-} from '@property-erp/shared';
 import { TriangleAlert } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +11,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { displayRate } from '@/lib/display';
+import {
+  EQ_ZONE_LABELS,
+  RISK_TYPE_LABELS,
+  formatAmount,
+  formatDate,
+  formatDateTime,
+  type FireRatingResponse,
+} from '@/shared';
 
 interface ComponentRow {
   label: string;

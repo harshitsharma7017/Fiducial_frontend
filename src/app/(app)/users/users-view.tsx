@@ -1,13 +1,5 @@
 'use client';
 
-import {
-  ROLE_LABELS,
-  UserListResponseSchema,
-  formatDate,
-  formatDateTime,
-  hasRole,
-  type User,
-} from '@property-erp/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { LoaderCircle, Lock } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
@@ -30,6 +22,14 @@ import {
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
+import {
+  ROLE_LABELS,
+  UserListResponseSchema,
+  formatDate,
+  formatDateTime,
+  hasRole,
+  type User,
+} from '@/shared';
 
 const COLUMNS = 6;
 

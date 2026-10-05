@@ -1,5 +1,5 @@
-import { ApiErrorSchema } from '@property-erp/shared';
 import type { z } from 'zod';
+import { ApiErrorSchema } from '@/shared';
 
 /** An API error with the server's code and details, for display. */
 export class ApiError extends Error {

@@ -1,6 +1,5 @@
 'use client';
 
-import { EQ_ZONE_LABELS, type PincodeRecord } from '@property-erp/shared';
 import { MapPin } from 'lucide-react';
 import { useId, useState } from 'react';
 import { PageHeader } from '@/components/page-header';
@@ -26,6 +25,7 @@ import {
 import { isCompletePincode, usePincode } from '@/hooks/use-pincode';
 import { ApiError } from '@/lib/api-client';
 import { displayRate } from '@/lib/display';
+import { EQ_ZONE_LABELS, type PincodeRecord } from '@/shared';
 
 function PincodeResult({ record }: { record: PincodeRecord }) {
   return (

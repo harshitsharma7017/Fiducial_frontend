@@ -1,9 +1,9 @@
 'use client';
 
-import { UserSchema, type User } from '@property-erp/shared';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
+import { UserSchema, type User } from '@/shared';
 
 /** The signed-in user, from GET /auth/me through the proxy. */
 export function useCurrentUser() {

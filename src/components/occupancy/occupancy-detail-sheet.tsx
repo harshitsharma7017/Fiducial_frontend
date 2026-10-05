@@ -1,6 +1,5 @@
 'use client';
 
-import { EQ_ZONES, EQ_ZONE_LABELS, type Occupancy } from '@property-erp/shared';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -19,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { displayRate, riskTypeLabel } from '@/lib/display';
+import { EQ_ZONES, EQ_ZONE_LABELS, type Occupancy } from '@/shared';
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

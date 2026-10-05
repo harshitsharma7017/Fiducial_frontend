@@ -1,8 +1,4 @@
-import path from 'node:path';
 import type { NextConfig } from 'next';
-
-// npm runs workspace scripts from apps/web, so the monorepo root is two levels up.
-const monorepoRoot = path.resolve(process.cwd(), '../..');
 
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -14,10 +10,6 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // The shared package ships TypeScript source.
-  transpilePackages: ['@property-erp/shared'],
-  outputFileTracingRoot: monorepoRoot,
-  turbopack: { root: monorepoRoot },
   headers() {
     return Promise.resolve([{ source: '/:path*', headers: securityHeaders }]);
   },

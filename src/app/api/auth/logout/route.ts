@@ -1,7 +1,7 @@
-import { ERROR_CODES } from '@property-erp/shared';
 import { NextResponse, type NextRequest } from 'next/server';
 import { errorResponse, forwardingHeaders, getApiUrl, isSameOrigin } from '@/lib/server/bff';
 import { SESSION_COOKIE, clearedSessionCookieOptions } from '@/lib/session';
+import { ERROR_CODES } from '@/shared';
 
 /** Clears the session cookie. The API call only records the sign-out in the audit log. */
 export async function POST(request: NextRequest): Promise<Response> {

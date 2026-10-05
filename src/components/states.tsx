@@ -110,7 +110,7 @@ export function MasterNotActiveState() {
       title="No master data is active yet"
       description={
         <>
-          An admin imports the IIB workbook with{' '}
+          An admin imports the IIB workbook from the Fiducial_backend repository with{' '}
           <code className="rounded bg-muted px-1 py-0.5 text-xs">
             npm run import:masters -- data/IIB_Code_Master.xlsx --activate
           </code>
