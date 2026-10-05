@@ -1,0 +1,28 @@
+import { NextResponse, type NextRequest } from 'next/server';
+import { SESSION_COOKIE } from '@/lib/session';
+
+/**
+ * Next.js 16 "proxy" (formerly middleware): sends signed-out visitors to /login and signed-in
+ * users away from it. It only checks that a session cookie exists; the API validates the token
+ * on every call, and an expired or revoked token clears the cookie (see api/proxy).
+ */
+export function proxy(request: NextRequest): NextResponse {
+  const { pathname, search } = request.nextUrl;
+  const signedIn = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
+  const onLoginPage = pathname === '/login';
+
+  if (onLoginPage && signedIn) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+  if (!onLoginPage && !signedIn) {
+    const loginUrl = new URL('/login', request.url);
+    if (pathname !== '/') loginUrl.searchParams.set('next', `${pathname}${search}`);
+    return NextResponse.redirect(loginUrl);
+  }
+  return NextResponse.next();
+}
+
+export const config = {
+  // Pages only. API routes answer 401 themselves, and static files are always public.
+  matcher: ['/((?!api/|_next/static|_next/image|favicon.ico|robots.txt).*)'],
+};
