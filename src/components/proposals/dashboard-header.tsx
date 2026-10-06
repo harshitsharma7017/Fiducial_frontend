@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useIstNow } from '@/hooks/use-ist-now';
-import { formatDate } from '@/shared';
+import { can, formatDate } from '@/shared';
 import type { ProposalType } from '@/types/proposal';
 
 function greeting(hourIst: number): string {
@@ -27,11 +27,15 @@ function istHour(nowMs: number): number {
   );
 }
 
-/** Greeting with the user's first name, today's IST date, and the type's primary action. */
+/**
+ * Greeting with the user's first name, today's IST date, and the type's primary action, shown
+ * only to users who may create proposals (proposals.create).
+ */
 export function DashboardHeader({ type }: { type: ProposalType }) {
   const me = useCurrentUser();
   const nowMs = useIstNow();
   const firstName = me.data?.name.split(/\s+/)[0];
+  const canCreate = me.data ? can(me.data.roles, 'proposals.create') : false;
 
   const action =
     type === 'EXISTING'
@@ -59,12 +63,14 @@ export function DashboardHeader({ type }: { type: ProposalType }) {
           Sample data: proposals are not connected to the API yet.
         </p>
       </div>
-      <Button asChild variant="accent">
-        <Link href={action.href}>
-          <ActionIcon aria-hidden="true" />
-          {action.label}
-        </Link>
-      </Button>
+      {canCreate ? (
+        <Button asChild variant="accent">
+          <Link href={action.href}>
+            <ActionIcon aria-hidden="true" />
+            {action.label}
+          </Link>
+        </Button>
+      ) : null}
     </div>
   );
 }

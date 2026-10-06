@@ -9,6 +9,10 @@ next-env.d.ts
 
 # Test output
 coverage/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # Environment files (commit only the example)
 .env

@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { Role } from '@/shared';
-import { NAV_GROUPS, isActiveItem, visibleGroups, type NavItem } from '../nav-config';
+import { isActiveItem, visibleGroups, type NavItem } from '../nav-config';
 
 const ITEM_CLASS =
   'flex h-9 w-full items-center gap-3 rounded-md px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar';
@@ -99,8 +99,9 @@ function LinkItem({
 }
 
 /**
- * The main navigation. `roles` is undefined while the user loads: the role-restricted groups
- * then show a skeleton.
+ * The main navigation: only the items the user's roles may see (visibleGroups). `roles` is
+ * undefined while the user loads: the items every role may see show at once, and a skeleton
+ * holds the place of the rest.
  */
 export function SidebarNav({
   roles,
@@ -114,7 +115,7 @@ export function SidebarNav({
   const pathname = usePathname();
   const search = useSearchParams();
   const idPrefix = useId();
-  const groups = roles ? visibleGroups(roles) : NAV_GROUPS.filter((group) => !group.roles);
+  const groups = visibleGroups(roles);
 
   return (
     <nav

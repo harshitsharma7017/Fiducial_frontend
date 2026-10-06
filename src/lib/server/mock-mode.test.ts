@@ -1,7 +1,7 @@
 // @vitest-environment node
 import fc from 'fast-check';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { UserSchema } from '@/shared';
+import { ROLES, UserSchema } from '@/shared';
 import {
   DEMO_PASSWORD,
   DEMO_USERS,
@@ -18,6 +18,12 @@ describe('mock-mode helpers', () => {
     for (const user of DEMO_USERS) {
       expect(UserSchema.safeParse(user).success).toBe(true);
     }
+  });
+
+  it('has one demo user per role, each with a unique id and email', () => {
+    expect(DEMO_USERS.flatMap((user) => user.roles).sort()).toEqual([...ROLES].sort());
+    expect(new Set(DEMO_USERS.map((user) => user.id)).size).toBe(DEMO_USERS.length);
+    expect(new Set(demoEmails).size).toBe(DEMO_USERS.length);
   });
 
   afterEach(() => {

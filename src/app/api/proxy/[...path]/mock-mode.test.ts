@@ -35,16 +35,18 @@ describe('/api/proxy in mock mode', () => {
     await expect(response.json()).resolves.toMatchObject({ email: 'demo.admin@example.com' });
   });
 
-  it('answers 503 DEMO_MODE for other allowlisted paths', async () => {
-    vi.stubEnv('USE_MOCK_API', 'true');
-    vi.stubGlobal('fetch', vi.fn());
-    const response = await GET(
-      request(['masters', 'versions'], `erp_session=${token}`),
-      context(['masters', 'versions']),
-    );
-    expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toMatchObject({ code: 'DEMO_MODE' });
-  });
+  it.each([['masters', 'versions'], ['audit']])(
+    'answers 503 DEMO_MODE for other allowlisted paths (%s)',
+    async (...path) => {
+      vi.stubEnv('USE_MOCK_API', 'true');
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      const response = await GET(request(path, `erp_session=${token}`), context(path));
+      expect(response.status).toBe(503);
+      expect(fetchMock).not.toHaveBeenCalled();
+      await expect(response.json()).resolves.toMatchObject({ code: 'DEMO_MODE' });
+    },
+  );
 
   it('clears the cookie for a token that is not a known mock token', async () => {
     vi.stubEnv('USE_MOCK_API', 'true');
@@ -60,7 +62,7 @@ describe('/api/proxy in mock mode', () => {
   it('still returns 404 for paths outside the allowlist', async () => {
     vi.stubEnv('USE_MOCK_API', 'true');
     vi.stubGlobal('fetch', vi.fn());
-    const response = await GET(request(['audit'], `erp_session=${token}`), context(['audit']));
+    const response = await GET(request(['clients'], `erp_session=${token}`), context(['clients']));
     expect(response.status).toBe(404);
   });
 });

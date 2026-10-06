@@ -7,7 +7,7 @@ scope. Install packages with exact versions (`--save-exact`), after confirming o
 one does not resolve, stop and ask instead of substituting another. The property test tasks follow design.md
 (Correctness Properties) and use `fast-check@4.10.2` (dev); the first of them installs it.
 
-- [ ] 1. Theme and tokens
+- [x] 1. Theme and tokens
 - [x] 1.1 Add next-themes and the theme provider
   - Install `next-themes@0.4.6`.
   - Add `src/components/layout/theme-provider.tsx` (next-themes with `attribute="class"`, `defaultTheme="system"`,
@@ -40,7 +40,7 @@ one does not resolve, stop and ask instead of substituting another. The property
 - [x] 1.5 Checkpoint: lint, typecheck, test and build pass. Check the existing pages in light and dark with the dev
       server.
 
-- [ ] 2. Layout
+- [x] 2. Layout
 - [x] 2.1 Navigation config and primitives
   - `src/components/layout/nav-config.ts` with the groups, items, icons, targets, roles and Planned flags from
     design.md.
@@ -91,7 +91,7 @@ one does not resolve, stop and ask instead of substituting another. The property
 - [x] 2.8 Checkpoint: lint, typecheck, test and build pass. Check keyboard navigation, the rail tooltips and the
       mobile drawer in both themes.
 
-- [ ] 3. Login
+- [x] 3. Login
 - [x] 3.1 Auth layout and pages
   - Move `src/app/login` into the `(auth)` route group with a shared layout: two-column panel at 1024 px and wider
     (product name, one-line description, three value points from design.md), form only below, theme control. The
@@ -184,26 +184,26 @@ one does not resolve, stop and ask instead of substituting another. The property
 - [x] 4.9 Property test for URL state
   - **Property 11: URL state survives a round trip**
   - **Validates: Requirements 9.3, 9.4, 9.5, 11.2, 11.3**
-- [-] 4.10 Header, type switch and KPI cards
+- [x] 4.10 Header, type switch and KPI cards
   - Greeting with first name (morning, afternoon or evening by the IST hour) and the IST date, both from
     `useIstNow()` (`src/hooks/use-ist-now.ts`: browser clock, skeleton until hydrated); primary action to the
     placeholder; sample-data note.
   - `TypeSwitch` (Radix Tabs with counts) and `KpiCards` with the definitions and helper text from design.md, with
     loading and error states.
   - _Requirements: 9.1, 9.2, 9.3, 9.6, 10.1, 10.2, 10.3, 10.4, 10.5, 20.2_
-- [~] 4.11 Pipeline strip
+- [x] 4.11 Pipeline strip
   - Six toggle buttons with counts and `aria-pressed`, synced with `?stage=`, horizontal scroll on narrow screens.
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 20.3_
-- [~] 4.12 Chart
+- [x] 4.12 Chart
   - Install `recharts@3.10.1` and `react-is@19.3.0`. `StageChart` with the two tabs (stage counts, and Fire SI (Proposed 1) by product), token colours, compact labels,
     the visually hidden data table, loaded with `next/dynamic`.
   - _Requirements: 12.1, 12.2, 12.3, 12.4_
-- [~] 4.13 Proposals table
+- [x] 4.13 Proposals table
   - Columns from design.md, with "Fire SI (Proposed 1)" as the sum insured column.
   - Toolbar (debounced search, stage select, result count), sortable headers with `aria-sort`, pagination, expiry
     chip, row hover and the Reference button, scroll region, and loading, empty and error states.
   - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 21.4, 21.6_
-- [~] 4.14 Proposal search in the command palette
+- [x] 4.14 Proposal search in the command palette
   - Proposals group using `useProposals({ q, pageSize: 6 })` from 2 characters, with loading, error and empty
     messages.
   - _Requirements: 8.3, 8.5_
@@ -241,12 +241,12 @@ one does not resolve, stop and ask instead of substituting another. The property
 - [x] 5.6 Checkpoint: lint, typecheck, test and build pass. Open several proposals from the table and from the
       palette, in both themes.
 
-- [ ] 6. Wrap-up
-- [-] 6.1 Documentation
+- [x] 6. Wrap-up
+- [x] 6.1 Documentation
   - README: demo users and password, `USE_MOCK_API`, themes, where sample data lives and how to swap it for the API.
   - Refresh the steering files to match what was built.
   - _Requirements: 5.7_
-- [~] 6.2 Playwright smoke test
+- [x] 6.2 Playwright smoke test
   - Install `@playwright/test@1.63.0` (dev, exact) and the Chromium browser only. `playwright.config.ts` starts the
     production build with `USE_MOCK_API=true`.
   - `e2e/smoke.spec.ts`: one test that signs in as the demo admin and checks the dashboard in light and dark.
@@ -254,7 +254,7 @@ one does not resolve, stop and ask instead of substituting another. The property
     Playwright version.
   - Ignore Playwright's reports and results in `.gitignore`, `.prettierignore` and ESLint.
   - _Requirements: 22.5_
-- [~] 6.3 Final verification
+- [x] 6.3 Final verification
   - Lint, typecheck, test and build; then, with `npm run dev` and `USE_MOCK_API=true`, walk through the brief's
     definition of done in light, dark and system themes, including a reload with no theme flash.
   - Confirm the new components sit in `src/components/ui`, `layout` and `proposals`, and no new component file is

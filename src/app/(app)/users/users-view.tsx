@@ -1,7 +1,8 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { LoaderCircle, Lock } from 'lucide-react';
+import { History, LoaderCircle, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState, ErrorState, TableLoadingRows } from '@/components/states';
 import { CreateUserDialog } from '@/components/users/create-user-dialog';
@@ -25,9 +26,9 @@ import { queryKeys } from '@/lib/query-keys';
 import {
   ROLE_LABELS,
   UserListResponseSchema,
+  can,
   formatDate,
   formatDateTime,
-  hasRole,
   type User,
 } from '@/shared';
 
@@ -49,7 +50,14 @@ function StatusBadges({ user }: { user: User }) {
   );
 }
 
-function UsersTable({ currentUserId }: { currentUserId: string }) {
+function UsersTable({
+  currentUserId,
+  showHistory,
+}: {
+  currentUserId: string;
+  /** Links each user to their record's history in the audit log (audit.view). */
+  showHistory: boolean;
+}) {
   const users = useInfiniteQuery({
     queryKey: queryKeys.users,
     queryFn: ({ pageParam, signal }) => {
@@ -110,6 +118,14 @@ function UsersTable({ currentUserId }: { currentUserId: string }) {
             )}
           </TableCell>
           <TableCell className="text-right whitespace-nowrap">
+            {showHistory ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link href={`/audit?entity=user&entityId=${user.id}`}>
+                  <History aria-hidden="true" />
+                  History <span className="sr-only">of {user.name}</span>
+                </Link>
+              </Button>
+            ) : null}
             <EditRolesDialog user={user} isSelf={isSelf} />
             <ToggleActiveDialog user={user} isSelf={isSelf} />
           </TableCell>
@@ -158,23 +174,24 @@ function UsersTable({ currentUserId }: { currentUserId: string }) {
 
 export function UsersView() {
   const me = useCurrentUser();
-  const isAdmin = me.data ? hasRole(me.data.roles, 'ADMIN') : false;
+  const canManage = me.data ? can(me.data.roles, 'users.manage') : false;
+  const canViewAudit = me.data ? can(me.data.roles, 'audit.view') : false;
 
   return (
     <>
       <PageHeader
         title="Users"
         description="Create users, change roles and deactivate accounts. Every change is audited."
-        actions={isAdmin ? <CreateUserDialog /> : undefined}
+        actions={canManage ? <CreateUserDialog /> : undefined}
       />
-      {me.data && !isAdmin ? (
+      {me.data && !canManage ? (
         <Alert variant="warning" role="alert" className="max-w-xl">
           <Lock aria-hidden="true" />
           <AlertTitle>Admins only</AlertTitle>
           <AlertDescription>You need the Admin role to manage users.</AlertDescription>
         </Alert>
       ) : me.data ? (
-        <UsersTable currentUserId={me.data.id} />
+        <UsersTable currentUserId={me.data.id} showHistory={canViewAudit} />
       ) : null}
     </>
   );

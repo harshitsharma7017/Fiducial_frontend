@@ -1,12 +1,20 @@
+'use client';
+
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { usePermission } from '@/hooks/use-permission';
 import { formatDateTime } from '@/shared';
 import { DOCUMENT_KINDS, DOCUMENT_KIND_LABELS, type Proposal } from '@/types/proposal';
 import { DocStatusBadge } from '../badges';
 import { Section } from './section-heading';
 
-/** The four documents with status badges and disabled "Coming soon" download buttons. */
+/**
+ * The four documents with status badges. Users who may export (proposals.export) also see the
+ * download buttons, disabled and marked "Coming soon" until document export is built.
+ */
 export function DocumentsSection({ proposal }: { proposal: Proposal }) {
+  const canExport = usePermission('proposals.export');
+
   return (
     <Section title="Documents">
       <ul className="grid gap-2">
@@ -28,11 +36,13 @@ export function DocumentsSection({ proposal }: { proposal: Proposal }) {
               </div>
               <div className="flex items-center gap-2">
                 <DocStatusBadge status={status} />
-                <Button variant="outline" size="sm" disabled title="Coming soon">
-                  <Download aria-hidden="true" />
-                  Download
-                  <span className="sr-only"> (coming soon)</span>
-                </Button>
+                {canExport ? (
+                  <Button variant="outline" size="sm" disabled title="Coming soon">
+                    <Download aria-hidden="true" />
+                    Download{' '}
+                    <span className="sr-only">{DOCUMENT_KIND_LABELS[kind]} (coming soon)</span>
+                  </Button>
+                ) : null}
               </div>
             </li>
           );

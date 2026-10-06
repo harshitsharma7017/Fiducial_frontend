@@ -5,20 +5,25 @@
 - Node.js 24 LTS (`.nvmrc`), TypeScript 6.0 (`strict`), ESM.
 - Next.js 16 (App Router, Turbopack), React 19, TanStack Query 5, React Hook Form + Zod 4, Tailwind CSS 4,
   shadcn-style components on `radix-ui`, lucide-react.
-- Tests: Vitest 5, Testing Library, jsdom.
+- Tests: Vitest 5, Testing Library, jsdom, fast-check (property tests); Playwright 1.63 for the e2e smoke test
+  (`e2e/`, Chromium only).
 - Tooling: ESLint 9 (flat config: `eslint-config-next` core web vitals + type-aware typescript-eslint), Prettier,
   Husky + lint-staged, GitHub Actions. ESLint stays on 9 until the plugins in `eslint-config-next` support 10.
 
 ## Commands
 
-`npm run dev` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run shared:check` ·
-`npm run shared:sync`
+`npm run dev` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:e2e` (Playwright, Chromium; builds
+first) · `npm run build` · `npm run shared:check` · `npm run shared:sync`
 
 ## Conventions
 
 - **The token never reaches the browser.** Browser code calls `apiFetch()` (`src/lib/api-client.ts`), which goes
   through `/api/proxy/*`. Server-only code lives in `src/lib/server/` and the `app/api/` route handlers.
 - **New API areas** must be added to the proxy allowlist in `src/lib/server/proxy-paths.ts` (with a test).
+- **Permissions**: show a page, nav item or action only to users whose roles hold its permission
+  (`src/shared/permissions.ts`): pages through `pagePermission()` and the shell's `PageGate`, nav items through their
+  `permission`, actions through `usePermission()` or `can()`. Never compare role codes in components. The API enforces
+  the same permissions; the screens only hide what a user cannot do.
 - **No `NEXT_PUBLIC_` variables** for anything sensitive; `API_URL` is server-only.
 - **Contracts come from `src/shared/`** (import from `@/shared`). It is a copy of `Fiducial_backend/src/shared`:
   never edit it here. Change the backend, then run `npm run shared:sync`.

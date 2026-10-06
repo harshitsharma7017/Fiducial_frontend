@@ -17,6 +17,7 @@
     "format": "prettier --write .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "shared:check": "node scripts/sync-shared.mjs --check",
     "shared:sync": "node scripts/sync-shared.mjs",
     "prepare": "husky"
@@ -50,6 +51,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",

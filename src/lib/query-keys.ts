@@ -7,6 +7,7 @@ export const queryKeys = {
   occupancy: (tacCode: string) => ['masters', 'occupancy', tacCode] as const,
   pincode: (pincode: string) => ['masters', 'pincode', pincode] as const,
   users: ['users'] as const,
+  auditLog: (filters: unknown) => ['audit', filters] as const,
   notifications: ['notifications'] as const,
   proposals: {
     list: (params: unknown) => ['proposals', 'list', params] as const,

@@ -6,6 +6,7 @@ import { ProposalDrawer, type DrawerTarget } from '@/components/proposals/propos
 import { ProposalsTable } from '@/components/proposals/proposals-table/proposals-table';
 import { TypeSwitch } from '@/components/proposals/type-switch';
 import { Button } from '@/components/ui/button';
+import { usePermission } from '@/hooks/use-permission';
 import { useDashboardStats } from '@/lib/api/proposals';
 import { parseProposalParams, proposalParamsToSearch, withType } from '@/lib/proposal-params';
 import { useUrlSearchParams } from '@/lib/use-url-search-params';
@@ -17,6 +18,7 @@ export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
   const { params, replace } = useUrlSearchParams(serverSearch);
   const { type, stage } = parseProposalParams(params);
   const [drawer, setDrawer] = useState<DrawerTarget | null>(null);
+  const canCreate = usePermission('proposals.create');
 
   const newStats = useDashboardStats('NEW');
   const existingStats = useDashboardStats('EXISTING');
@@ -34,12 +36,14 @@ export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
           type === 'EXISTING' ? 'Renewals of existing policies.' : 'New business proposals.'
         }
         actions={
-          <Button asChild variant="accent">
-            <Link href={action.href}>
-              <action.Icon aria-hidden="true" />
-              {action.label}
-            </Link>
-          </Button>
+          canCreate ? (
+            <Button asChild variant="accent">
+              <Link href={action.href}>
+                <action.Icon aria-hidden="true" />
+                {action.label}
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
       <div className="grid gap-6">

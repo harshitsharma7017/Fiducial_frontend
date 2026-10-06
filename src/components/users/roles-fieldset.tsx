@@ -5,12 +5,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ROLES, ROLE_LABELS, type Role } from '@/shared';
 
+// What each role may do, in short (the full table is src/shared/permissions.ts).
 const ROLE_HINTS: Record<Role, string> = {
-  ADMIN: 'Users, master data activation; passes every role check',
-  MANAGER: 'Reviews and approves',
-  ACCOUNT_MANAGER: 'Owns client relationships',
-  PLACEMENT_EXEC: 'Handles insurers and quotes',
-  READ_ONLY: 'Can view, cannot change',
+  ADMIN: 'Users, master data and the audit log; can do everything',
+  MANAGER: 'Approves RFQs and placements',
+  ACCOUNT_MANAGER: 'Owns clients; creates proposals and sends RFQs',
+  PLACEMENT_EXEC: 'Prepares RFQs and enters insurer quotes',
+  READ_ONLY: 'Views proposals and masters; changes nothing',
 };
 
 /** A checkbox group for roles. */

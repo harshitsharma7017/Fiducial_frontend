@@ -31,6 +31,7 @@ export const DEMO_USERS: readonly User[] = [
     updatedAt: '2026-10-05T09:30:00.000Z',
   },
   {
+    // Relationship Manager (the email predates the role names in the plan).
     id: 'de300000000000000000ac02',
     email: 'demo.manager@example.com',
     name: 'Rahul Iyer',
@@ -40,6 +41,39 @@ export const DEMO_USERS: readonly User[] = [
     lastLoginAt: '2026-10-04T11:15:00.000Z',
     createdAt: '2026-01-02T05:00:00.000Z',
     updatedAt: '2026-10-04T11:15:00.000Z',
+  },
+  {
+    id: 'de300000000000000000ae03',
+    email: 'demo.approver@example.com',
+    name: 'Vikram Shah',
+    roles: ['MANAGER'] as Role[],
+    active: true,
+    lockedUntil: null,
+    lastLoginAt: '2026-10-04T10:05:00.000Z',
+    createdAt: '2026-01-02T05:00:00.000Z',
+    updatedAt: '2026-10-04T10:05:00.000Z',
+  },
+  {
+    id: 'de300000000000000000bc04',
+    email: 'demo.placement@example.com',
+    name: 'Priya Nair',
+    roles: ['PLACEMENT_EXEC'] as Role[],
+    active: true,
+    lockedUntil: null,
+    lastLoginAt: '2026-10-05T08:40:00.000Z',
+    createdAt: '2026-01-02T05:00:00.000Z',
+    updatedAt: '2026-10-05T08:40:00.000Z',
+  },
+  {
+    id: 'de300000000000000000cd05',
+    email: 'demo.readonly@example.com',
+    name: 'Kavita Rao',
+    roles: ['READ_ONLY'] as Role[],
+    active: true,
+    lockedUntil: null,
+    lastLoginAt: '2026-10-03T12:20:00.000Z',
+    createdAt: '2026-01-02T05:00:00.000Z',
+    updatedAt: '2026-10-03T12:20:00.000Z',
   },
 ];
 

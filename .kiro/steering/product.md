@@ -10,13 +10,16 @@ Two repositories: **Fiducial_frontend** (this one: Next.js web app and its serve
 
 ## Users and roles
 
-| Role              | Who                                                              |
-| ----------------- | ---------------------------------------------------------------- |
-| `ADMIN`           | Operations / admin: users, master data. Passes every role check. |
-| `MANAGER`         | Reviews and approves RFQs and placements                         |
-| `ACCOUNT_MANAGER` | Owns the client; creates risks, reviews the QCR                  |
-| `PLACEMENT_EXEC`  | Prepares RFQs, chases and enters insurer quotes                  |
-| `READ_ONLY`       | Views only                                                       |
+| Role code         | Label                    | Who                                                             |
+| ----------------- | ------------------------ | --------------------------------------------------------------- |
+| `ADMIN`           | Admin                    | Operations / admin: users, master data. Holds every permission. |
+| `MANAGER`         | Approver                 | Reviews and approves RFQs and placements                        |
+| `ACCOUNT_MANAGER` | Relationship Manager     | Owns the client; creates risks, sends RFQs, reviews the QCR     |
+| `PLACEMENT_EXEC`  | Underwriting / Placement | Prepares RFQs, chases and enters insurer quotes                 |
+| `READ_ONLY`       | Read-only                | Views only                                                      |
+
+What each role may do is the table in `src/shared/permissions.ts` (copied from the backend; the README shows it per
+screen). It follows the PRD personas and waits for the client's confirmation (Q12).
 
 ## Domain terms
 
@@ -49,11 +52,13 @@ Two repositories: **Fiducial_frontend** (this one: Next.js web app and its serve
 
 ## Current phase
 
-Built (foundation): sign-in, app shell with role-aware navigation, dashboard (system status, active master
-versions), occupancy and pincode lookups, the Fire rate check with its breakdown, and user admin.
+Built (foundation): sign-in, occupancy and pincode lookups, the Fire rate check with its breakdown, user admin,
+settings (system status, active master versions), screens and actions per role (F-2), and the audit log page with
+who, when and old and new values (F-3).
 
-Specified, waiting for approval: the frontend shell (`.kiro/specs/frontend-shell`): themes, new layout, mock API mode
-and a proposals dashboard on sample data.
+Built from the frontend-shell spec (`.kiro/specs/frontend-shell`; its wrap-up tasks 6.x are still open): themes, the
+new layout, mock API mode with one demo user per role, and a proposals dashboard, drawer and full page on sample
+data.
 
 Not built yet: clients, risks, Data Sheet, RFQ, quotes, QCR and placement slip screens, proposal create and edit
 forms, a proposals API.

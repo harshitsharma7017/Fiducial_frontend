@@ -4,8 +4,9 @@ Next.js web app for the Property Insurance Placement ERP that Spirezen Enterpris
 will replace the Excel chain of Data Sheet → RFQ → insurer quotes → QCR → Placement Slip.
 
 This repository holds the **foundation** screens: sign-in, a proposals dashboard with the detail drawer and full
-page, occupancy and pincode masters, the Fire rate check and user admin. Light and dark themes follow the system
-setting and can be switched by hand. The API lives in the separate **Fiducial_backend** repository. The browser
+page, occupancy and pincode masters, the Fire rate check, user admin and the audit log. Each role sees only the
+screens and actions it is allowed ([Roles and permissions](#roles-and-permissions)). Light and dark themes follow the
+system setting and can be switched by hand. The API lives in the separate **Fiducial_backend** repository. The browser
 never calls it directly: this app's own server routes (a backend-for-frontend) hold the session and forward each
 call.
 
@@ -35,18 +36,59 @@ Sign in with the admin you seeded in Fiducial_backend.
 ## Demo mode (no backend)
 
 Set `USE_MOCK_API=true` in `.env.local` to run the whole app without Fiducial_backend. The sign-in route then
-accepts two built-in demo users and never calls the API; a "Demo mode" badge shows in the navbar. `.env.example`
-ships with it on.
+accepts five built-in demo users, one per role, and never calls the API; a "Demo mode" badge shows in the navbar.
+`.env.example` ships with it on. Every demo user has the password `Fiducial-demo-2026`.
 
-| Email                      | Password             | Role            | Sees                                  |
-| -------------------------- | -------------------- | --------------- | ------------------------------------- |
-| `demo.admin@example.com`   | `Fiducial-demo-2026` | ADMIN           | Everything, including the Admin group |
-| `demo.manager@example.com` | `Fiducial-demo-2026` | ACCOUNT_MANAGER | Everything except the Admin group     |
+| Email                        | Role                     | Code              |
+| ---------------------------- | ------------------------ | ----------------- |
+| `demo.admin@example.com`     | Admin                    | `ADMIN`           |
+| `demo.manager@example.com`   | Relationship Manager     | `ACCOUNT_MANAGER` |
+| `demo.approver@example.com`  | Approver                 | `MANAGER`         |
+| `demo.placement@example.com` | Underwriting / Placement | `PLACEMENT_EXEC`  |
+| `demo.readonly@example.com`  | Read-only                | `READ_ONLY`       |
 
-In demo mode the pages that read live data (Occupancy, Pincodes, Fire rate check, Users and Settings) show a short
-"Not available in demo mode" notice instead of calling the API. The dashboard and proposal screens work fully,
+In demo mode the pages that read live data (Occupancy, Pincodes, Fire rate check, Users, Audit log and Settings) show
+a short "Not available in demo mode" notice instead of calling the API. The dashboard and proposal screens work fully,
 because they already use sample data. Turn demo mode off (`USE_MOCK_API=false` or unset) and the app signs in against
 the real API again, unchanged.
+
+## Roles and permissions
+
+What each role may do is one table, `src/shared/permissions.ts`, shared with the API (the backend's README lists it).
+The web app reads the same table:
+
+| Screen or action                                                | Admin | Approver | Relationship Manager | Underwriting / Placement | Read-only |
+| --------------------------------------------------------------- | ----- | -------- | -------------------- | ------------------------ | --------- |
+| Dashboard, proposals, proposal drawer and page, masters lookups | yes   | yes      | yes                  | yes                      | yes       |
+| Fire rate check                                                 | yes   | yes      | yes                  | yes                      |           |
+| Document downloads (coming soon)                                | yes   | yes      | yes                  | yes                      |           |
+| New proposal and Start renewal                                  | yes   |          | yes                  |                          |           |
+| Users, Audit log, Settings                                      | yes   |          |                      |                          |           |
+
+- Navigation shows only the items a user's permissions allow (`nav-config.ts`); a group with nothing left is hidden.
+- Opening a page without its permission, for example by typing the URL, shows "You do not have access" inside the
+  shell (`PageGate`), and the page sends no requests. Pages are mapped to permissions by `pagePermission()`.
+- Actions use `usePermission()` or `can()`; components never compare role codes.
+- The API checks the same permission on every route, so the screens are a convenience, not the security boundary.
+
+The approve and send permissions exist for the RFQ, QCR and placement slip screens, which are not built yet. The
+client still has to confirm the table (Q12 in the backend's `docs/OPEN_ITEMS.md`).
+
+## Audit log
+
+`/audit` (Admin) lists sign-ins and every create, edit and approval, newest first: when, who, what, which record, and
+each changed field's old and new value (a new record shows its values). Filter by kind and record type; select a
+person or a record in the list to narrow it to their entries or its history, and remove the filter from the chip.
+The filters live in the URL, so the Users page links each user to `/audit?entity=user&entityId=<id>`. Send and export
+entries arrive with RFQ email and document export. Entries are never changed or deleted.
+
+## Sample proposal data
+
+The dashboard, proposal lists, drawer, full proposal page, palette search and notifications read sample data built in
+`src/lib/data/` (14 fictional proposals, with dates relative to today in IST). Components never import it: they call
+the hooks in `src/lib/api/` (`useProposals`, `useProposal`, `useDashboardStats`, `useNotifications`). When the
+proposals API exists, replace the bodies of the functions in `src/lib/api/proposals.ts` and `notifications.ts` with
+`apiFetch()` calls, add `proposals` to the proxy allowlist, and delete `src/lib/data/`; no component changes.
 
 ## Scripts
 
@@ -57,9 +99,21 @@ the real API again, unchanged.
 | `npm run lint`                | ESLint (Next.js core web vitals, type-aware TypeScript) and Prettier     |
 | `npm run typecheck`           | `next typegen` (route types), then `tsc --noEmit`                        |
 | `npm test`                    | Vitest with Testing Library (jsdom)                                      |
+| `npm run test:e2e`            | Playwright smoke test (Chromium): builds, starts in demo mode, signs in  |
 | `npm run shared:check`        | Compares `src/shared` with the backend's copy; exits 1 if they differ    |
 | `npm run shared:sync`         | Copies the backend's `src/shared` here (adds, updates and removes files) |
 | `npm run format`              | Prettier write                                                           |
+
+`npm run test:e2e` needs Playwright's Chromium once: `npx playwright install chromium`. It builds the app, serves it
+on port 3100 with `USE_MOCK_API=true` (no API needed), signs in as the demo admin and checks the dashboard in light and
+dark. CI runs it as its own job and caches the browser per Playwright version.
+
+## Themes
+
+The theme control in the navbar offers Light, Dark and System (the default, which follows the operating system). The
+choice is kept in the browser (`localStorage`, key `erp-theme`) and applied before the first paint, so a reload never
+flashes the other theme. Colours come only from the tokens in `src/app/globals.css`; `src/app/tokens.test.ts` checks
+that every text and focus pair meets its contrast minimum in both themes.
 
 ## How it talks to the API
 
@@ -67,8 +121,9 @@ the real API again, unchanged.
   `__Host-erp_session` in production), SameSite=Lax, that expires with the token. The browser receives only the user.
 - `POST /api/auth/logout` tells the API (for the audit log) and clears the cookie, even if the API is unreachable.
 - `/api/proxy/<path>` forwards to `/api/v1/<path>` with the token as a bearer header. Only `users`, `masters`,
-  `rating`, `health` and `auth/me` are allowed (`src/lib/server/proxy-paths.ts`). No cookie gives 401, a path outside
-  the list gives 404, a cross-origin write gives 403, and a 401 from the API clears the cookie.
+  `rating`, `audit`, `health` and `auth/me` are allowed (`src/lib/server/proxy-paths.ts`). No cookie gives 401, a
+  path outside the list gives 404, a cross-origin write gives 403, and a 401 from the API clears the cookie. The API
+  then checks the user's permission for the route.
 - `src/proxy.ts` (Next.js 16's replacement for middleware) sends signed-out visitors to `/login`.
 - Client code calls `apiFetch()` (`src/lib/api-client.ts`). It parses responses with the shared Zod schemas and sends
   the user to sign-in on a 401.
@@ -91,11 +146,15 @@ becomes private, give that job's backend checkout a read-only token.
 
 ```
 src/
-  app/                  login/, (app)/ (dashboard, masters, rating, users), api/ (BFF route handlers)
-  components/           app shell and feature components; ui/ holds the shadcn-style primitives on Radix
-  hooks/                React Query hooks and small helpers
-  lib/                  api-client, display helpers, session cookie; server/ is the BFF code (server only)
+  app/                  (auth)/ sign-in pages, (app)/ signed-in pages (dashboard, proposals, masters, rating,
+                        users, audit, settings, profile), api/ (BFF route handlers)
+  components/           layout/ (shell, navigation and page permissions), proposals/, audit/ and other feature
+                        components; ui/ holds the shadcn-style primitives on Radix
+  hooks/                React Query hooks (current user, permission, audit log) and small helpers
+  lib/                  api-client, api/ (proposal data layer) and data/ (sample data), display helpers;
+                        server/ is the BFF code (server only)
   shared/               copy of the backend's API contracts (do not edit here)
+  types/proposal.ts     proposal enums, labels and schemas (until the backend has a proposals API)
   proxy.ts              redirects signed-out visitors to /login
 scripts/sync-shared.mjs keeps src/shared identical to the backend's copy
 ```

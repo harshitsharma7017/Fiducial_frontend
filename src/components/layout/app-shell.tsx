@@ -10,6 +10,7 @@ import { writeSidebarCookie } from '@/lib/sidebar-state';
 import { CommandPalette } from './command-palette';
 import { MobileNav } from './mobile-nav';
 import { Navbar } from './navbar';
+import { PageGate } from './page-gate';
 import { Sidebar } from './sidebar/sidebar';
 
 /**
@@ -98,7 +99,7 @@ export function AppShell({
                 title="Could not load your account"
               />
             ) : (
-              children
+              <PageGate roles={user?.roles}>{children}</PageGate>
             )}
           </main>
         </div>

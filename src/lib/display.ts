@@ -9,7 +9,7 @@ export function riskTypeLabel(value: RiskType | null): string {
   return value ? RISK_TYPE_LABELS[value] : 'Blank';
 }
 
-/** The user's roles for display, for example "Admin, Account manager". */
+/** The user's roles for display, for example "Admin, Relationship Manager". */
 export function rolesLabel(user: Pick<User, 'roles'>): string {
   return user.roles.map((role) => ROLE_LABELS[role]).join(', ');
 }

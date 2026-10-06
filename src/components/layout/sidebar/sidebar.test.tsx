@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -45,13 +45,24 @@ describe('SidebarNav', () => {
     );
   });
 
-  it('gives admins Users and Settings', () => {
+  it('gives admins Users, the audit log and Settings', () => {
     const nav = renderNav(['ADMIN']);
     expect(within(nav).getByRole('link', { name: 'Users' })).toHaveAttribute('href', '/users');
+    expect(within(nav).getByRole('link', { name: 'Audit log' })).toHaveAttribute('href', '/audit');
     expect(within(nav).getByRole('link', { name: 'Settings' })).toHaveAttribute(
       'href',
       '/settings',
     );
+  });
+
+  it('hides the Fire rate check from Read-only users only', () => {
+    expect(
+      within(renderNav(['READ_ONLY'])).queryByRole('link', { name: 'Fire rate check' }),
+    ).not.toBeInTheDocument();
+    cleanup();
+    expect(
+      within(renderNav(['PLACEMENT_EXEC'])).getByRole('link', { name: 'Fire rate check' }),
+    ).toHaveAttribute('href', '/rating/fire');
   });
 
   it('shows planned items as disabled links that go nowhere', () => {
@@ -103,9 +114,10 @@ describe('SidebarNav', () => {
     expect(within(nav).queryAllByRole('link', { current: 'page' })).toHaveLength(0);
   });
 
-  it('hides the role-restricted groups while the user loads', () => {
+  it('shows only what every role may see while the user loads', () => {
     const nav = renderNav(undefined);
     expect(within(nav).queryByRole('heading', { name: 'Admin' })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'Fire rate check' })).not.toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
   });
 

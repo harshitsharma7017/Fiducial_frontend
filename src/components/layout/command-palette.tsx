@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/command';
 import type { Role } from '@/shared';
 import { CommandProposals } from './command-proposals';
-import { NAV_GROUPS, visibleGroups, type NavItem } from './nav-config';
+import { visibleGroups, type NavItem } from './nav-config';
 
 interface PageEntry {
   label: string;
@@ -23,8 +23,7 @@ interface PageEntry {
 
 /** The navigable sidebar items the user may see; planned items are left out. */
 function pageEntries(roles: readonly Role[] | undefined): PageEntry[] {
-  const groups = roles ? visibleGroups(roles) : NAV_GROUPS.filter((group) => !group.roles);
-  return groups.flatMap((group) =>
+  return visibleGroups(roles).flatMap((group) =>
     group.items.flatMap((item) =>
       item.href && !item.planned
         ? [{ label: item.label, group: group.title, href: item.href, icon: item.icon }]

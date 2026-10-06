@@ -25,6 +25,7 @@ describe('breadcrumbTrail', () => {
     expect(trail('/masters/occupancy')).toEqual(['Masters', 'Occupancy']);
     expect(trail('/rating/fire')).toEqual(['Workflow', 'Fire rate check']);
     expect(trail('/users')).toEqual(['Admin', 'Users']);
+    expect(trail('/audit')).toEqual(['Admin', 'Audit log']);
     expect(trail('/settings')).toEqual(['Admin', 'Settings']);
     expect(trail('/profile')).toEqual(['Profile']);
   });

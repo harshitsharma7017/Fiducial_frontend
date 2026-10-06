@@ -10,7 +10,17 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['node_modules/**', '.next/**', 'out/**', 'coverage/**', 'next-env.d.ts']),
+  globalIgnores([
+    'node_modules/**',
+    '.next/**',
+    'out/**',
+    'coverage/**',
+    'next-env.d.ts',
+    // Playwright output
+    'test-results/**',
+    'playwright-report/**',
+    'blob-report/**',
+  ]),
 
   js.configs.recommended,
   ...nextVitals,

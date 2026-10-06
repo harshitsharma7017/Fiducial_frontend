@@ -3,48 +3,44 @@
 ```
 src/
   app/
-    layout.tsx, providers.tsx   root layout, React Query and toast providers
-    login/                      sign-in page and form
-    (app)/                      signed-in pages inside the app shell: dashboard, masters/occupancy,
-                                masters/pincodes, rating/fire, users
+    layout.tsx, providers.tsx   root layout, theme, React Query and toast providers
+    (auth)/                     login and forgot-password with a shared two-column layout
+    (app)/                      signed-in pages inside the app shell: dashboard, proposals (list, new, [id]),
+                                masters/occupancy, masters/pincodes, rating/fire, users, audit, settings, profile
     api/auth/login, logout      BFF: sets and clears the httpOnly session cookie
     api/proxy/[...path]         BFF: forwards allowlisted calls to the API with the bearer token
   components/
-    app-shell/                  sidebar navigation (nav-items.ts), top bar, shell
-    occupancy/, rating/, users/ feature components
+    layout/                     app shell, page gate, sidebar, navbar, breadcrumbs, command palette, notifications,
+                                user menu, theme toggle; nav-config.ts holds the navigation and page permissions
+    proposals/                  dashboard header, type switch, KPI cards, pipeline, chart, table, drawer, badges,
+                                sections/ (shared by the drawer and the full proposal page)
+    audit/                      audit log toolbar and entry row
+    occupancy/, rating/, users/, settings/, profile/   feature components
     ui/                         shadcn-style primitives (Radix)
-    states.tsx                  loading, empty, error and "master not active" states
-  hooks/                        useCurrentUser, usePincode, useDebouncedValue, toast
+    states.tsx                  loading, empty, error, access denied, demo mode and "master not active" states
+    demo-mode-gate.tsx          the demo-mode state in place of live-data pages in mock mode
+  hooks/                        useCurrentUser, usePermission, useAuditLog, useDemoMode, useIstNow, usePincode, …
   lib/
     api-client.ts               apiFetch() and ApiError (browser side)
-    server/                     BFF helpers and the proxy allowlist (server only)
+    api/                        proposal and notification data layer and its TanStack Query hooks
+    data/                       sample data (imported only by lib/api and tests)
+    audit-display.ts            audit filters in the URL, field labels and value formatting
+    money.ts, dates.ts          rupee arithmetic and formatting, IST date helpers
+    proposal-metrics.ts         table summaries, KPI inputs, expiry urgency, coverage columns and totals
+    proposal-params.ts          ?type= and ?stage= parsing and writing
+    use-url-search-params.ts    URL query state without navigation
+    demo-mode.ts                demo-mode error code (browser side)
+    server/                     BFF helpers, the proxy allowlist and mock mode (server only)
     session.ts, display.ts, query-keys.ts, utils.ts
-  shared/                       copy of Fiducial_backend/src/shared (do not edit here)
+  shared/                       copy of Fiducial_backend/src/shared, incl. roles, permissions and audit contracts
+                                (do not edit here)
+  types/proposal.ts             proposal enums, labels, schemas and types
   proxy.ts                      Next.js 16 proxy: redirects signed-out visitors to /login
 scripts/sync-shared.mjs         shared:sync / shared:check
+e2e/smoke.spec.ts               Playwright smoke test (playwright.config.ts builds and serves in mock mode)
 ```
 
 - A page is `page.tsx` (server component) plus a `*-view.tsx` client component next to it.
-- Tests sit next to the code (`*.test.ts`, `*.test.tsx`).
-
-## Added by the frontend-shell spec
-
-`.kiro/specs/frontend-shell/` (requirements, design, tasks) changes the layout as follows once implemented:
-
-```
-src/
-  app/(auth)/                   login and forgot-password with a shared two-column layout (moved from app/login)
-  app/(app)/proposals/          list (?type=), new (placeholder), [id] (full proposal with tabs)
-  app/(app)/settings, profile/  admin system status and master versions; account card
-  components/layout/            app shell, sidebar, navbar, breadcrumbs, command palette, notifications,
-                                user menu, theme toggle, nav-config.ts (replaces components/app-shell/)
-  components/proposals/         type switch, pipeline strip, proposals table, drawer, tabs, badges, sections/
-  lib/api/                      data-layer functions and TanStack Query hooks
-  lib/data/                     sample data (imported only by lib/api and tests)
-  lib/money.ts, lib/dates.ts    rupee arithmetic and formatting, IST date helpers
-  lib/proposal-metrics.ts       table summaries, KPI inputs, expiry urgency, coverage columns and totals
-  lib/proposal-params.ts        ?type= and ?stage= parsing and writing
-  lib/demo-mode.ts              demo-mode error code and context (browser side)
-  lib/server/mock-mode.ts       USE_MOCK_API demo users and mock tokens (server only)
-  types/proposal.ts             proposal enums, labels, schemas and types
-```
+- A new signed-in page gets a permission: a nav item with `permission`, or an entry in `OTHER_PAGES` in
+  `nav-config.ts`. Pages with neither are open to every signed-in user.
+- Tests sit next to the code (`*.test.ts`, `*.test.tsx`); the browser smoke test is in `e2e/` (`*.spec.ts`).

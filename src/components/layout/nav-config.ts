@@ -3,6 +3,7 @@ import {
   FileCheck2,
   FilePlus2,
   Flame,
+  History,
   Landmark,
   LayoutDashboard,
   MapPin,
@@ -15,11 +16,16 @@ import {
   UserCog,
   type LucideIcon,
 } from 'lucide-react';
-import { hasRole, type Role } from '@/shared';
+import { ROLES, can, type Permission, type Role } from '@/shared';
 
 export interface NavItem {
   label: string;
   icon: LucideIcon;
+  /**
+   * What a user needs to see the item and, for a link, to open its page (src/shared/permissions.ts).
+   * Planned items use the permission of the area they belong to.
+   */
+  permission: Permission;
   /** Omitted for planned features, which show as disabled with a "Planned" tag. */
   href?: string;
   planned?: true;
@@ -33,12 +39,20 @@ export interface NavItem {
 export interface NavGroup {
   title: string;
   items: NavItem[];
-  /** When set, only users with one of these roles (or ADMIN) see the group. */
-  roles?: Role[];
 }
 
 export const NAV_GROUPS: readonly NavGroup[] = [
-  { title: 'Overview', items: [{ label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] },
+  {
+    title: 'Overview',
+    items: [
+      {
+        label: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutDashboard,
+        permission: 'proposals.view',
+      },
+    ],
+  },
   {
     title: 'Proposals',
     items: [
@@ -46,12 +60,14 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'New Proposals',
         href: '/proposals?type=new',
         icon: FilePlus2,
+        permission: 'proposals.view',
         activeParam: { name: 'type', value: 'new', isDefault: true },
       },
       {
         label: 'Existing Proposals',
         href: '/proposals?type=existing',
         icon: RefreshCcw,
+        permission: 'proposals.view',
         activeParam: { name: 'type', value: 'existing' },
       },
     ],
@@ -59,39 +75,87 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     title: 'Workflow',
     items: [
-      { label: 'RFQ', icon: Send, planned: true },
-      { label: 'Quotes and QCR', icon: Scale, planned: true },
-      { label: 'Placement Slips', icon: FileCheck2, planned: true },
-      { label: 'Fire rate check', href: '/rating/fire', icon: Flame },
+      { label: 'RFQ', icon: Send, permission: 'proposals.view', planned: true },
+      { label: 'Quotes and QCR', icon: Scale, permission: 'proposals.view', planned: true },
+      { label: 'Placement Slips', icon: FileCheck2, permission: 'proposals.view', planned: true },
+      { label: 'Fire rate check', href: '/rating/fire', icon: Flame, permission: 'rating.use' },
     ],
   },
   {
     title: 'Masters',
     items: [
-      { label: 'Occupancy', href: '/masters/occupancy', icon: Building2 },
-      { label: 'Pincodes', href: '/masters/pincodes', icon: MapPin },
-      { label: 'Add-on Covers', icon: PackagePlus, planned: true },
-      { label: 'Clauses', icon: ScrollText, planned: true },
-      { label: 'Insurers', icon: Landmark, planned: true },
+      {
+        label: 'Occupancy',
+        href: '/masters/occupancy',
+        icon: Building2,
+        permission: 'masters.view',
+      },
+      { label: 'Pincodes', href: '/masters/pincodes', icon: MapPin, permission: 'masters.view' },
+      { label: 'Add-on Covers', icon: PackagePlus, permission: 'masters.view', planned: true },
+      { label: 'Clauses', icon: ScrollText, permission: 'masters.view', planned: true },
+      { label: 'Insurers', icon: Landmark, permission: 'masters.view', planned: true },
     ],
   },
   {
     title: 'Admin',
-    roles: ['ADMIN'],
     items: [
-      { label: 'Users', href: '/users', icon: UserCog },
-      { label: 'Settings', href: '/settings', icon: Settings },
+      { label: 'Users', href: '/users', icon: UserCog, permission: 'users.manage' },
+      { label: 'Audit log', href: '/audit', icon: History, permission: 'audit.view' },
+      { label: 'Settings', href: '/settings', icon: Settings, permission: 'settings.view' },
     ],
   },
 ];
 
-/** The groups a user with these roles may see. */
-export function visibleGroups(roles: readonly Role[]): NavGroup[] {
-  return NAV_GROUPS.filter((group) => !group.roles || hasRole(roles, ...group.roles));
+/** True when every role holds the permission, so it can show before the user has loaded. */
+export function isOpenToEveryRole(permission: Permission): boolean {
+  return ROLES.every((role) => can([role], permission));
+}
+
+/**
+ * The groups and items a user may see. Each item needs its permission, and a group left with
+ * no items is dropped. While the user loads (roles undefined) only the items every role may see
+ * are shown, so nothing appears and then disappears.
+ */
+export function visibleGroups(roles: readonly Role[] | undefined): NavGroup[] {
+  const allowed = (item: NavItem) =>
+    roles ? can(roles, item.permission) : isOpenToEveryRole(item.permission);
+  return NAV_GROUPS.flatMap((group) => {
+    const items = group.items.filter(allowed);
+    return items.length > 0 ? [{ ...group, items }] : [];
+  });
 }
 
 function pathOf(href: string): string {
   return href.split('?')[0] ?? href;
+}
+
+/** Pages outside the navigation, with the permission each needs. */
+const OTHER_PAGES: readonly { path: string; permission: Permission }[] = [
+  { path: '/proposals/new', permission: 'proposals.create' },
+];
+
+const PAGE_PERMISSIONS: readonly { path: string; permission: Permission }[] = [
+  ...NAV_GROUPS.flatMap((group) =>
+    group.items.flatMap((item) =>
+      item.href && !item.planned ? [{ path: pathOf(item.href), permission: item.permission }] : [],
+    ),
+  ),
+  ...OTHER_PAGES,
+];
+
+/**
+ * The permission needed to open a page: that of the nav link or other page with the longest
+ * path that is the page or one of its parents (so /proposals/{id} needs proposals.view and
+ * /proposals/new needs proposals.create). Null for pages open to every signed-in user, such as
+ * /profile.
+ */
+export function pagePermission(pathname: string): Permission | null {
+  let match: { path: string; permission: Permission } | null = null;
+  for (const page of PAGE_PERMISSIONS) {
+    const covers = pathname === page.path || pathname.startsWith(`${page.path}/`);
+    if (covers && (!match || page.path.length > match.path.length)) match = page;
+  }
+  return match?.permission ?? null;
 }
 
 /** The values each query parameter takes across the nav items, keyed by "path?name". */
