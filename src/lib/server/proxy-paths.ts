@@ -1,7 +1,16 @@
 // Only these API areas are reachable through /api/proxy. Sign-in is not: it returns a token,
 // and the token must never reach the browser (see /api/auth/login). The API checks each user's
 // permission for every area (audit, for example, is Admin only).
-const ALLOWED_AREAS = new Set(['users', 'masters', 'rating', 'health', 'audit']);
+const ALLOWED_AREAS = new Set([
+  'users',
+  'masters',
+  'clients',
+  'insurers',
+  'imports',
+  'rating',
+  'health',
+  'audit',
+]);
 
 /** True when the proxied path is one the browser may call. */
 export function isAllowedProxyPath(segments: string[]): boolean {

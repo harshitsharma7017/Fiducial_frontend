@@ -1,9 +1,11 @@
 'use client';
 
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
-import { LoaderCircle, Search } from 'lucide-react';
+import { LoaderCircle, Plus, Search } from 'lucide-react';
 import { useId, useState } from 'react';
+import { MasterActions } from '@/components/masters/master-actions';
 import { OccupancyDetailSheet } from '@/components/occupancy/occupancy-detail-sheet';
+import { OccupancyFormSheet } from '@/components/occupancy/occupancy-form-sheet';
 import { PageHeader } from '@/components/page-header';
 import {
   EmptyState,
@@ -139,6 +141,19 @@ export function OccupancyView() {
       <PageHeader
         title="Occupancy master"
         description="IIB occupancy codes with rates per mille, from the active master version."
+        actions={
+          <MasterActions>
+            <OccupancyFormSheet
+              onSaved={openDetail}
+              trigger={
+                <Button variant="outline">
+                  <Plus aria-hidden="true" />
+                  Add occupancy
+                </Button>
+              }
+            />
+          </MasterActions>
+        }
       />
 
       <div className="mb-4 grid max-w-md gap-2">
@@ -205,7 +220,12 @@ export function OccupancyView() {
         </div>
       ) : null}
 
-      <OccupancyDetailSheet occupancy={selected} open={detailOpen} onOpenChange={setDetailOpen} />
+      <OccupancyDetailSheet
+        occupancy={selected}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onUpdated={setSelected}
+      />
     </>
   );
 }

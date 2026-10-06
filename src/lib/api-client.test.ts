@@ -92,6 +92,20 @@ describe('apiFetch', () => {
     });
   });
 
+  it('sends a file as it is, with its own content type', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const file = new Blob(['PK'], { type: 'application/x-test' });
+    await apiFetch('imports/clients', { method: 'POST', body: file });
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.body).toBe(file);
+    expect(init.headers).toMatchObject({ 'Content-Type': 'application/x-test' });
+  });
+
   it('throws an ApiError with the server code on failure', async () => {
     vi.stubGlobal(
       'fetch',

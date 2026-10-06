@@ -154,8 +154,7 @@ move around quickly.
 1. The app SHALL wrap every signed-in page in a layout with a sidebar, a top navbar and a main landmark, with a "Skip
    to content" link as the first focusable element.
 2. The sidebar SHALL show the brand at the top, then these groups and items, each with a lucide icon:
-   - Overview: Dashboard
-   - Proposals: New Proposals, Existing Proposals
+   - Overview: Dashboard, Proposals (one item since 06 Oct 2026; the list page switches between new and existing)
    - Workflow: RFQ, Quotes and QCR, Placement Slips (all Planned), Fire rate check
    - Masters: Occupancy, Pincodes, Add-on Covers (Planned), Clauses (Planned), Insurers (Planned)
    - Admin, only for users with the ADMIN role: Users, Settings
@@ -358,8 +357,8 @@ navigation never dead-ends.
 
 #### Acceptance criteria
 
-1. The page `/proposals?type=new|existing` SHALL show the proposals table and drawer for that type. The sidebar's New
-   Proposals and Existing Proposals items link here.
+1. The page `/proposals?type=new|existing` SHALL show the proposals table and drawer for that type. The sidebar's
+   Proposals item links here (`/proposals`, new by default).
 2. The primary action ("New proposal" or "Start renewal") SHALL open `/proposals/new?type=new|existing`, a placeholder
    marked Planned that says proposal creation is planned.
 3. The signed-in layout SHALL include `/profile` (placeholder) and `/settings`. Settings is for ADMIN users and SHALL

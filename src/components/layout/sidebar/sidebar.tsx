@@ -20,11 +20,11 @@ export function SidebarBrand({ collapsed }: { collapsed: boolean }) {
         className="grid size-7 shrink-0 place-items-center rounded bg-accent text-xs font-bold text-accent-foreground"
         aria-hidden="true"
       >
-        PE
+        F
       </span>
       <span className={cn('grid leading-tight', collapsed && 'sr-only')}>
-        <span className="text-sm font-semibold text-sidebar-foreground">Property ERP</span>
-        <span className="text-[11px] text-sidebar-muted">Fiducial</span>
+        <span className="text-sm font-semibold text-sidebar-foreground">Fiducial</span>
+        <span className="text-[11px] text-sidebar-muted">Property insurance</span>
       </span>
     </div>
   );

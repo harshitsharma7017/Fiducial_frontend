@@ -1,7 +1,8 @@
 # Fiducial frontend
 
-Next.js web app for the Property Insurance Placement ERP that Spirezen Enterprises is building for Fiducial. The ERP
-will replace the Excel chain of Data Sheet → RFQ → insurer quotes → QCR → Placement Slip.
+Next.js web app for **Fiducial**, the property insurance placement platform that Spirezen Enterprises is building for
+Fiducial Insurance Brokers. It will replace the Excel chain of Data Sheet → RFQ → insurer quotes → QCR → Placement
+Slip.
 
 This repository holds the **foundation** screens: sign-in, a proposals dashboard with the detail drawer and full
 page, occupancy and pincode masters, the Fire rate check, user admin and the audit log. Each role sees only the
@@ -60,6 +61,11 @@ The web app reads the same table:
 | Screen or action                                                | Admin | Approver | Relationship Manager | Underwriting / Placement | Read-only |
 | --------------------------------------------------------------- | ----- | -------- | -------------------- | ------------------------ | --------- |
 | Dashboard, proposals, proposal drawer and page, masters lookups | yes   | yes      | yes                  | yes                      | yes       |
+| Clients and risk locations, Insurers (view)                     | yes   | yes      | yes                  | yes                      | yes       |
+| New client, edit client, add and edit risk locations            | yes   |          | yes                  |                          |           |
+| Import data: clients and risk locations                         | yes   |          | yes                  |                          |           |
+| Import data: insurers                                           | yes   |          |                      |                          |           |
+| Add, edit and deactivate insurers                               | yes   |          |                      |                          |           |
 | Fire rate check                                                 | yes   | yes      | yes                  | yes                      |           |
 | Document downloads (coming soon)                                | yes   | yes      | yes                  | yes                      |           |
 | New proposal and Start renewal                                  | yes   |          | yes                  |                          |           |
@@ -73,6 +79,28 @@ The web app reads the same table:
 
 The approve and send permissions exist for the RFQ, QCR and placement slip screens, which are not built yet. The
 client still has to confirm the table (Q12 in the backend's `docs/OPEN_ITEMS.md`).
+
+## Clients and insurers
+
+- `/masters/clients` lists clients by name; search by name or the start of the GSTIN. **New client** opens a side
+  sheet: insured name, GSTIN (checked as you type for format, state code and check character, and named by its
+  state when valid), nature of business, occupancy (from the active master), communication address and contacts. A
+  GSTIN that belongs to another client is shown on the GSTIN field.
+- `/masters/clients/{id}` shows the client and its risk locations, with **Edit client**, **Add location** and
+  **Edit** per location. A location's pincode fills its state, district and earthquake zone from the pincode master;
+  a location has the client's occupancy unless one is chosen for it.
+- `/masters/insurers` lists insurer branches with their RFQ email addresses and contacts, active ones first by
+  default. Admins add, edit, deactivate and reactivate them.
+- `/masters/import` (**Import data**) loads the IIB master (Admin), clients, risk locations and insurers from Excel. The
+  IIB master previews its validation report, saves as a draft version and is then activated; the Occupancy and
+  Pincodes pages have **Download as Excel** (to edit and re-upload) and **Upload new version**. Admins also add and
+  edit single rows there: **Add occupancy** and **Edit** in an occupancy's details, **Add pincode** and **Edit** in the
+  pincode list (searchable by pincode, district or state). Records: Pick the record type
+  (only the ones your permissions allow), download its template (a sample file is linked in the hints), then drop
+  or browse for the filled-in .xlsx and **Preview**. The preview lists every row as Valid or Invalid with its
+  problems (field — reason); valid rows start ticked and rows with problems cannot be ticked. **Import N** saves
+  the ticked rows and leaves the rest out. Import clients before their risk locations.
+- These pages read live data, so they show the demo-mode state in mock mode.
 
 ## Audit log
 
@@ -187,4 +215,5 @@ scripts/sync-shared.mjs keeps src/shared identical to the backend's copy
   `sudo chown -R "$(id -u):$(id -g)" ~/.npm`.
 - "The server is not reachable" (502, `UPSTREAM_UNAVAILABLE`): the API is not running at `API_URL`.
 - An error naming `API_URL`: `.env.local` is missing or the value is not a URL.
-- "No master data is active yet": import and activate the IIB workbook in Fiducial_backend.
+- "No master data is active yet": as an Admin, upload the IIB workbook on **Masters › Import data** (record type
+  IIB master), then **Save as new version** and **Activate**.

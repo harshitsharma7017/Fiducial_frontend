@@ -17,7 +17,7 @@ describe('parseAuditFilters', () => {
   });
 
   it('ignores unknown values, malformed ids and a record id without its type', () => {
-    expect(parseAuditFilters(new URLSearchParams('kind=DELETE&entity=client'))).toEqual({});
+    expect(parseAuditFilters(new URLSearchParams('kind=DELETE&entity=proposal'))).toEqual({});
     expect(parseAuditFilters(new URLSearchParams(`entityId=${ID}`))).toEqual({});
     expect(parseAuditFilters(new URLSearchParams('entity=user&entityId=12&actorId=x'))).toEqual({
       entity: 'user',
@@ -71,6 +71,18 @@ describe('formatAuditValue', () => {
       'Rows read: 8, Error count: 0',
     );
     expect(formatAuditValue('tags', ['a', 'b'])).toBe('a, b');
+  });
+
+  it('separates records in a list, such as contacts', () => {
+    expect(
+      formatAuditValue('contacts', [
+        { name: 'Meera', email: 'meera@example.com' },
+        { name: 'Ravi', email: null },
+      ]),
+    ).toBe('Name: Meera, Email: meera@example.com; Name: Ravi, Email: —');
+    expect(formatAuditValue('address', { line1: '12 Mill Road', line2: null })).toBe(
+      'Address line 1: 12 Mill Road, Address line 2: —',
+    );
   });
 });
 

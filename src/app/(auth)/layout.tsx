@@ -28,14 +28,14 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
             className="grid size-8 place-items-center rounded bg-accent text-sm font-bold text-accent-foreground"
             aria-hidden="true"
           >
-            PE
+            F
           </span>
-          <span className="text-sm font-semibold tracking-wide">Fiducial</span>
+          <span className="text-sm font-semibold tracking-wide">Fiducial Insurance Brokers</span>
         </div>
         <div className="max-w-md">
-          <h1 className="text-3xl font-semibold text-balance">Property Insurance Placement ERP</h1>
+          <h1 className="text-3xl font-semibold text-balance">Fiducial</h1>
           <p className="mt-3 text-sidebar-muted">
-            From Data Sheet to Placement Slip, in one place.
+            Property insurance placement, from Data Sheet to Placement Slip, in one place.
           </p>
           <ul className="mt-8 grid gap-3">
             {VALUE_POINTS.map((point) => (
@@ -59,11 +59,9 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-8">
           <div className="mb-6 lg:hidden">
             <p className="text-xs font-semibold tracking-widest text-accent-strong uppercase">
-              Fiducial
+              Property insurance placement
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-primary">
-              Property Insurance Placement ERP
-            </h1>
+            <h1 className="mt-1 text-2xl font-semibold text-primary">Fiducial</h1>
           </div>
           {demoMode ? (
             <Alert variant="info" className="mb-6">

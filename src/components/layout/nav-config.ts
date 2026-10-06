@@ -1,14 +1,15 @@
 import {
   Building2,
+  BriefcaseBusiness,
   FileCheck2,
-  FilePlus2,
+  FileText,
+  FileUp,
   Flame,
   History,
   Landmark,
   LayoutDashboard,
   MapPin,
   PackagePlus,
-  RefreshCcw,
   Scale,
   ScrollText,
   Send,
@@ -51,25 +52,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         icon: LayoutDashboard,
         permission: 'proposals.view',
       },
-    ],
-  },
-  {
-    title: 'Proposals',
-    items: [
-      {
-        label: 'New Proposals',
-        href: '/proposals?type=new',
-        icon: FilePlus2,
-        permission: 'proposals.view',
-        activeParam: { name: 'type', value: 'new', isDefault: true },
-      },
-      {
-        label: 'Existing Proposals',
-        href: '/proposals?type=existing',
-        icon: RefreshCcw,
-        permission: 'proposals.view',
-        activeParam: { name: 'type', value: 'existing' },
-      },
+      // One entry for every proposal; the page switches between new and existing (renewals).
+      { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'proposals.view' },
     ],
   },
   {
@@ -85,15 +69,33 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     title: 'Masters',
     items: [
       {
+        label: 'Clients',
+        href: '/masters/clients',
+        icon: BriefcaseBusiness,
+        permission: 'clients.view',
+      },
+      {
+        label: 'Insurers',
+        href: '/masters/insurers',
+        icon: Landmark,
+        permission: 'masters.view',
+      },
+      {
         label: 'Occupancy',
         href: '/masters/occupancy',
         icon: Building2,
         permission: 'masters.view',
       },
       { label: 'Pincodes', href: '/masters/pincodes', icon: MapPin, permission: 'masters.view' },
+      {
+        label: 'Import data',
+        href: '/masters/import',
+        icon: FileUp,
+        // Clients and risk locations need clients.manage; the insurer import also masters.manage.
+        permission: 'clients.manage',
+      },
       { label: 'Add-on Covers', icon: PackagePlus, permission: 'masters.view', planned: true },
       { label: 'Clauses', icon: ScrollText, permission: 'masters.view', planned: true },
-      { label: 'Insurers', icon: Landmark, permission: 'masters.view', planned: true },
     ],
   },
   {

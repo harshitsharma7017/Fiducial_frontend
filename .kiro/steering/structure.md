@@ -6,7 +6,8 @@ src/
     layout.tsx, providers.tsx   root layout, theme, React Query and toast providers
     (auth)/                     login and forgot-password with a shared two-column layout
     (app)/                      signed-in pages inside the app shell: dashboard, proposals (list, new, [id]),
-                                masters/occupancy, masters/pincodes, rating/fire, users, audit, settings, profile
+                                masters/occupancy, masters/pincodes, masters/clients (list, [id]),
+                                masters/insurers, masters/import, rating/fire, users, audit, settings, profile
     api/auth/login, logout      BFF: sets and clears the httpOnly session cookie
     api/proxy/[...path]         BFF: forwards allowlisted calls to the API with the bearer token
   components/
@@ -15,6 +16,13 @@ src/
     proposals/                  dashboard header, type switch, KPI cards, pipeline, chart, table, drawer, badges,
                                 sections/ (shared by the drawer and the full proposal page)
     audit/                      audit log toolbar and entry row
+    clients/                    client form sheet, address fieldset, details card, locations card and dialog
+    insurers/                   insurer form sheet, RFQ emails field, activate / deactivate dialog
+    imports/                    import panel (record type, template, file drop), record preview table, IIB master
+                                result (report, save, activate), record types, upload hooks
+    masters/                    download / upload actions and shared fields for the master forms
+    occupancy/, pincodes/       occupancy detail and add/edit sheet; pincode add/edit dialog
+    forms/                      contacts fieldset and pincode summary, shared by forms
     occupancy/, rating/, users/, settings/, profile/   feature components
     ui/                         shadcn-style primitives (Radix)
     states.tsx                  loading, empty, error, access denied, demo mode and "master not active" states
@@ -24,6 +32,8 @@ src/
     api-client.ts               apiFetch() and ApiError (browser side)
     api/                        proposal and notification data layer and its TanStack Query hooks
     data/                       sample data (imported only by lib/api and tests)
+    form-errors.ts              puts the API's field errors (and codes such as GSTIN_TAKEN) on form fields
+    client-query.ts             one client's query (key and fetch), shared by its page and breadcrumb
     audit-display.ts            audit filters in the URL, field labels and value formatting
     money.ts, dates.ts          rupee arithmetic and formatting, IST date helpers
     proposal-metrics.ts         table summaries, KPI inputs, expiry urgency, coverage columns and totals

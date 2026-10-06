@@ -1,6 +1,7 @@
 # Product
 
-Property Insurance Placement ERP for **Fiducial**, an insurance broker, built by Spirezen Enterprises. It replaces an
+**Fiducial**: the property insurance placement platform for Fiducial Insurance Brokers, built by Spirezen
+Enterprises. The product is called Fiducial everywhere it is shown (not "Property ERP"). It replaces an
 Excel chain: Data Sheet → RFQ → insurer quotes → QCR (quote comparison report) → Placement Slip. A risk is entered
 once, rated from versioned master data, sent to insurers, compared and placed, with an audit trail.
 
@@ -60,8 +61,12 @@ Built from the frontend-shell spec (`.kiro/specs/frontend-shell`; its wrap-up ta
 new layout, mock API mode with one demo user per role, and a proposals dashboard, drawer and full page on sample
 data.
 
-Not built yet: clients, risks, Data Sheet, RFQ, quotes, QCR and placement slip screens, proposal create and edit
-forms, a proposals API.
+Built (masters M-1 to M-3): the client master with GSTIN validation and duplicate blocking, any number of risk
+locations per client, and the insurer master with RFQ email addresses (`/masters/clients`, `/masters/insurers`), with
+Excel templates and a preview-then-import of chosen valid rows for all three (`/masters/import`).
+
+Not built yet: risks, Data Sheet, RFQ, quotes, QCR and placement slip screens, proposal create and edit forms, a
+proposals API.
 
 ## Rules
 

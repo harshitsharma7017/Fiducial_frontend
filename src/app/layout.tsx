@@ -4,7 +4,7 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: { default: 'Property ERP', template: '%s · Property ERP' },
+  title: { default: 'Fiducial', template: '%s · Fiducial' },
   description: 'Property insurance placement for Fiducial',
   robots: { index: false, follow: false },
 };

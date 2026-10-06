@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronsUpDown } from 'lucide-react';
 import { useId, useState, type KeyboardEvent, type Ref } from 'react';
+import { useFormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { apiFetch } from '@/lib/api-client';
@@ -15,6 +16,8 @@ const RESULT_LIMIT = 10;
 
 export interface OccupancyPickerProps {
   id?: string;
+  /** The occupancy already chosen, shown when the picker opens (for example in an edit form). */
+  initialValue?: { tacCode: string; description: string } | null;
   /** Called with the chosen occupancy, or null when the text no longer matches a choice. */
   onSelect: (occupancy: Occupancy | null) => void;
   onBlur?: () => void;
@@ -26,6 +29,7 @@ export interface OccupancyPickerProps {
 /** Search-as-you-type occupancy picker following the ARIA combobox pattern. */
 export function OccupancyPicker({
   id,
+  initialValue,
   onSelect,
   onBlur,
   invalid,
@@ -33,12 +37,15 @@ export function OccupancyPicker({
   ref,
 }: OccupancyPickerProps) {
   const listboxId = useId();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(() =>
+    initialValue ? `${initialValue.tacCode} — ${initialValue.description}` : '',
+  );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [selected, setSelected] = useState<Occupancy | null>(null);
+  // True while the text shows a chosen occupancy rather than a search.
+  const [selected, setSelected] = useState(Boolean(initialValue));
   const q = useDebouncedValue(text.trim(), 250);
-  const searching = open && q.length > 0 && selected === null;
+  const searching = open && q.length > 0 && !selected;
 
   const results = useQuery({
     queryKey: [...queryKeys.occupancies(q), 'picker'],
@@ -57,7 +64,7 @@ export function OccupancyPicker({
   const activeOption = options[activeIndex];
 
   function choose(option: Occupancy) {
-    setSelected(option);
+    setSelected(true);
     setText(`${option.tacCode} — ${option.description}`);
     setOpen(false);
     onSelect(option);
@@ -100,7 +107,7 @@ export function OccupancyPicker({
           setOpen(true);
           setActiveIndex(0);
           if (selected) {
-            setSelected(null);
+            setSelected(false);
             onSelect(null);
           }
         }}
@@ -160,5 +167,30 @@ export function OccupancyPicker({
         </ul>
       ) : null}
     </div>
+  );
+}
+
+/** Wires the combobox to the surrounding FormItem's ids and error state. */
+export function OccupancyField({
+  initialValue,
+  onSelect,
+  onBlur,
+  ref,
+}: Pick<OccupancyPickerProps, 'initialValue'> & {
+  onSelect: (occupancy: Occupancy | null) => void;
+  onBlur: () => void;
+  ref: Ref<HTMLInputElement>;
+}) {
+  const { formItemId, formDescriptionId, formMessageId, error } = useFormField();
+  return (
+    <OccupancyPicker
+      id={formItemId}
+      ref={ref}
+      initialValue={initialValue}
+      onSelect={onSelect}
+      onBlur={onBlur}
+      invalid={Boolean(error)}
+      describedBy={error ? `${formDescriptionId} ${formMessageId}` : formDescriptionId}
+    />
   );
 }

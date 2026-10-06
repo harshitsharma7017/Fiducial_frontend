@@ -2,7 +2,7 @@
   "name": "fiducial-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Next.js web app for the Fiducial Property Insurance Placement ERP",
+  "description": "Next.js web app for Fiducial, the property insurance placement platform",
   "type": "module",
   "packageManager": "npm@11.6.2",
   "engines": {

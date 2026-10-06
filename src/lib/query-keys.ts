@@ -6,7 +6,18 @@ export const queryKeys = {
   occupancies: (q: string) => ['masters', 'occupancies', q] as const,
   occupancy: (tacCode: string) => ['masters', 'occupancy', tacCode] as const,
   pincode: (pincode: string) => ['masters', 'pincode', pincode] as const,
+  pincodes: (q: string) => ['masters', 'pincodes', q] as const,
   users: ['users'] as const,
+  clients: {
+    all: ['clients'] as const,
+    list: (q: string) => ['clients', 'list', q] as const,
+    detail: (id: string) => ['clients', 'detail', id] as const,
+    locations: (id: string) => ['clients', 'locations', id] as const,
+  },
+  insurers: {
+    all: ['insurers'] as const,
+    list: (filters: unknown) => ['insurers', 'list', filters] as const,
+  },
   auditLog: (filters: unknown) => ['audit', filters] as const,
   notifications: ['notifications'] as const,
   proposals: {

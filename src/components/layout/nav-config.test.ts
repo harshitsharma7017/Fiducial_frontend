@@ -7,21 +7,23 @@ const labels = (roles: readonly Role[] | undefined) =>
 
 const PROPOSALS_AND_MASTERS = [
   'Dashboard',
-  'New Proposals',
-  'Existing Proposals',
+  'Proposals',
   'RFQ',
   'Quotes and QCR',
   'Placement Slips',
 ];
-const MASTERS = ['Occupancy', 'Pincodes', 'Add-on Covers', 'Clauses', 'Insurers'];
+const MASTERS = ['Clients', 'Insurers', 'Occupancy', 'Pincodes', 'Add-on Covers', 'Clauses'];
 const WORKING_ROLE = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS];
 const VIEW_ONLY = [...PROPOSALS_AND_MASTERS, ...MASTERS];
+// Import data needs clients.manage: Admins and Relationship Managers.
+const MASTERS_WITH_IMPORT = MASTERS.toSpliced(4, 0, 'Import data');
+const CLIENT_OWNER = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS_WITH_IMPORT];
 
 describe('visibleGroups', () => {
   it.each<[Role, string[]]>([
-    ['ADMIN', [...WORKING_ROLE, 'Users', 'Audit log', 'Settings']],
+    ['ADMIN', [...CLIENT_OWNER, 'Users', 'Audit log', 'Settings']],
     ['MANAGER', WORKING_ROLE],
-    ['ACCOUNT_MANAGER', WORKING_ROLE],
+    ['ACCOUNT_MANAGER', CLIENT_OWNER],
     ['PLACEMENT_EXEC', WORKING_ROLE],
     ['READ_ONLY', VIEW_ONLY],
   ])('shows %s only the screens its permissions allow', (role, expected) => {
@@ -31,7 +33,6 @@ describe('visibleGroups', () => {
   it('drops a group with nothing left to show', () => {
     expect(visibleGroups(['READ_ONLY']).map((group) => group.title)).toEqual([
       'Overview',
-      'Proposals',
       'Workflow',
       'Masters',
     ]);
@@ -53,6 +54,10 @@ describe('pagePermission', () => {
     ['/proposals/prp-0101', 'proposals.view'],
     ['/proposals/new', 'proposals.create'],
     ['/masters/occupancy', 'masters.view'],
+    ['/masters/clients', 'clients.view'],
+    ['/masters/clients/0123456789abcdef01234567', 'clients.view'],
+    ['/masters/insurers', 'masters.view'],
+    ['/masters/import', 'clients.manage'],
     ['/rating/fire', 'rating.use'],
     ['/users', 'users.manage'],
     ['/audit', 'audit.view'],

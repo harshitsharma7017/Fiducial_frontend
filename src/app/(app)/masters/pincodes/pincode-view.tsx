@@ -1,171 +1,214 @@
 'use client';
 
-import { MapPin } from 'lucide-react';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { LoaderCircle, Pencil, Plus, Search } from 'lucide-react';
 import { useId, useState } from 'react';
+import { MasterActions } from '@/components/masters/master-actions';
 import { PageHeader } from '@/components/page-header';
+import { PincodeFormDialog } from '@/components/pincodes/pincode-form-dialog';
 import {
   EmptyState,
   ErrorState,
-  LoadingState,
   MasterNotActiveState,
+  TableLoadingRows,
   isMasterNotActive,
 } from '@/components/states';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { isCompletePincode, usePincode } from '@/hooks/use-pincode';
-import { ApiError } from '@/lib/api-client';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { usePermission } from '@/hooks/use-permission';
+import { apiFetch } from '@/lib/api-client';
 import { displayRate } from '@/lib/display';
-import { EQ_ZONE_LABELS, type PincodeRecord } from '@/shared';
+import { queryKeys } from '@/lib/query-keys';
+import { EQ_ZONE_LABELS, PincodeListResponseSchema } from '@/shared';
 
-function PincodeResult({ record }: { record: PincodeRecord }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="tabular">{record.pincode}</CardTitle>
-        <CardDescription>
-          {record.district || '—'}, {record.state || '—'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-          <dt className="text-muted-foreground">State</dt>
-          <dd>{record.state || '—'}</dd>
-          <dt className="text-muted-foreground">District</dt>
-          <dd>{record.district || '—'}</dd>
-          <dt className="text-muted-foreground">AIFT earthquake zone</dt>
-          <dd>
-            {record.eqZone ? (
-              <Badge variant="accent">
-                {EQ_ZONE_LABELS[record.eqZone]} (zone {record.eqZone})
-              </Badge>
-            ) : (
-              <Badge variant="warning">Not set</Badge>
-            )}
-          </dd>
-        </dl>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead scope="col">Risk type</TableHead>
-                <TableHead scope="col" className="text-right">
-                  EQ rate ‰
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableHead scope="row" className="normal-case">
-                  Residential
-                </TableHead>
-                <TableCell className="tabular text-right">
-                  {displayRate(record.eqRates.residential)}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableHead scope="row" className="normal-case">
-                  Non-industrial
-                </TableHead>
-                <TableCell className="tabular text-right">
-                  {displayRate(record.eqRates.nonIndustrial)}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableHead scope="row" className="normal-case">
-                  Industrial
-                </TableHead>
-                <TableCell className="tabular text-right">
-                  {displayRate(record.eqRates.industrial)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+const PAGE_SIZE = 100;
 
+/** Every pincode of the active master, searchable, with add and edit for Admins. */
 export function PincodeView() {
-  const inputId = useId();
-  const hintId = useId();
-  const [value, setValue] = useState('');
-  const pincode = value.trim();
-  const lookup = usePincode(pincode);
-  const partial = pincode.length > 0 && !isCompletePincode(pincode);
+  const searchId = useId();
+  const [search, setSearch] = useState('');
+  const q = useDebouncedValue(search.trim(), 300);
+  const canManage = usePermission('masters.manage');
+  const columns = canManage ? 8 : 7;
 
-  let result;
-  if (!isCompletePincode(pincode)) {
-    result = (
-      <EmptyState
-        icon={<MapPin className="size-8" />}
-        title="Enter a six-digit pincode"
-        description="State, district, earthquake zone and EQ rates appear as soon as all six digits are in."
-      />
+  const pincodes = useInfiniteQuery({
+    queryKey: queryKeys.pincodes(q),
+    queryFn: ({ pageParam, signal }) => {
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+      if (q) params.set('q', q);
+      if (pageParam) params.set('cursor', pageParam);
+      return apiFetch(`masters/pincodes?${params.toString()}`, {
+        schema: PincodeListResponseSchema,
+        signal,
+      });
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
+  });
+  const items = pincodes.data?.pages.flatMap((page) => page.items) ?? [];
+
+  let body;
+  if (pincodes.isPending) body = <TableLoadingRows columns={columns} />;
+  else if (pincodes.isError && items.length === 0) {
+    body = (
+      <TableRow>
+        <TableCell colSpan={columns} className="p-4">
+          {isMasterNotActive(pincodes.error) ? (
+            <MasterNotActiveState />
+          ) : (
+            <ErrorState error={pincodes.error} onRetry={() => void pincodes.refetch()} />
+          )}
+        </TableCell>
+      </TableRow>
     );
-  } else if (lookup.isPending) {
-    result = <LoadingState label={`Looking up ${pincode}…`} />;
-  } else if (lookup.isError) {
-    if (lookup.error instanceof ApiError && lookup.error.code === 'PINCODE_NOT_FOUND') {
-      result = (
-        <EmptyState
-          title={`Pincode ${pincode} is not in the active master`}
-          description="Check the number. The master holds about 20,600 pincodes."
-        />
-      );
-    } else if (isMasterNotActive(lookup.error)) {
-      result = <MasterNotActiveState />;
-    } else {
-      result = <ErrorState error={lookup.error} onRetry={() => void lookup.refetch()} />;
-    }
+  } else if (items.length === 0) {
+    body = (
+      <TableRow>
+        <TableCell colSpan={columns}>
+          <EmptyState
+            title={q ? `No pincodes match “${q}”` : 'No pincodes in the active master'}
+            description="Search by the start of a pincode (4000) or by district or state (Pune)."
+          />
+        </TableCell>
+      </TableRow>
+    );
   } else {
-    result = <PincodeResult record={lookup.data} />;
+    body = items.map((record) => (
+      <TableRow key={record.id}>
+        <TableCell className="tabular font-medium">{record.pincode}</TableCell>
+        <TableCell>{record.district || <Badge variant="warning">Blank</Badge>}</TableCell>
+        <TableCell>{record.state || <Badge variant="warning">Blank</Badge>}</TableCell>
+        <TableCell className="whitespace-nowrap">
+          {record.eqZone ? EQ_ZONE_LABELS[record.eqZone] : <Badge variant="warning">Not set</Badge>}
+        </TableCell>
+        <TableCell className="tabular text-right">
+          {displayRate(record.eqRates.residential)}
+        </TableCell>
+        <TableCell className="tabular text-right">
+          {displayRate(record.eqRates.nonIndustrial)}
+        </TableCell>
+        <TableCell className="tabular text-right">
+          {displayRate(record.eqRates.industrial)}
+        </TableCell>
+        {canManage ? (
+          <TableCell className="text-right">
+            <PincodeFormDialog
+              record={record}
+              trigger={
+                <Button variant="ghost" size="sm" aria-label={`Edit pincode ${record.pincode}`}>
+                  <Pencil aria-hidden="true" />
+                  Edit
+                </Button>
+              }
+            />
+          </TableCell>
+        ) : null}
+      </TableRow>
+    ));
   }
 
   return (
     <>
       <PageHeader
-        title="Pincode lookup"
-        description="Earthquake zone and EQ rates by risk type, from the active master."
+        title="Pincodes"
+        description="Every pincode in the active master, with its earthquake zone and EQ rates per mille."
+        actions={
+          <MasterActions>
+            <PincodeFormDialog
+              trigger={
+                <Button variant="outline">
+                  <Plus aria-hidden="true" />
+                  Add pincode
+                </Button>
+              }
+            />
+          </MasterActions>
+        }
       />
-      <form
-        className="mb-6 grid max-w-xs gap-2"
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (isCompletePincode(pincode)) void lookup.refetch();
-        }}
-      >
-        <Label htmlFor={inputId}>Pincode</Label>
-        <Input
-          id={inputId}
-          value={value}
-          onChange={(event) => setValue(event.target.value.replace(/\D/g, '').slice(0, 6))}
-          inputMode="numeric"
-          autoComplete="postal-code"
-          maxLength={6}
-          placeholder="400001"
-          aria-describedby={hintId}
-          aria-invalid={partial ? true : undefined}
-          className="tabular"
-        />
-        <p id={hintId} className="text-xs text-muted-foreground">
-          Six digits, for example 400001.
+
+      <div className="mb-4 grid max-w-md gap-2">
+        <Label htmlFor={searchId}>Search by pincode, district or state</Label>
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            id={searchId}
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="For example 400001, 4000 or Pune"
+            className="pl-9"
+            autoComplete="off"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {pincodes.isFetching && !pincodes.isFetchingNextPage
+            ? 'Searching…'
+            : pincodes.isSuccess
+              ? `Showing ${items.length.toLocaleString('en-IN')}${pincodes.hasNextPage ? '+' : ''} pincodes`
+              : ' '}
         </p>
-      </form>
-      <div aria-live="polite" className="max-w-xl">
-        {result}
       </div>
+
+      <Card className="py-0">
+        <Table>
+          <TableCaption className="sr-only">Pincodes in order</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead scope="col">Pincode</TableHead>
+              <TableHead scope="col">District</TableHead>
+              <TableHead scope="col">State</TableHead>
+              <TableHead scope="col">EQ zone</TableHead>
+              <TableHead scope="col" className="text-right">
+                Residential ‰
+              </TableHead>
+              <TableHead scope="col" className="text-right">
+                Non-industrial ‰
+              </TableHead>
+              <TableHead scope="col" className="text-right">
+                Industrial ‰
+              </TableHead>
+              {canManage ? (
+                <TableHead scope="col" className="text-right">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              ) : null}
+            </TableRow>
+          </TableHeader>
+          <TableBody>{body}</TableBody>
+        </Table>
+      </Card>
+
+      {pincodes.hasNextPage ? (
+        <div className="mt-4 flex justify-center">
+          <Button
+            variant="outline"
+            onClick={() => void pincodes.fetchNextPage()}
+            disabled={pincodes.isFetchingNextPage}
+          >
+            {pincodes.isFetchingNextPage ? (
+              <LoaderCircle className="animate-spin" aria-hidden="true" />
+            ) : null}
+            Load more
+          </Button>
+        </div>
+      ) : null}
     </>
   );
 }

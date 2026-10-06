@@ -1,11 +1,13 @@
 'use client';
 
 import { CircleAlert, FlaskConical, Inbox, Lock, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { usePermission } from '@/hooks/use-permission';
 import { ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
@@ -105,17 +107,24 @@ export function isMasterNotActive(error: unknown): boolean {
 }
 
 export function MasterNotActiveState() {
+  const canUpload = usePermission('masters.manage');
   return (
     <EmptyState
       title="No master data is active yet"
       description={
-        <>
-          An admin imports the IIB workbook from the Fiducial_backend repository with{' '}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">
-            npm run import:masters -- data/IIB_Code_Master.xlsx --activate
-          </code>
-          .
-        </>
+        canUpload ? (
+          <div className="grid justify-items-center gap-3">
+            <span>
+              Upload the IIB workbook (occupancy codes and pincodes) and activate it. Lookups,
+              client forms and the Fire rate check use the active version.
+            </span>
+            <Button asChild size="sm">
+              <Link href="/masters/import?type=masters">Upload the IIB master</Link>
+            </Button>
+          </div>
+        ) : (
+          'An admin uploads the IIB workbook on the Import data page and activates it.'
+        )
       }
     />
   );

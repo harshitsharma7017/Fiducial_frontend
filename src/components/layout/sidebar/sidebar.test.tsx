@@ -20,14 +20,7 @@ function renderNav(roles: readonly Role[] | undefined, collapsed = false) {
   return screen.getByRole('navigation', { name: 'Main' });
 }
 
-const PLANNED = [
-  'RFQ',
-  'Quotes and QCR',
-  'Placement Slips',
-  'Add-on Covers',
-  'Clauses',
-  'Insurers',
-];
+const PLANNED = ['RFQ', 'Quotes and QCR', 'Placement Slips', 'Add-on Covers', 'Clauses'];
 
 describe('SidebarNav', () => {
   beforeEach(() => {
@@ -85,33 +78,23 @@ describe('SidebarNav', () => {
     expect(within(nav).getByRole('link', { name: 'Pincodes' })).not.toHaveAttribute('aria-current');
   });
 
-  it('matches the proposal lists on their type, with new as the default', () => {
-    navigation.pathname = '/proposals';
-    navigation.search = 'type=existing';
-    const { unmount } = render(
-      <TooltipProvider>
-        <SidebarNav roles={['READ_ONLY']} />
-      </TooltipProvider>,
-    );
-    expect(screen.getByRole('link', { name: 'Existing Proposals' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    expect(screen.getByRole('link', { name: 'New Proposals' })).not.toHaveAttribute('aria-current');
-    unmount();
-
-    navigation.search = 'type=unknown';
-    renderNav(['READ_ONLY']);
-    expect(screen.getByRole('link', { name: 'New Proposals' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-  });
-
-  it('marks no item on a proposal page', () => {
-    navigation.pathname = '/proposals/prp-0101';
-    const nav = renderNav(['READ_ONLY']);
-    expect(within(nav).queryAllByRole('link', { current: 'page' })).toHaveLength(0);
+  it('has one Proposals item, current on the list whatever its type, and on each proposal', () => {
+    for (const [pathname, search] of [
+      ['/proposals', ''],
+      ['/proposals', 'type=existing'],
+      ['/proposals/new', 'type=new'],
+      ['/proposals/prp-0101', ''],
+    ] as const) {
+      navigation.pathname = pathname;
+      navigation.search = search;
+      const nav = renderNav(['READ_ONLY']);
+      expect(within(nav).getAllByRole('link', { name: /proposals/i })).toHaveLength(1);
+      expect(within(nav).getByRole('link', { name: 'Proposals' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      cleanup();
+    }
   });
 
   it('shows only what every role may see while the user loads', () => {

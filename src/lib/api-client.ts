@@ -54,6 +54,7 @@ export function redirectToLogin(): void {
 
 export interface ApiRequestOptions<T> {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  /** Sent as JSON, or as-is with its own content type when it is a Blob (a File upload). */
   body?: unknown;
   /** Validates the response against the shared contract. */
   schema?: z.ZodType<T>;
@@ -73,14 +74,16 @@ function toApiError(status: number, data: unknown): ApiError {
  */
 export async function apiFetch<T>(path: string, options: ApiRequestOptions<T> = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  const file = options.body instanceof Blob ? options.body : null;
+  if (file) headers['Content-Type'] = file.type || 'application/octet-stream';
+  else if (options.body !== undefined) headers['Content-Type'] = 'application/json';
 
   let response: Response;
   try {
     response = await fetch(`/api/proxy/${path.replace(/^\/+/, '')}`, {
       method: options.method ?? 'GET',
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: file ?? (options.body === undefined ? undefined : JSON.stringify(options.body)),
       credentials: 'same-origin',
       cache: 'no-store',
       signal: options.signal,

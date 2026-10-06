@@ -41,6 +41,8 @@ interface RouteParams {
 
 const FORWARDED_RESPONSE_HEADERS = [
   'content-type',
+  // Downloads (import templates) keep their file name.
+  'content-disposition',
   'x-request-id',
   'retry-after',
   'ratelimit',

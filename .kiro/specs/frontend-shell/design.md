@@ -267,16 +267,18 @@ shows an error with retry. A 401 already sends the user to sign-in through `apiF
 
 #### Sidebar
 
-| Group     | Item                                   | Icon (lucide)                           | Target                                    |
-| --------- | -------------------------------------- | --------------------------------------- | ----------------------------------------- |
-| Overview  | Dashboard                              | `LayoutDashboard`                       | `/dashboard`                              |
-| Proposals | New Proposals                          | `FilePlus2`                             | `/proposals?type=new`                     |
-| Proposals | Existing Proposals                     | `RefreshCcw`                            | `/proposals?type=existing`                |
-| Workflow  | RFQ · Quotes and QCR · Placement Slips | `Send`, `Scale`, `FileCheck2`           | Planned                                   |
-| Workflow  | Fire rate check                        | `Flame`                                 | `/rating/fire`                            |
-| Masters   | Occupancy · Pincodes                   | `Building2`, `MapPin`                   | `/masters/occupancy`, `/masters/pincodes` |
-| Masters   | Add-on Covers · Clauses · Insurers     | `PackagePlus`, `ScrollText`, `Landmark` | Planned                                   |
-| Admin     | Users · Settings (ADMIN only)          | `UserCog`, `Settings`                   | `/users`, `/settings`                     |
+Changed on 06 Oct 2026: the Proposals group's two items (New Proposals, Existing Proposals) became one
+**Proposals** item under Overview; the list page's type switch chooses new or existing.
+
+| Group    | Item                                   | Icon (lucide)                           | Target                                    |
+| -------- | -------------------------------------- | --------------------------------------- | ----------------------------------------- |
+| Overview | Dashboard                              | `LayoutDashboard`                       | `/dashboard`                              |
+| Overview | Proposals                              | `FileText`                              | `/proposals` (the page switches type)     |
+| Workflow | RFQ · Quotes and QCR · Placement Slips | `Send`, `Scale`, `FileCheck2`           | Planned                                   |
+| Workflow | Fire rate check                        | `Flame`                                 | `/rating/fire`                            |
+| Masters  | Occupancy · Pincodes                   | `Building2`, `MapPin`                   | `/masters/occupancy`, `/masters/pincodes` |
+| Masters  | Add-on Covers · Clauses · Insurers     | `PackagePlus`, `ScrollText`, `Landmark` | Planned                                   |
+| Admin    | Users · Settings (ADMIN only)          | `UserCog`, `Settings`                   | `/users`, `/settings`                     |
 
 - Expanded width 240 px; rail 56 px. The aside is labelled "Sidebar" and contains `<nav aria-label="Main">`.
 - The toggle lives in the navbar. At 1024 px and wider it collapses or expands the sidebar (`aria-expanded`,

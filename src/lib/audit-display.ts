@@ -75,6 +75,13 @@ const FIELD_LABELS: Readonly<Record<string, string>> = {
   ip: 'IP address',
   failedAttempts: 'Failed attempts',
   lockedUntil: 'Locked until',
+  gstin: 'GSTIN',
+  line1: 'Address line 1',
+  line2: 'Address line 2',
+  tacCode: 'TAC code',
+  eqZone: 'EQ zone',
+  clientId: 'Client id',
+  rfqEmails: 'RFQ emails',
 };
 
 /** A readable name for a snapshot field: known fields by name, others from their camelCase. */
@@ -100,7 +107,7 @@ function isRole(value: unknown): value is Role {
 
 /**
  * A stored value as text: date-times in IST, roles by their labels, Yes or No, lists joined
- * with commas, and an em dash for no value.
+ * with commas (semicolons between records such as contacts), and an em dash for no value.
  */
 export function formatAuditValue(field: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
@@ -111,7 +118,10 @@ export function formatAuditValue(field: string, value: unknown): string {
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (typeof value === 'number') return String(value);
   if (typeof value === 'string') return ISO_DATE_TIME.test(value) ? formatDateTime(value) : value;
-  if (Array.isArray(value)) return value.map((item) => formatAuditValue('', item)).join(', ');
+  if (Array.isArray(value)) {
+    const records = value.some((item) => typeof item === 'object' && item !== null);
+    return value.map((item) => formatAuditValue('', item)).join(records ? '; ' : ', ');
+  }
   if (typeof value === 'object') {
     return Object.entries(value)
       .map(([key, item]) => `${auditFieldLabel(key)}: ${formatAuditValue(key, item)}`)

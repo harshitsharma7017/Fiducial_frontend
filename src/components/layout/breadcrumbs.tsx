@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Fragment } from 'react';
@@ -12,6 +13,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { useProposal } from '@/lib/api/proposals';
+import { clientQuery } from '@/lib/client-query';
 import { cn } from '@/lib/utils';
 import { NAV_GROUPS } from './nav-config';
 
@@ -20,6 +22,11 @@ function proposalIdFromPath(pathname: string): string | null {
   const match = /^\/proposals\/([^/]+)$/.exec(pathname);
   if (!match || match[1] === 'new') return null;
   return match[1] ?? null;
+}
+
+/** The client id for a `/masters/clients/{id}` route, else null. */
+function clientIdFromPath(pathname: string): string | null {
+  return /^\/masters\/clients\/([a-f0-9]{24})$/i.exec(pathname)?.[1] ?? null;
 }
 
 export interface Crumb {
@@ -33,11 +40,14 @@ const FIXED_TRAILS: Readonly<Record<string, Crumb[]>> = {
   '/profile': [{ label: 'Profile' }],
 };
 
-/** The breadcrumb trail for a route. The last crumb is the current page. */
+/**
+ * The breadcrumb trail for a route. The last crumb is the current page; on a detail route it is
+ * the record's name (`detailLabel`) once loaded.
+ */
 export function breadcrumbTrail(
   pathname: string,
   search: URLSearchParams,
-  proposalLabel?: string,
+  detailLabel?: string,
 ): Crumb[] {
   const fixed = FIXED_TRAILS[pathname];
   if (fixed) return fixed;
@@ -55,15 +65,20 @@ export function breadcrumbTrail(
   if (pathname.startsWith('/proposals/')) {
     return [
       { label: 'Proposals', href: '/proposals?type=new' },
-      { label: proposalLabel ?? 'Proposal' },
+      { label: detailLabel ?? 'Proposal' },
     ];
   }
 
   for (const group of NAV_GROUPS) {
     for (const item of group.items) {
       if (!item.href || item.activeParam) continue;
-      if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
-        return [{ label: group.title }, { label: item.label }];
+      if (pathname === item.href) return [{ label: group.title }, { label: item.label }];
+      if (pathname.startsWith(`${item.href}/`)) {
+        return [
+          { label: group.title },
+          { label: item.label, href: item.href },
+          { label: detailLabel ?? 'Details' },
+        ];
       }
     }
   }
@@ -78,7 +93,11 @@ export function Breadcrumbs({ className }: { className?: string }) {
   const proposalId = proposalIdFromPath(pathname);
   const proposal = useProposal(proposalId ?? '');
   const proposalLabel = proposalId && proposal.data ? proposal.data.client.name : undefined;
-  const trail = breadcrumbTrail(pathname, search, proposalLabel);
+  // A client page loads its client; the crumb reads that cache entry without a request of its own.
+  const clientId = clientIdFromPath(pathname);
+  const client = useQuery({ ...clientQuery(clientId), enabled: false });
+  const clientLabel = clientId ? client.data?.name : undefined;
+  const trail = breadcrumbTrail(pathname, search, proposalLabel ?? clientLabel);
   if (trail.length === 0) return <div className={className} />;
 
   return (

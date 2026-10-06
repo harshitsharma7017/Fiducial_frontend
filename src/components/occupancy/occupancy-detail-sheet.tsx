@@ -1,7 +1,10 @@
 'use client';
 
+import { Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { OccupancyFormSheet } from '@/components/occupancy/occupancy-form-sheet';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -17,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { usePermission } from '@/hooks/use-permission';
 import { displayRate, riskTypeLabel } from '@/lib/display';
 import { EQ_ZONES, EQ_ZONE_LABELS, type Occupancy } from '@/shared';
 
@@ -33,11 +37,15 @@ export function OccupancyDetailSheet({
   occupancy,
   open,
   onOpenChange,
+  onUpdated,
 }: {
   occupancy: Occupancy | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called with the occupancy after an Admin edits it here. */
+  onUpdated?: (occupancy: Occupancy) => void;
 }) {
+  const canManage = usePermission('masters.manage');
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg">
@@ -51,6 +59,20 @@ export function OccupancyDetailSheet({
               <SheetDescription>
                 Occupancy master record from the active IIB version
               </SheetDescription>
+              {canManage ? (
+                <div className="pt-2">
+                  <OccupancyFormSheet
+                    occupancy={occupancy}
+                    onSaved={onUpdated}
+                    trigger={
+                      <Button size="sm" variant="outline">
+                        <Pencil aria-hidden="true" />
+                        Edit
+                      </Button>
+                    }
+                  />
+                </div>
+              ) : null}
             </SheetHeader>
             <div className="overflow-y-auto px-5 pb-6">
               <dl className="text-sm">

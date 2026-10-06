@@ -3,12 +3,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { Calculator, LoaderCircle } from 'lucide-react';
-import { useState, type Ref } from 'react';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { PageHeader } from '@/components/page-header';
 import { FireBreakdown } from '@/components/rating/fire-breakdown';
-import { OccupancyPicker } from '@/components/rating/occupancy-picker';
+import { PincodeSummary } from '@/components/forms/pincode-summary';
+import { OccupancyField } from '@/components/rating/occupancy-picker';
 import { SumInsuredInput } from '@/components/rating/sum-insured-input';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Badge } from '@/components/ui/badge';
@@ -22,14 +23,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  useFormField,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { isCompletePincode, usePincode } from '@/hooks/use-pincode';
 import { ApiError, apiFetch } from '@/lib/api-client';
 import { displayRate, riskTypeLabel } from '@/lib/display';
 import {
-  EQ_ZONE_LABELS,
   FireRatingResponseSchema,
   PerMilleRateSchema,
   PincodeValueSchema,
@@ -63,50 +61,6 @@ function OccupancySummary({ occupancy }: { occupancy: Occupancy }) {
         <span className="text-warning">No numeric IIB rate: “{occupancy.iibRateNote}”</span>
       ) : null}
     </div>
-  );
-}
-
-function PincodeSummary({ pincode }: { pincode: string }) {
-  const lookup = usePincode(pincode);
-  if (!isCompletePincode(pincode)) return null;
-  if (lookup.isPending)
-    return <p className="text-xs text-muted-foreground">Looking up {pincode}…</p>;
-  if (lookup.isError) {
-    const message =
-      lookup.error instanceof ApiError && lookup.error.code === 'PINCODE_NOT_FOUND'
-        ? `Pincode ${pincode} is not in the active master.`
-        : 'Could not look up this pincode.';
-    return <p className="text-xs text-destructive">{message}</p>;
-  }
-  const record = lookup.data;
-  return (
-    <p className="text-xs text-muted-foreground">
-      {record.district || '—'}, {record.state || '—'}
-      {record.eqZone ? ` · ${EQ_ZONE_LABELS[record.eqZone]}` : ' · zone not set'}
-    </p>
-  );
-}
-
-/** Wires the combobox to the surrounding FormItem's ids and error state. */
-function OccupancyField({
-  onSelect,
-  onBlur,
-  ref,
-}: {
-  onSelect: (occupancy: Occupancy | null) => void;
-  onBlur: () => void;
-  ref: Ref<HTMLInputElement>;
-}) {
-  const { formItemId, formDescriptionId, formMessageId, error } = useFormField();
-  return (
-    <OccupancyPicker
-      id={formItemId}
-      ref={ref}
-      onSelect={onSelect}
-      onBlur={onBlur}
-      invalid={Boolean(error)}
-      describedBy={error ? `${formDescriptionId} ${formMessageId}` : formDescriptionId}
-    />
   );
 }
 
