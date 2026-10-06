@@ -30,14 +30,37 @@ Two repositories: **Fiducial_frontend** (this one: Next.js web app and its serve
 - **Master version**: each import is a `DRAFT`; an admin activates it (`ACTIVE`); the previous one becomes
   `SUPERSEDED`. Lookups and ratings always read the ACTIVE version.
 
-## Current phase: foundation
+## Proposals
 
-Built: sign-in, app shell with role-aware navigation, dashboard (system status, active master versions), occupancy
-and pincode lookups, the Fire rate check with its breakdown, and user admin.
+- **Proposal**: one placement for one client. **New proposal** (`NEW`): new business, started from a Data Sheet, no
+  existing policy. **Existing proposal** (`EXISTING`, renewal): the RFQ and QCR compare the existing policy with two
+  proposed options.
+- **Stages**: Draft → Data Sheet → RFQ Sent → Quotes Received → QCR → Placed. (The SRS lists a different status
+  workflow; the client has not settled it.)
+- **Products by sum insured**: BSUS up to ₹5 Cr, BLUS above ₹5 Cr up to ₹50 Cr, SFSP above ₹50 Cr, PAR optional above
+  ₹5 Cr. Whether the test uses total or per-location sum insured is open (Q04); the UI never selects a product.
+- **14 coverage sections**, in this order: Fire, Burglary, Fire Floater, Burglary Floater, Fire Loss of Profit, Money,
+  Fidelity Guarantee, Plate Glass, Neon / Glow Sign, All Risk, EEI, Mechanical Breakdown, Boiler and Pressure Plant,
+  Public Liability.
+- **Sum-insured options**: Existing (renewals only), Proposed 1, Proposed 2. A new proposal never shows Existing.
+- **Quote status** per insurer (up to 5): Not sent, Sent, Quoted, Declined, No response.
+- **Documents**: Data Sheet, RFQ, QCR, Placement Slip, each Not started, Draft, Ready, Sent or Approved.
+- **Add-on catalogues** (client's RFQ workbook): BSUS and BLUS 20 entries, PAR 125, SFSP 185.
 
-Not built yet (shown as disabled navigation items): clients, risks, Data Sheet, RFQ, quotes, QCR, placement slips.
+## Current phase
+
+Built (foundation): sign-in, app shell with role-aware navigation, dashboard (system status, active master
+versions), occupancy and pincode lookups, the Fire rate check with its breakdown, and user admin.
+
+Specified, waiting for approval: the frontend shell (`.kiro/specs/frontend-shell`): themes, new layout, mock API mode
+and a proposals dashboard on sample data.
+
+Not built yet: clients, risks, Data Sheet, RFQ, quotes, QCR and placement slip screens, proposal create and edit
+forms, a proposals API.
 
 ## Rules
 
 - Do not invent client business rules. Anything TBC stays unbuilt and is listed in the backend's `docs/OPEN_ITEMS.md`.
 - The API does every calculation. The UI displays the values it returns and never recomputes premiums.
+- Proposal screens run on sample data until a proposals API exists, and say so on screen. Sample company, person and
+  insurer names are fictional.

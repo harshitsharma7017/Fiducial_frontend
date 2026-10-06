@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { DEMO_MODE_CODE, DEMO_MODE_MESSAGE } from '@/lib/demo-mode';
 import {
   errorResponse,
   forwardingHeaders,
@@ -6,9 +7,28 @@ import {
   isSameOrigin,
   upstreamUnavailable,
 } from '@/lib/server/bff';
+import { demoUserForToken, isMockApi } from '@/lib/server/mock-mode';
 import { isAllowedProxyPath } from '@/lib/server/proxy-paths';
 import { SESSION_COOKIE, clearedSessionCookieOptions } from '@/lib/session';
 import { ERROR_CODES } from '@/shared';
+
+/**
+ * Mock mode: auth/me returns the demo user; every other allowlisted path answers 503 (the UI
+ * shows a demo-mode state). A token that is not a known mock token clears the cookie, as the
+ * real API's 401 would.
+ */
+function mockResponse(method: string, path: string[], token: string): Response {
+  const user = demoUserForToken(token);
+  if (!user) {
+    const response = errorResponse(401, ERROR_CODES.UNAUTHENTICATED, 'Sign in to continue');
+    response.cookies.set(SESSION_COOKIE, '', clearedSessionCookieOptions());
+    return response;
+  }
+  if (method === 'GET' && path.length === 2 && path[0] === 'auth' && path[1] === 'me') {
+    return NextResponse.json(user, { headers: { 'Cache-Control': 'no-store' } });
+  }
+  return errorResponse(503, DEMO_MODE_CODE, DEMO_MODE_MESSAGE);
+}
 
 /**
  * Forwards browser calls to the Express API (/api/proxy/<path> -> /api/v1/<path>), adding the
@@ -37,6 +57,8 @@ async function forward(request: NextRequest, { params }: RouteParams): Promise<R
 
   const { path } = await params;
   if (!isAllowedProxyPath(path)) return errorResponse(404, ERROR_CODES.NOT_FOUND, 'Not found');
+
+  if (isMockApi()) return mockResponse(request.method, path, token);
 
   const url = new URL(`/api/v1/${path.map(encodeURIComponent).join('/')}`, getApiUrl());
   url.search = request.nextUrl.search;

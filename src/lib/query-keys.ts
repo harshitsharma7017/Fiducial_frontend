@@ -7,4 +7,10 @@ export const queryKeys = {
   occupancy: (tacCode: string) => ['masters', 'occupancy', tacCode] as const,
   pincode: (pincode: string) => ['masters', 'pincode', pincode] as const,
   users: ['users'] as const,
+  notifications: ['notifications'] as const,
+  proposals: {
+    list: (params: unknown) => ['proposals', 'list', params] as const,
+    detail: (id: string) => ['proposals', 'detail', id] as const,
+    stats: (type: string) => ['proposals', 'stats', type] as const,
+  },
 };

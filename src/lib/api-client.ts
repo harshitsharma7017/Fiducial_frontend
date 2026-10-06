@@ -16,12 +16,31 @@ export class ApiError extends Error {
   }
 }
 
-/** Only same-site paths are followed after sign-in, never another origin. */
+/** A real origin is never used; the parser just resolves `next` as the browser would. */
+const NEXT_BASE_ORIGIN = 'https://app.invalid';
+// C0 controls, DEL and C1 controls. A browser strips tab, CR and LF from a URL, so
+// "/\t/evil.example" would resolve to another origin after sign-in. Detecting them is the point.
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f]/;
+
+/**
+ * The path to open after sign-in: `next` only when it stays on this site and is not the sign-in
+ * page, otherwise /dashboard. Rejects other origins, protocol-relative ("//host") and
+ * backslash or control-character tricks, then returns the resolved path, search and hash.
+ */
 export function safeNextPath(next: string | null | undefined): string {
-  if (!next || !next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\'))
+  if (!next || !next.startsWith('/') || next.startsWith('//')) return '/dashboard';
+  if (next.includes('\\') || CONTROL_CHARACTERS.test(next)) return '/dashboard';
+
+  let url: URL;
+  try {
+    url = new URL(next, NEXT_BASE_ORIGIN);
+  } catch {
     return '/dashboard';
-  if (next === '/login' || next.startsWith('/login?')) return '/dashboard';
-  return next;
+  }
+  if (url.origin !== NEXT_BASE_ORIGIN) return '/dashboard';
+  if (url.pathname === '/login') return '/dashboard';
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 export function redirectToLogin(): void {

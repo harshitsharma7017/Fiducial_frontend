@@ -1,197 +1,68 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Activity, CircleCheck, Database, TriangleAlert, UserCog } from 'lucide-react';
-import { PageHeader } from '@/components/page-header';
-import { ErrorState, LoadingState, MasterNotActiveState } from '@/components/states';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCurrentUser } from '@/hooks/use-current-user';
-import { ApiError, apiFetch } from '@/lib/api-client';
-import { queryKeys } from '@/lib/query-keys';
+import dynamic from 'next/dynamic';
+import { useState } from 'react';
+import { useDashboardStats } from '@/lib/api/proposals';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardHeader } from '@/components/proposals/dashboard-header';
+import { KpiCards } from '@/components/proposals/kpi-cards';
+import { PipelineStrip } from '@/components/proposals/pipeline-strip';
+import { ProposalDrawer, type DrawerTarget } from '@/components/proposals/proposal-drawer';
+import { ProposalsTable } from '@/components/proposals/proposals-table/proposals-table';
+import { TypeSwitch } from '@/components/proposals/type-switch';
 import {
-  HealthResponseSchema,
-  MasterVersionListResponseSchema,
-  ROLE_LABELS,
-  formatDate,
-  formatDateTime,
-  formatIndianNumber,
-  type MasterVersion,
-} from '@/shared';
+  parseProposalParams,
+  proposalParamsToSearch,
+  toggleStage,
+  withType,
+} from '@/lib/proposal-params';
+import { useUrlSearchParams } from '@/lib/use-url-search-params';
+import type { Stage } from '@/types/proposal';
 
-const MASTER_TITLES: Record<MasterVersion['type'], string> = {
-  OCCUPANCY: 'Occupancy (IIB codes)',
-  PINCODE: 'Pincodes',
-};
+// Recharts is ~148 kB; load it only with the chart, with a skeleton in its place.
+const StageChart = dynamic(
+  () => import('@/components/proposals/stage-chart').then((module) => module.StageChart),
+  { ssr: false, loading: () => <Skeleton className="h-80 w-full" /> },
+);
 
-function HealthCard() {
-  const health = useQuery({
-    queryKey: queryKeys.health,
-    queryFn: ({ signal }) => apiFetch('health', { schema: HealthResponseSchema, signal }),
-    refetchInterval: 60_000,
-  });
-  const databaseDown = health.error instanceof ApiError && health.error.status === 503;
+export function DashboardView({ serverSearch }: { serverSearch: string }) {
+  const { params, replace } = useUrlSearchParams(serverSearch);
+  const { type, stage } = parseProposalParams(params);
+  const [drawer, setDrawer] = useState<DrawerTarget | null>(null);
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="size-4 text-accent" aria-hidden="true" />
-          System status
-        </CardTitle>
-        <CardDescription>API and database health</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {health.isPending ? (
-          <LoadingState label="Checking system status…" />
-        ) : databaseDown ? (
-          <p className="flex items-center gap-2 text-sm text-destructive">
-            <TriangleAlert className="size-4" aria-hidden="true" />
-            The API is up but cannot reach the database.
-          </p>
-        ) : health.isError ? (
-          <ErrorState
-            error={health.error}
-            onRetry={() => void health.refetch()}
-            title="Status unavailable"
-          />
-        ) : (
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <dt className="text-muted-foreground">API</dt>
-            <dd>
-              <Badge variant="success">
-                <CircleCheck aria-hidden="true" className="size-3" />
-                Up · v{health.data.version}
-              </Badge>
-            </dd>
-            <dt className="text-muted-foreground">Database</dt>
-            <dd>
-              <Badge variant={health.data.db === 'up' ? 'success' : 'destructive'}>
-                {health.data.db === 'up' ? 'Connected' : 'Down'}
-              </Badge>
-            </dd>
-            <dt className="text-muted-foreground">Checked</dt>
-            <dd className="tabular">{formatDateTime(health.data.time)}</dd>
-          </dl>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+  // Counts for the type switch come from each type's stats.
+  const newStats = useDashboardStats('NEW');
+  const existingStats = useDashboardStats('EXISTING');
 
-function UserCard() {
-  const me = useCurrentUser();
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserCog className="size-4 text-accent" aria-hidden="true" />
-          Signed in as
-        </CardTitle>
-        <CardDescription>Your account and roles</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {me.data ? (
-          <dl className="grid gap-2 text-sm">
-            <div>
-              <dt className="sr-only">Name</dt>
-              <dd className="font-medium">{me.data.name}</dd>
-              <dt className="sr-only">Email</dt>
-              <dd className="text-muted-foreground">{me.data.email}</dd>
-            </div>
-            <div>
-              <dt className="mb-1 text-muted-foreground">Roles</dt>
-              <dd className="flex flex-wrap gap-1">
-                {me.data.roles.map((role) => (
-                  <Badge key={role}>{ROLE_LABELS[role]}</Badge>
-                ))}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Last sign-in</dt>
-              <dd className="tabular">
-                {me.data.lastLoginAt ? formatDateTime(me.data.lastLoginAt) : 'First sign-in'}
-              </dd>
-            </div>
-          </dl>
-        ) : (
-          <LoadingState />
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function MasterVersionSummary({ version }: { version: MasterVersion }) {
-  return (
-    <div className="grid gap-1 rounded-md border p-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="font-medium">{MASTER_TITLES[version.type]}</p>
-        <Badge variant="success">Active</Badge>
-      </div>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-        <dt className="text-muted-foreground">Records</dt>
-        <dd className="tabular">{formatIndianNumber(String(version.stats.recordsImported), 0)}</dd>
-        <dt className="text-muted-foreground">Source</dt>
-        <dd className="break-all">{version.sourceFileName}</dd>
-        <dt className="text-muted-foreground">Effective from</dt>
-        <dd className="tabular">
-          {version.effectiveFrom ? formatDate(version.effectiveFrom) : '—'}
-        </dd>
-        <dt className="text-muted-foreground">Import warnings</dt>
-        <dd className="tabular">{version.stats.warningCount}</dd>
-      </dl>
-    </div>
-  );
-}
-
-function MastersCard() {
-  const versions = useQuery({
-    queryKey: queryKeys.activeVersions,
-    queryFn: ({ signal }) =>
-      apiFetch('masters/versions?status=ACTIVE', {
-        schema: MasterVersionListResponseSchema,
-        signal,
-      }),
-  });
-  return (
-    <Card className="md:col-span-2 xl:col-span-1">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Database className="size-4 text-accent" aria-hidden="true" />
-          Master data
-        </CardTitle>
-        <CardDescription>The versions every lookup and rating uses</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        {versions.isPending ? (
-          <LoadingState label="Loading master versions…" />
-        ) : versions.isError ? (
-          <ErrorState error={versions.error} onRetry={() => void versions.refetch()} />
-        ) : versions.data.items.length === 0 ? (
-          <MasterNotActiveState />
-        ) : (
-          versions.data.items.map((version) => (
-            <MasterVersionSummary key={version.id} version={version} />
-          ))
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-export function DashboardView() {
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="System status, your account and the active master data."
-      />
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <HealthCard />
-        <UserCard />
-        <MastersCard />
+      <DashboardHeader type={type} />
+      <div className="grid gap-6">
+        <TypeSwitch
+          type={type}
+          counts={{
+            NEW: newStats.data?.total ?? null,
+            EXISTING: existingStats.data?.total ?? null,
+          }}
+          onChange={(next) => replace(proposalParamsToSearch(withType(next)))}
+        />
+        <KpiCards type={type} />
+        <PipelineStrip
+          type={type}
+          selected={stage}
+          onToggle={(next: Stage) =>
+            replace(proposalParamsToSearch(toggleStage({ type, stage }, next)))
+          }
+        />
+        <StageChart type={type} />
+        <ProposalsTable
+          type={type}
+          stage={stage}
+          onStage={(next) => replace(proposalParamsToSearch({ type, stage: next }))}
+          onOpen={(id, trigger) => setDrawer({ id, trigger })}
+        />
       </div>
+      <ProposalDrawer target={drawer} onClose={() => setDrawer(null)} />
     </>
   );
 }

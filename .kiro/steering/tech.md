@@ -28,3 +28,32 @@
 - **Accessibility**: label every input, keep visible focus, use `LoadingState` / `ErrorState` / `EmptyState` from
   `src/components/states.tsx`, and keep keyboard support for custom widgets.
 - Imports: external packages first, then `@/` aliases, then relative paths. Use `import type` for types.
+
+## Frontend shell conventions
+
+These apply to the code added by `.kiro/specs/frontend-shell` (see its design.md for details).
+
+- **Adding a library needs the user's approval.** Approved for the shell: next-themes 0.4.6, Recharts 3.10.1 (with
+  its `react-is` 19.3.0 peer), cmdk 1.1.1, fast-check 4.10.2 (dev) and @playwright/test 1.63.0 (dev, Chromium only).
+  Check the exact version on npm before installing; if it does not resolve, ask instead of substituting another.
+- **Never read the clock during render** (`react-hooks/purity`). Components use `useIstNow()`; data-layer functions
+  may call `new Date()`.
+- **Proposal data goes through hooks only.** Components call `useProposals`, `useProposal`, `useDashboardStats` and
+  `useNotifications` from `src/lib/api/`. Sample data in `src/lib/data/` is imported only by `src/lib/api/` and tests.
+  Swapping in the real API changes `src/lib/api/` and nothing else.
+- **Proposal types live in `src/types/proposal.ts`** (constant arrays, labels, Zod schemas). They are not part of
+  `src/shared` until the backend has a proposals API.
+- **Proposal amounts are whole-rupee digit strings.** Add them with `sumRupees` (BigInt) and display them with
+  `formatInr` or `formatInrCompact` from `src/lib/money.ts`. Only chart bar heights may use numbers.
+- **Dates**: work out today, days to expiry and the current month in IST with `src/lib/dates.ts`; display with the
+  shared `formatDate` (DD MMM YYYY).
+- **Mock mode**: `USE_MOCK_API=true` makes the BFF sign in the demo users and never call the API. The code default is
+  off; `.env.example` turns it on for local work. Browser code checks demo mode with `useDemoMode()` and
+  `isDemoModeError()` from `src/lib/demo-mode.ts`, never in `src/shared`.
+- **Property tests**: pure logic (money, dates, sample data, listing, URL state, mock mode, redirects) is checked
+  against the Correctness Properties in the spec's design.md. Tag each test with
+  `// Feature: frontend-shell, Property N: <name>`.
+- **Components**: shadcn primitives in `src/components/ui`, layout pieces in `src/components/layout`, proposal pieces
+  in `src/components/proposals`. Keep each file under about 250 lines; split instead.
+- **URL state**: the dashboard's `?type=` and `?stage=` are read with `useUrlSearchParams` and written with
+  `history.replaceState`.

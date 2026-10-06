@@ -1,6 +1,6 @@
 'use client';
 
-import { CircleAlert, Inbox, RefreshCw } from 'lucide-react';
+import { CircleAlert, FlaskConical, Inbox, Lock, RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -118,5 +118,32 @@ export function MasterNotActiveState() {
         </>
       }
     />
+  );
+}
+
+/** Shown instead of pages that read live data while the BFF runs in mock mode. */
+export function DemoModeState({ className }: { className?: string }) {
+  return (
+    <EmptyState
+      className={className}
+      icon={<FlaskConical className="size-8" />}
+      title="Not available in demo mode"
+      description="This page reads live data from Fiducial_backend. Run the API and set USE_MOCK_API=false to use it."
+    />
+  );
+}
+
+/** Shown when the user's role does not include the page. */
+export function AccessDeniedState({
+  description = 'Your role does not include this page.',
+}: {
+  description?: string;
+}) {
+  return (
+    <Alert variant="warning" role="alert" className="max-w-xl">
+      <Lock aria-hidden="true" />
+      <AlertTitle>You do not have access</AlertTitle>
+      <AlertDescription>{description}</AlertDescription>
+    </Alert>
   );
 }

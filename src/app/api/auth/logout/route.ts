@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { errorResponse, forwardingHeaders, getApiUrl, isSameOrigin } from '@/lib/server/bff';
+import { isMockApi } from '@/lib/server/mock-mode';
 import { SESSION_COOKIE, clearedSessionCookieOptions } from '@/lib/session';
 import { ERROR_CODES } from '@/shared';
 
@@ -10,7 +11,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (token) {
+  // Mock mode has no API session to end; just clear the cookie below.
+  if (token && !isMockApi()) {
     try {
       const headers = forwardingHeaders(request);
       headers.set('Authorization', `Bearer ${token}`);

@@ -26,3 +26,25 @@ scripts/sync-shared.mjs         shared:sync / shared:check
 
 - A page is `page.tsx` (server component) plus a `*-view.tsx` client component next to it.
 - Tests sit next to the code (`*.test.ts`, `*.test.tsx`).
+
+## Added by the frontend-shell spec
+
+`.kiro/specs/frontend-shell/` (requirements, design, tasks) changes the layout as follows once implemented:
+
+```
+src/
+  app/(auth)/                   login and forgot-password with a shared two-column layout (moved from app/login)
+  app/(app)/proposals/          list (?type=), new (placeholder), [id] (full proposal with tabs)
+  app/(app)/settings, profile/  admin system status and master versions; account card
+  components/layout/            app shell, sidebar, navbar, breadcrumbs, command palette, notifications,
+                                user menu, theme toggle, nav-config.ts (replaces components/app-shell/)
+  components/proposals/         type switch, pipeline strip, proposals table, drawer, tabs, badges, sections/
+  lib/api/                      data-layer functions and TanStack Query hooks
+  lib/data/                     sample data (imported only by lib/api and tests)
+  lib/money.ts, lib/dates.ts    rupee arithmetic and formatting, IST date helpers
+  lib/proposal-metrics.ts       table summaries, KPI inputs, expiry urgency, coverage columns and totals
+  lib/proposal-params.ts        ?type= and ?stage= parsing and writing
+  lib/demo-mode.ts              demo-mode error code and context (browser side)
+  lib/server/mock-mode.ts       USE_MOCK_API demo users and mock tokens (server only)
+  types/proposal.ts             proposal enums, labels, schemas and types
+```

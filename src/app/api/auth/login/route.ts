@@ -6,14 +6,37 @@ import {
   isSameOrigin,
   upstreamUnavailable,
 } from '@/lib/server/bff';
+import { createMockToken, findDemoUser, isMockApi } from '@/lib/server/mock-mode';
 import { SESSION_COOKIE, sessionCookieOptions } from '@/lib/session';
 import {
   ApiErrorSchema,
   ERROR_CODES,
+  INVALID_CREDENTIALS_MESSAGE,
   LoginRequestSchema,
   LoginResponseSchema,
+  type LoginRequest,
   type SessionResponse,
 } from '@/shared';
+
+const MOCK_TOKEN_SECONDS = 8 * 60 * 60;
+
+/** Mock sign-in: a demo pair gets the usual cookie with a mock token; anything else is a 401. */
+function mockLogin(credentials: LoginRequest): Response {
+  const user = findDemoUser(credentials.email, credentials.password);
+  if (!user) {
+    return errorResponse(401, ERROR_CODES.INVALID_CREDENTIALS, INVALID_CREDENTIALS_MESSAGE);
+  }
+  const response = NextResponse.json<SessionResponse>(
+    { user },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
+  response.cookies.set(
+    SESSION_COOKIE,
+    createMockToken(user.id),
+    sessionCookieOptions(MOCK_TOKEN_SECONDS),
+  );
+  return response;
+}
 
 /**
  * Signs in against the Express API and stores the access token in an httpOnly cookie.
@@ -44,6 +67,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       { status: 400 },
     );
   }
+
+  if (isMockApi()) return mockLogin(credentials.data);
 
   const headers = forwardingHeaders(request);
   headers.set('Content-Type', 'application/json');

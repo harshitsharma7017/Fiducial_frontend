@@ -1,0 +1,325 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add next-themes and the theme provider": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213219932
+      },
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213256116
+      }
+    ],
+    "1.2 Rewrite the colour tokens": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213219980
+      }
+    ],
+    "1.3 Build the theme control": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220026
+      }
+    ],
+    "1.4 Guard the tokens with tests": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220068
+      }
+    ],
+    "1.5 Checkpoint: lint, typecheck, test and build pass. Check the existing pages in light and dark with the dev": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220113
+      }
+    ],
+    "2.1 Navigation config and primitives": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220155
+      }
+    ],
+    "2.2 Sidebar and app shell": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220197
+      }
+    ],
+    "2.3 Navbar": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220236
+      }
+    ],
+    "2.4 Notifications menu": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220275
+      }
+    ],
+    "2.5 Command palette": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220315
+      }
+    ],
+    "2.6 Settings and Profile pages": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220356
+      }
+    ],
+    "2.7 Layout tests": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220396
+      }
+    ],
+    "2.8 Checkpoint: lint, typecheck, test and build pass. Check keyboard navigation, the rail tooltips and the": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220434
+      }
+    ],
+    "3.1 Auth layout and pages": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220513
+      }
+    ],
+    "3.2 Sign-in form": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220546
+      }
+    ],
+    "3.3 Mock API mode": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220582
+      }
+    ],
+    "3.4 Route protection": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220615
+      }
+    ],
+    "3.5 Login tests": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220659
+      }
+    ],
+    "3.6 Property tests for mock mode and redirects": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220700
+      }
+    ],
+    "3.7 Checkpoint: lint, typecheck, test and build pass. With `USE_MOCK_API=true`, sign in as each demo user and": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220741
+      }
+    ],
+    "4.1 Domain types": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220783
+      }
+    ],
+    "4.2 Money and dates": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220824
+      }
+    ],
+    "4.3 Property tests for money and dates": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220867
+      }
+    ],
+    "4.4 Sample data": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220909
+      }
+    ],
+    "4.5 Property test for the sample data": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213220957
+      }
+    ],
+    "4.6 Data layer and metrics": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221002
+      }
+    ],
+    "4.7 Property tests for the data layer and metrics": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221048
+      }
+    ],
+    "4.8 URL state": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221092
+      }
+    ],
+    "4.9 Property test for URL state": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221136
+      }
+    ],
+    "4.10 Header, type switch and KPI cards": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221179
+      }
+    ],
+    "4.11 Pipeline strip": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221222
+      }
+    ],
+    "4.12 Chart": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221272
+      }
+    ],
+    "4.13 Proposals table": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221335
+      }
+    ],
+    "4.14 Proposal search in the command palette": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221446
+      }
+    ],
+    "4.15 Dashboard test": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221488
+      }
+    ],
+    "4.16 Checkpoint: lint, typecheck, test and build pass. Check the dashboard in both themes, on a phone width and": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221533
+      }
+    ],
+    "5.1 Badges and section components": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221577
+      }
+    ],
+    "5.2 Proposal drawer": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221625
+      }
+    ],
+    "5.3 Full proposal page": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221677
+      }
+    ],
+    "5.4 Proposal list and placeholder": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221734
+      }
+    ],
+    "5.5 Drawer test": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221783
+      }
+    ],
+    "5.6 Checkpoint: lint, typecheck, test and build pass. Open several proposals from the table and from the": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221835
+      }
+    ],
+    "6.1 Documentation": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221899
+      }
+    ],
+    "6.2 Playwright smoke test": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221946
+      }
+    ],
+    "6.3 Final verification": [
+      {
+        "executionId": "f87d0c95-e3da-4241-b652-6e56ed13cbbb",
+        "chatSessionId": "sess_ce764d3d-d80d-442e-82c6-c33ecf2d67e4",
+        "timestamp": 1791213221994
+      }
+    ]
+  }
+}

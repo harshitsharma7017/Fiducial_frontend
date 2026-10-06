@@ -6,15 +6,19 @@ import { SESSION_COOKIE } from '@/lib/session';
  * users away from it. It only checks that a session cookie exists; the API validates the token
  * on every call, and an expired or revoked token clears the cookie (see api/proxy).
  */
+/** Pages a signed-out visitor may open. */
+const PUBLIC_PATHS = new Set(['/login', '/forgot-password']);
+
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const signedIn = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
-  const onLoginPage = pathname === '/login';
+  const isPublic = PUBLIC_PATHS.has(pathname);
 
-  if (onLoginPage && signedIn) {
+  // A signed-in visitor has no reason to see sign-in; send them to the dashboard.
+  if (pathname === '/login' && signedIn) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
-  if (!onLoginPage && !signedIn) {
+  if (!isPublic && !signedIn) {
     const loginUrl = new URL('/login', request.url);
     if (pathname !== '/') loginUrl.searchParams.set('next', `${pathname}${search}`);
     return NextResponse.redirect(loginUrl);

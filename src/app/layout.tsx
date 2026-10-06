@@ -11,7 +11,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-IN">
+    // The theme script sets the class on <html> before React hydrates, so its attributes differ.
+    <html lang="en-IN" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
       </body>

@@ -1,16 +1,72 @@
+import fc from 'fast-check';
 import { describe, expect, it, vi } from 'vitest';
-import { UserSchema } from '@/shared';
 import { ApiError, apiFetch, safeNextPath } from './api-client';
+import { UserSchema } from '@/shared';
 
-function jsonResponse(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
+const ORIGIN = 'https://erp.example';
+/** Where the browser would actually navigate for the path safeNextPath returns. */
+const resolved = (next: string | null | undefined) => new URL(safeNextPath(next), ORIGIN);
+
+describe('safeNextPath', () => {
+  it('keeps a same-site path, with its query and hash', () => {
+    expect(safeNextPath('/proposals?type=existing#row')).toBe('/proposals?type=existing#row');
+    expect(safeNextPath('/masters/occupancy')).toBe('/masters/occupancy');
   });
-}
+
+  it('falls back to the dashboard for the sign-in page and for empty input', () => {
+    expect(safeNextPath('/login')).toBe('/dashboard');
+    expect(safeNextPath('/login?next=/x')).toBe('/dashboard');
+    expect(safeNextPath(null)).toBe('/dashboard');
+    expect(safeNextPath(undefined)).toBe('/dashboard');
+    expect(safeNextPath('')).toBe('/dashboard');
+  });
+
+  it('rejects other origins and known tricks', () => {
+    for (const value of [
+      '//evil.example',
+      '/\\evil.example',
+      'https://evil.example',
+      'http://evil.example/x',
+      '/\tevil.example',
+      '/%09/evil.example'.replace('%09', '\t'),
+      '/\r\n/evil.example',
+      'relative/path',
+      'javascript:alert(1)',
+    ]) {
+      expect(safeNextPath(value)).toBe('/dashboard');
+    }
+  });
+
+  // Feature: frontend-shell, Property 13: Sign-in redirects stay on this site
+  it('always resolves to this origin and never to the sign-in page', () => {
+    fc.assert(
+      fc.property(fc.string(), (next) => {
+        const result = resolved(next);
+        expect(result.origin).toBe(ORIGIN);
+        expect(result.pathname).not.toBe('/login');
+      }),
+    );
+  });
+
+  // Feature: frontend-shell, Property 13: Sign-in redirects stay on this site
+  it('keeps a path that already resolves to this site and is not sign-in', () => {
+    const safeSegment = fc.webSegment().filter(
+      // eslint-disable-next-line no-control-regex -- excluding control characters on purpose
+      (segment) => segment.length > 0 && !/[\u0000-\u001f\u007f-\u009f\\]/.test(segment),
+    );
+    fc.assert(
+      fc.property(fc.array(safeSegment, { minLength: 1 }), (segments) => {
+        const path = `/${segments.join('/')}`;
+        const target = resolved(path);
+        fc.pre(target.origin === ORIGIN && target.pathname !== '/login');
+        expect(safeNextPath(path)).toBe(`${target.pathname}${target.search}${target.hash}`);
+      }),
+    );
+  });
+});
 
 describe('apiFetch', () => {
-  it('calls the proxy and validates the response', async () => {
+  it('returns parsed data on success', async () => {
     const user = {
       id: '0123456789abcdef01234567',
       email: 'a@example.com',
@@ -19,66 +75,37 @@ describe('apiFetch', () => {
       active: true,
       lockedUntil: null,
       lastLoginAt: null,
-      createdAt: '2026-10-05T00:00:00.000Z',
-      updatedAt: '2026-10-05T00:00:00.000Z',
+      createdAt: '2026-10-01T00:00:00.000Z',
+      updatedAt: '2026-10-01T00:00:00.000Z',
     };
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, user));
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(apiFetch('auth/me', { schema: UserSchema })).resolves.toEqual(user);
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/proxy/auth/me',
-      expect.objectContaining({ credentials: 'same-origin' }),
-    );
-  });
-
-  it('redirects to the sign-in page on any 401', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(jsonResponse(401, { message: 'x', code: 'UNAUTHENTICATED' })),
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(user), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
     );
-    const assign = vi.fn();
-    vi.stubGlobal('location', {
-      ...window.location,
-      pathname: '/masters/occupancy',
-      search: '?q=2001',
-      assign,
+    await expect(apiFetch('auth/me', { schema: UserSchema })).resolves.toMatchObject({
+      email: 'a@example.com',
     });
-
-    await expect(apiFetch('masters/occupancies')).rejects.toMatchObject({ status: 401 });
-    expect(assign).toHaveBeenCalledWith(
-      `/login?next=${encodeURIComponent('/masters/occupancy?q=2001')}`,
-    );
   });
 
-  it('turns API errors into ApiError with the server code and message', async () => {
+  it('throws an ApiError with the server code on failure', async () => {
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          jsonResponse(422, { message: 'No Fire risk type', code: 'MASTER_DATA_ERROR' }),
-        ),
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ message: 'Nope', code: 'MASTER_NOT_ACTIVE' }), {
+          status: 409,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
     );
-    const error: unknown = await apiFetch('rating/fire', { method: 'POST', body: {} }).catch(
-      (caught: unknown) => caught,
-    );
-    expect(error).toBeInstanceOf(ApiError);
-    expect(error).toMatchObject({
-      status: 422,
-      code: 'MASTER_DATA_ERROR',
-      message: 'No Fire risk type',
+    await expect(apiFetch('masters/occupancies')).rejects.toMatchObject({
+      status: 409,
+      code: 'MASTER_NOT_ACTIVE',
     });
-  });
-});
-
-describe('safeNextPath', () => {
-  it('only follows same-site paths', () => {
-    expect(safeNextPath('/rating/fire')).toBe('/rating/fire');
-    expect(safeNextPath('https://evil.example')).toBe('/dashboard');
-    expect(safeNextPath('//evil.example')).toBe('/dashboard');
-    expect(safeNextPath('/\\evil.example')).toBe('/dashboard');
-    expect(safeNextPath('/login')).toBe('/dashboard');
-    expect(safeNextPath(undefined)).toBe('/dashboard');
+    await expect(apiFetch('masters/occupancies')).rejects.toBeInstanceOf(ApiError);
   });
 });

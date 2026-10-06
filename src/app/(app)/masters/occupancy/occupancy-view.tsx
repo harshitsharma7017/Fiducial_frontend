@@ -101,7 +101,7 @@ export function OccupancyView() {
         <TableCell className="font-medium">
           <button
             type="button"
-            className="tabular rounded-sm text-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            className="tabular rounded-sm text-accent-strong underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             onClick={(event) => {
               event.stopPropagation();
               openDetail(occupancy);

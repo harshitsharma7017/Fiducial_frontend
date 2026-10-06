@@ -20,15 +20,20 @@ function SheetClose(props: React.ComponentProps<typeof SheetPrimitive.Close>) {
 
 function SheetContent({
   className,
+  closeClassName,
   children,
   side = 'right',
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & { side?: 'right' | 'left' }) {
+}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+  side?: 'right' | 'left';
+  /** Extra classes for the close button, for example a focus ring that suits a dark panel. */
+  closeClassName?: string;
+}) {
   return (
     <SheetPrimitive.Portal>
       <SheetPrimitive.Overlay
         data-slot="sheet-overlay"
-        className="fixed inset-0 z-50 bg-foreground/40 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0"
+        className="fixed inset-0 z-50 bg-overlay/50 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0"
       />
       <SheetPrimitive.Content
         data-slot="sheet-content"
@@ -42,7 +47,12 @@ function SheetContent({
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+        <SheetPrimitive.Close
+          className={cn(
+            'absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+            closeClassName,
+          )}
+        >
           <XIcon className="size-4" aria-hidden="true" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>

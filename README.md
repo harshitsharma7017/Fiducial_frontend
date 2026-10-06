@@ -3,9 +3,14 @@
 Next.js web app for the Property Insurance Placement ERP that Spirezen Enterprises is building for Fiducial. The ERP
 will replace the Excel chain of Data Sheet → RFQ → insurer quotes → QCR → Placement Slip.
 
-This repository holds the **foundation** screens: sign-in, dashboard, occupancy and pincode masters, the Fire rate
-check and user admin. The API lives in the separate **Fiducial_backend** repository. The browser never calls it
-directly: this app's own server routes (a backend-for-frontend) hold the session and forward each call.
+This repository holds the **foundation** screens: sign-in, a proposals dashboard with the detail drawer and full
+page, occupancy and pincode masters, the Fire rate check and user admin. Light and dark themes follow the system
+setting and can be switched by hand. The API lives in the separate **Fiducial_backend** repository. The browser
+never calls it directly: this app's own server routes (a backend-for-frontend) hold the session and forward each
+call.
+
+The dashboard and proposal screens read **sample data**, not the API yet (see [Sample proposal data](#sample-proposal-data)).
+To click through everything without running the backend, use [demo mode](#demo-mode-no-backend).
 
 Project documents and open questions live in the backend repository: `docs/` and `docs/OPEN_ITEMS.md` there
 (`../Fiducial_backend/docs` when the two repos are side by side).
@@ -26,6 +31,22 @@ npm run dev                   # http://localhost:3000
 ```
 
 Sign in with the admin you seeded in Fiducial_backend.
+
+## Demo mode (no backend)
+
+Set `USE_MOCK_API=true` in `.env.local` to run the whole app without Fiducial_backend. The sign-in route then
+accepts two built-in demo users and never calls the API; a "Demo mode" badge shows in the navbar. `.env.example`
+ships with it on.
+
+| Email                      | Password             | Role            | Sees                                  |
+| -------------------------- | -------------------- | --------------- | ------------------------------------- |
+| `demo.admin@example.com`   | `Fiducial-demo-2026` | ADMIN           | Everything, including the Admin group |
+| `demo.manager@example.com` | `Fiducial-demo-2026` | ACCOUNT_MANAGER | Everything except the Admin group     |
+
+In demo mode the pages that read live data (Occupancy, Pincodes, Fire rate check, Users and Settings) show a short
+"Not available in demo mode" notice instead of calling the API. The dashboard and proposal screens work fully,
+because they already use sample data. Turn demo mode off (`USE_MOCK_API=false` or unset) and the app signs in against
+the real API again, unchanged.
 
 ## Scripts
 

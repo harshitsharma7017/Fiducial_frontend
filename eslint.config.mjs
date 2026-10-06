@@ -46,6 +46,26 @@ export default defineConfig([
     },
   },
 
+  // Sample data is reached only through the hooks in src/lib/api: components import from there,
+  // never from src/lib/data. Swapping in the real API then touches one folder.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/lib/api/**', '**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/lib/data', '@/lib/data/*', '**/lib/data', '**/lib/data/*'],
+              message: 'Import proposal and notification data through the hooks in @/lib/api.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Repo scripts print their results to the terminal on purpose.
   {
     files: ['scripts/**/*.mjs'],
