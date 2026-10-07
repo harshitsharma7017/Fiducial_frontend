@@ -74,6 +74,16 @@ insurers, the RFQ workbook download and marking it sent, which locks the Data Sh
 Built (M-4 to M-9): product and cover master screens (`/masters/products`, `/sections`, `/addons`, `/tax-rates`,
 `/notes`; `components/catalog/`) and their Excel upload on Import data.
 
+Built (R-1, R-2, R-5): the RFQ review tab — preview with inline edits, versions, submit / approve / return
+(`components/proposals/rfq-review/`); sending waits for approval.
+
+Built (QC-1 to QC-6): the case's QCR tab — comparison with the lowest total marked, recommendation and payment,
+approval, downloads in the client's layout, send to the insured (`components/proposals/qcr/`).
+
+Built (Q-1 to Q-5): the case's Quotes tab — quote entry per insurer and option with live totals, terms and
+deviations, mandatory mail or PDF, revised versions, declines with reasons, what the QCR takes
+(`components/proposals/quotes/`).
+
 Built (C-1 to C-6): product with override and reason, three options per schedule line with an editable Existing
 column for renewals, Burglary basis from the Fire contents, add-on picker with favourites per client, cover toggles
 (`components/proposals/new-business/product-addons.tsx`, `section-details.tsx`).

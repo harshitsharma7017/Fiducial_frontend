@@ -33,6 +33,12 @@ export const queryKeys = {
     detail: (id: string) => ['proposals', 'detail', id] as const,
     /** A new-business proposal as the API returns it, for its workspace. */
     record: (id: string) => ['proposals', 'record', id] as const,
+    /** The insurers' quotes on a case (Q-1 to Q-5). */
+    quotes: (id: string) => ['proposals', 'quotes', id] as const,
+    /** The quote comparison report of a case (QC-1 to QC-6). */
+    qcr: (id: string) => ['proposals', 'qcr', id] as const,
+    /** The RFQ's edits, versions and approval (R-2, R-5). */
+    rfq: (id: string) => ['proposals', 'rfq', id] as const,
     stats: (type: string) => ['proposals', 'stats', type] as const,
   },
 };

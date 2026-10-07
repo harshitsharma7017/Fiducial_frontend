@@ -1,11 +1,13 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { Copy, Send } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePermission } from '@/hooks/use-permission';
 import type { ProposalInsurer, ProposalRecord } from '@/shared';
+import { rfqStateQuery } from '@/components/proposals/rfq-review/rfq-review-panel';
 import { DownloadRfqButtons } from './download-rfq';
 import { InsurersCard } from './insurers-card';
 import { MarkSentDialog } from './mark-sent-dialog';
@@ -50,9 +52,13 @@ export function InsurersRfqPanel({ record }: { record: ProposalRecord }) {
   const mailOn = mail?.transport !== 'off';
   const unsent = record.insurers.filter((insurer) => insurer.status === 'NOT_SENT');
   const complete = record.missing.length === 0;
+  // R-5: the RFQ goes to insurers only once its latest version is approved (RFQ review tab).
+  const rfq = useQuery(rfqStateQuery(record.id));
+  const approved = rfq.data?.sendable ?? false;
+  const ready = complete && approved;
   const open = record.stage !== 'CLOSED';
   const markTrigger = (label: string, variant: 'default' | 'outline') => (
-    <Button type="button" variant={variant} disabled={!complete}>
+    <Button type="button" variant={variant} disabled={!ready}>
       {variant === 'default' ? <Send aria-hidden="true" /> : null}
       {label}
     </Button>
@@ -60,7 +66,10 @@ export function InsurersRfqPanel({ record }: { record: ProposalRecord }) {
 
   return (
     <div className="grid gap-6 *:min-w-0">
-      <InsurersCard record={record} permissions={{ canEdit, canSend, mailOn }} />
+      <InsurersCard
+        record={record}
+        permissions={{ canEdit, canSend, mailOn, rfqApproved: approved }}
+      />
 
       <Card>
         <CardHeader>
@@ -101,13 +110,15 @@ export function InsurersRfqPanel({ record }: { record: ProposalRecord }) {
                     ? 'Choose insurers above first.'
                     : 'Every chosen insurer has the RFQ.'}
                 </p>
+              ) : complete && rfq.data && !approved ? (
+                <p className="text-sm text-warning">{rfq.data.blocked} Use the RFQ review tab.</p>
               ) : !canSend || !open ? (
                 <p className="text-sm text-muted-foreground">
                   {open ? 'Your role cannot send the RFQ.' : 'This case is closed.'}
                 </p>
               ) : mailOn ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  {complete ? (
+                  {ready ? (
                     <SendRfqDialog record={record} insurers={unsent} />
                   ) : (
                     markTrigger('Email the RFQ', 'default')
@@ -115,7 +126,7 @@ export function InsurersRfqPanel({ record }: { record: ProposalRecord }) {
                   <MarkSentDialog
                     record={record}
                     insurers={unsent}
-                    disabled={!complete}
+                    disabled={!ready}
                     outsideApp
                     trigger={markTrigger('Sent outside the app', 'outline')}
                   />
@@ -138,7 +149,7 @@ export function InsurersRfqPanel({ record }: { record: ProposalRecord }) {
                     <MarkSentDialog
                       record={record}
                       insurers={unsent}
-                      disabled={!complete}
+                      disabled={!ready}
                       outsideApp={false}
                       trigger={markTrigger(
                         `Mark as sent to ${unsent.length === 1 ? '1 insurer' : `all ${unsent.length}`}`,

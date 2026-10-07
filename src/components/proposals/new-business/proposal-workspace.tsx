@@ -13,6 +13,9 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { QcrPanel } from '@/components/proposals/qcr/qcr-panel';
+import { QuotesPanel } from '@/components/proposals/quotes/quotes-panel';
+import { RfqReviewPanel } from '@/components/proposals/rfq-review/rfq-review-panel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermission } from '@/hooks/use-permission';
 import { ApiError } from '@/lib/api-client';
@@ -34,7 +37,7 @@ export function ProposalWorkspace({ id, initialTab }: { id: string; initialTab?:
   );
 }
 
-const TABS = ['data-sheet', 'rfq', 'activity'] as const;
+const TABS = ['data-sheet', 'review', 'rfq', 'quotes', 'qcr', 'activity'] as const;
 
 function Workspace({ id, initialTab }: { id: string; initialTab?: string }) {
   const proposal = useQuery(proposalRecordQuery(id));
@@ -142,7 +145,10 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
               </Badge>
             ) : null}
           </TabsTrigger>
+          <TabsTrigger value="review">RFQ review</TabsTrigger>
           <TabsTrigger value="rfq">Insurers and RFQ</TabsTrigger>
+          <TabsTrigger value="quotes">Quotes</TabsTrigger>
+          <TabsTrigger value="qcr">QCR</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
         {/* Mounted while hidden, so unsaved Data Sheet entries survive a look at another tab. */}
@@ -156,8 +162,17 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
           ) : null}
           <DataSheetForm record={record} canEdit={canEdit} />
         </TabsContent>
+        <TabsContent value="review" className="min-w-0">
+          <RfqReviewPanel record={record} />
+        </TabsContent>
         <TabsContent value="rfq" className="min-w-0">
           <InsurersRfqPanel record={record} />
+        </TabsContent>
+        <TabsContent value="quotes" className="min-w-0">
+          <QuotesPanel record={record} canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="qcr" className="min-w-0">
+          <QcrPanel record={record} />
         </TabsContent>
         <TabsContent value="activity" className="grid gap-6">
           <MailLog proposalId={record.id} />

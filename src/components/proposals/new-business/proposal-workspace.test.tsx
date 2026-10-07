@@ -11,6 +11,7 @@ import {
   type Role,
   type InsurerStatus,
 } from '@/shared';
+import { approvedRfqState } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
 import { ProposalWorkspace } from './proposal-workspace';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
@@ -201,12 +202,17 @@ function serve(initial: ProposalRecord, onWrite?: (url: string, body: unknown) =
       return Promise.resolve(json({ items: [], nextCursor: null }));
     }
     if (url.endsWith(`/proposals/${ID}`)) return Promise.resolve(json(current));
+    if (url.endsWith(`/proposals/${ID}/rfq/versions`)) {
+      return Promise.resolve(json(approvedRfqState()));
+    }
     return Promise.resolve(json({ code: 'NOT_FOUND', message: 'Not found' }, 404));
   });
 }
 
 function renderWorkspace() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // The RFQ's latest version is approved (R-5), so it can be sent.
+  queryClient.setQueryData(['proposals', 'rfq', ID], approvedRfqState());
   render(
     <QueryClientProvider client={queryClient}>
       <ProposalWorkspace id={ID} />

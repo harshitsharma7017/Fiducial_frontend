@@ -16,6 +16,7 @@ import {
   json,
   mailDetail,
   urlOf,
+  approvedRfqState,
 } from './rfq-fixtures.test-utils';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
@@ -34,6 +35,7 @@ function serve(handler: Handler) {
     const body: unknown = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
     const answer = handler(url, body, method);
     if (answer) return Promise.resolve(answer);
+    if (url.endsWith('/rfq/versions')) return Promise.resolve(json(approvedRfqState()));
     if (url.endsWith('/rfq/preview')) {
       const request = body as { insurers: { insurerId: string; to: string[] }[] };
       return Promise.resolve(
@@ -57,6 +59,8 @@ function serve(handler: Handler) {
 
 function renderWith(node: React.ReactNode) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // The RFQ's latest version is approved (R-5), so it can be sent.
+  queryClient.setQueryData(['proposals', 'rfq', CASE_ID], approvedRfqState());
   render(<QueryClientProvider client={queryClient}>{node}</QueryClientProvider>);
   return userEvent.setup();
 }
@@ -286,6 +290,10 @@ describe('reminders and answers', () => {
         .getAllByRole('radio')
         .map((radio) => radio.parentElement?.textContent),
     ).toEqual(['Quoted', 'Declined', 'No response']);
+    // Q-5: a decline waits for its reason.
+    await user.click(within(dialog).getByRole('radio', { name: 'Declined' }));
+    expect(within(dialog).getByRole('button', { name: 'Save answer' })).toBeDisabled();
+    expect(within(dialog).getByLabelText('Reason for declining')).toBeRequired();
     await user.click(within(dialog).getByRole('radio', { name: 'Quoted' }));
     await user.type(within(dialog).getByLabelText('Note (optional)'), 'Best terms');
     await user.click(within(dialog).getByRole('button', { name: 'Save answer' }));

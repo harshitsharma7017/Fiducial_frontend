@@ -51,6 +51,9 @@ export function ResponseDialog({
   const [note, setNote] = useState('');
   const name = `${insurer.company}, ${insurer.branch}`;
   const answered = insurer.response !== null;
+  // Q-5: a decline is recorded with the insurer's reason; the QCR then leaves the insurer out.
+  const needsReason = status === 'DECLINED';
+  const missingReason = needsReason && note.trim() === '';
 
   const save = useMutation({
     mutationFn: () =>
@@ -120,15 +123,20 @@ export function ResponseDialog({
           ))}
         </fieldset>
         <div className="grid gap-1.5">
-          <Label htmlFor={ids.note}>Note (optional)</Label>
+          <Label htmlFor={ids.note}>
+            {needsReason ? 'Reason for declining' : 'Note (optional)'}
+          </Label>
           <Textarea
             id={ids.note}
             value={note}
             maxLength={NOTE_MAX}
             rows={3}
+            required={needsReason}
+            aria-required={needsReason}
             onChange={(event) => setNote(event.target.value)}
           />
           <p className="text-xs text-muted-foreground tabular">
+            {needsReason ? 'Required. A declined insurer is left out of the QCR. ' : ''}
             {note.length} of {NOTE_MAX} characters
           </p>
         </div>
@@ -141,7 +149,11 @@ export function ResponseDialog({
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button type="button" disabled={!status || save.isPending} onClick={() => save.mutate()}>
+          <Button
+            type="button"
+            disabled={!status || missingReason || save.isPending}
+            onClick={() => save.mutate()}
+          >
             {save.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : null}
             Save answer
           </Button>

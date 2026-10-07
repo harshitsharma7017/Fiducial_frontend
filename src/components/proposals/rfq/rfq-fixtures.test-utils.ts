@@ -2,7 +2,9 @@ import {
   FIRE_GROUPS,
   OTHER_SECTION_LABELS,
   OTHER_SECTIONS,
+  NO_RFQ_EDITS,
   type MailDetail,
+  type RfqState,
   type ProposalInsurer,
   type ProposalRecord,
 } from '@/shared';
@@ -148,3 +150,30 @@ export function json(body: unknown, status = 200): Response {
 
 export const urlOf = (input: RequestInfo | URL) =>
   input instanceof Request ? input.url : input.toString();
+
+/** The RFQ's standing with v1 approved: it may be sent (R-5). */
+export function approvedRfqState(overrides: Partial<RfqState> = {}): RfqState {
+  return {
+    edits: NO_RFQ_EDITS,
+    editsUpdatedAt: null,
+    editsUpdatedBy: null,
+    versions: [
+      {
+        version: 1,
+        status: 'APPROVED',
+        layout: 'template',
+        fileName: 'RFQ-PRP-2026-0042-v1',
+        createdAt: '2026-10-07T04:00:00.000Z',
+        createdBy: 'Asha Rao',
+        events: [
+          { action: 'GENERATED', at: '2026-10-07T04:00:00.000Z', by: 'Asha Rao', comment: null },
+          { action: 'APPROVED', at: '2026-10-07T05:00:00.000Z', by: 'Ravi Kumar', comment: null },
+        ],
+      },
+    ],
+    current: { version: 1, status: 'APPROVED', stale: false },
+    sendable: true,
+    blocked: null,
+    ...overrides,
+  };
+}

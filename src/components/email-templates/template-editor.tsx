@@ -30,6 +30,7 @@ type Field = 'subject' | 'body';
 const PURPOSE: Record<EmailTemplate['kind'], string> = {
   RFQ: 'Sent to each insurer with the RFQ attached, one mail per insurer.',
   REMINDER: 'Sent when a user reminds an insurer that has not answered.',
+  QCR: 'Sent to the insured with the approved QCR attached. {{insurerName}} is the recommended insurer.',
 };
 
 /** Field problems: the API's on save, else the same checks as the API's, while typing. */

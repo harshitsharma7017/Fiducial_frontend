@@ -188,8 +188,26 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
     changes `canMoveInsurer()` allows). The first insurer sent locks the Data Sheet. When the API has mail turned off
     (a 409 `MAIL_DISABLED`, or Settings' mail card for Admins), the tab falls back to copying the addresses and
     marking the RFQ sent.
+  - **RFQ review** (R-1, R-2, R-5, `components/proposals/rfq-review/`): the RFQ previewed from the case (premium
+    details, schedule, risk details, claims, annexure); on the draft the heading, notes for insurers, risk details and
+    claims are edited in place (marked Edited, with a way back to the Data Sheet's value) and saved. Generate v1, v2…
+    keeps each version; the preview can show any version, with its Excel and PDF. Submit for approval; an approver
+    approves or returns it with comments; the history lists every step. The Insurers and RFQ tab sends only once
+    the latest version is approved and current.
+  - **Quotes** (Q-1 to Q-5, `components/proposals/quotes/`): per insurer and option, the latest quote with net, GST
+    and total (with and without terrorism), its deviations from the RFQ and the insurer's mail or PDF; earlier
+    versions under "Earlier versions"; a declined insurer with its reason; and "For the QCR", the latest version of
+    each quote from insurers that have not declined. "Enter quote" / "Revise quote" opens the entry sheet: premiums
+    of the sections asked for with live totals, the add-ons and covers asked for (Accepted / Declined), deductibles,
+    capacity, conditions, validity, the proof (upload or pick one already kept; required) and, for a revision, its
+    reason. Declining an insurer (Record answer → Declined) needs the reason.
+  - **QCR** (QC-1 to QC-6, `components/proposals/qcr/`): the comparison per option (existing policy and every
+    insurer's latest quote, Fire without terrorism, net / GST / total, Lowest and Recommended badges, deviations and
+    "Where the insurers differ"); the recommendation, remarks and "cheque / payment in favour of"; Approve QCR (for
+    `proposals.approve`, once nothing is missing and changes are saved); Download QCR (Excel or PDF); and Send to the
+    insured (client contacts or other addresses, PDF or Excel), offered only while the approval is current.
   - **Activity**: the mails of the case (kind, insurer, To, who, when, Delivered, Outbox or Failed; select one for its
-    subject, message and attachment), then the proposal's history, newest first. `?tab=data-sheet|rfq|activity` opens
+    subject, message and attachment), then the proposal's history, newest first. `?tab=data-sheet|review|rfq|quotes|qcr|activity` opens
     a given tab.
 - **RFQ page** (`/rfq`, sidebar Workflow → RFQ, `proposals.view`): every new-business RFQ, ready to send first, with
   status chips (Data Sheet incomplete, Ready to send, Partly sent, Sent; `?status=`), an Overdue responses chip

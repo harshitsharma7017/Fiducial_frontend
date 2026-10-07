@@ -22,6 +22,8 @@ export interface RowPermissions {
   canSend: boolean;
   /** Mail can be sent from the app (not turned off). */
   mailOn: boolean;
+  /** The RFQ's latest version is approved and current (R-5). */
+  rfqApproved: boolean;
 }
 
 /** Where the RFQ stands with one insurer: status, Overdue, due date, sent, reminders, answer (8.1). */
@@ -129,7 +131,7 @@ export function InsurerRow({
               <MarkSentDialog
                 record={record}
                 insurers={[insurer]}
-                disabled={!complete}
+                disabled={!complete || !permissions.rfqApproved}
                 outsideApp={mailOn}
                 trigger={
                   <Button
