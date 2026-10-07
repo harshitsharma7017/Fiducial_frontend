@@ -37,7 +37,7 @@ export function DashboardView({ serverSearch }: { serverSearch: string }) {
   return (
     <>
       <DashboardHeader type={type} />
-      <div className="grid gap-6">
+      <div className="grid gap-6 *:min-w-0">
         <TypeSwitch
           type={type}
           counts={{

@@ -40,6 +40,11 @@ function proposal(
     id: String(n).repeat(24).slice(0, 24).padEnd(24, 'a'),
     reference: `PRP-2026-000${n}`,
     type: 'NEW',
+    nextStage: null,
+    closedReason: null,
+    policyEnd: null,
+    existingPolicy: null,
+    existingPolicyLookup: null,
     stage: insurers.some((i) => i.status === 'SENT')
       ? 'RFQ_SENT'
       : missing.length
@@ -61,6 +66,8 @@ function proposal(
       included: false,
       proposed1: null,
       proposed2: null,
+      lines: {},
+      annexure: [],
     })),
     suggestedProducts: [],
     gstRatePercent: '18',

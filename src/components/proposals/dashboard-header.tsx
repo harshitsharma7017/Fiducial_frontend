@@ -37,11 +37,11 @@ export function DashboardHeader({ type }: { type: ProposalType }) {
   const nowMs = useIstNow();
   const firstName = me.data?.name.split(/\s+/)[0];
   const canCreate = me.data ? can(me.data.roles, 'proposals.create') : false;
-  // New business comes from the API; renewals (and everything in demo mode) are still samples.
+  // Every case comes from the API; demo mode shows sample proposals.
   const sampleNote = useDemoMode()
     ? 'Demo mode: sample proposals.'
     : type === 'EXISTING'
-      ? 'Sample data: renewals are not connected to the API yet.'
+      ? 'Renewals.'
       : 'New business proposals.';
 
   const action =

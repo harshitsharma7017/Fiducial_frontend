@@ -1,7 +1,7 @@
 'use client';
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, Download, LoaderCircle, Search, Send, Users, X } from 'lucide-react';
+import { Copy, Download, FileText, LoaderCircle, Search, Send, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import { useId, useState, type ReactElement, type ReactNode } from 'react';
 import { ErrorState, LoadingState, errorMessage } from '@/components/states';
@@ -36,6 +36,7 @@ import { toast } from '@/hooks/use-toast';
 import { apiDownload, apiFetch, saveFile } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 import {
+  DocumentTemplateListSchema,
   InsurerListResponseSchema,
   MAX_PROPOSAL_INSURERS,
   ProposalRecordSchema,
@@ -206,32 +207,66 @@ function Step({ number, title, children }: { number: number; title: string; chil
   );
 }
 
+/**
+ * The RFQ downloads (R-3, R-4): Excel in the client's template and the same as an A4 PDF with the
+ * broker's letterhead. Says whether the client's template is in use or the built-in layout.
+ */
 function DownloadRfqButton({ record, disabled }: { record: ProposalRecord; disabled: boolean }) {
   const queryClient = useQueryClient();
+  const templates = useQuery({
+    queryKey: ['templates'],
+    queryFn: ({ signal }) => apiFetch('templates', { schema: DocumentTemplateListSchema, signal }),
+  });
+  const rfqTemplate = templates.data?.items.find((item) => item.kind === 'RFQ')?.template ?? null;
   const download = useMutation({
-    mutationFn: () => apiDownload(`proposals/${record.id}/rfq`, `RFQ-${record.reference}.xlsx`),
+    mutationFn: (format: 'xlsx' | 'pdf') =>
+      apiDownload(
+        `proposals/${record.id}/rfq?format=${format}`,
+        `RFQ-${record.reference}.${format}`,
+      ),
     onSuccess: (file) => {
       saveFile(file);
       void queryClient.invalidateQueries({ queryKey: queryKeys.proposals.record(record.id) });
     },
   });
+  const pending = (format: 'xlsx' | 'pdf') => download.isPending && download.variables === format;
   return (
     <div className="grid gap-2">
-      <div>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled || download.isPending}
-          onClick={() => download.mutate()}
-        >
-          {download.isPending ? (
-            <LoaderCircle className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Download aria-hidden="true" />
-          )}
-          Download RFQ (Excel)
-        </Button>
+      <div className="flex flex-wrap gap-2">
+        {(['xlsx', 'pdf'] as const).map((format) => (
+          <Button
+            key={format}
+            type="button"
+            variant="outline"
+            disabled={disabled || download.isPending}
+            onClick={() => download.mutate(format)}
+          >
+            {pending(format) ? (
+              <LoaderCircle className="animate-spin" aria-hidden="true" />
+            ) : format === 'pdf' ? (
+              <FileText aria-hidden="true" />
+            ) : (
+              <Download aria-hidden="true" />
+            )}
+            Download RFQ ({format === 'pdf' ? 'PDF' : 'Excel'})
+          </Button>
+        ))}
       </div>
+      {templates.isSuccess ? (
+        <p className="text-xs text-muted-foreground">
+          {rfqTemplate ? (
+            <>
+              In the client’s RFQ template ({rfqTemplate.fileName}); the PDF has the broker’s
+              letterhead.
+            </>
+          ) : (
+            <>
+              In the built-in layout: the client’s RFQ template has not been uploaded (Masters →
+              Document templates).
+            </>
+          )}
+        </p>
+      ) : null}
       {download.isError ? (
         <Alert variant="destructive" role="alert">
           <AlertDescription>{errorMessage(download.error)}</AlertDescription>

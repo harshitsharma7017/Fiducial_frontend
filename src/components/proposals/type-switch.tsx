@@ -22,7 +22,7 @@ export function TypeSwitch({
       onValueChange={(value) => onChange(value as ProposalType)}
       aria-label="Proposal type"
     >
-      <TabsList>
+      <TabsList className="h-auto max-w-full flex-wrap">
         <TabsTrigger value="NEW">
           New proposals
           <Count value={counts.NEW} />

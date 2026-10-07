@@ -7,7 +7,8 @@ src/
     (auth)/                     login and forgot-password with a shared two-column layout
     (app)/                      signed-in pages inside the app shell: dashboard, proposals (list, new, [id]), rfq,
                                 masters/occupancy, masters/pincodes, masters/clients (list, [id]),
-                                masters/insurers, masters/import, rating/fire, users, audit, settings, profile
+                                masters/insurers, masters/import, masters/templates, rating/fire, users, audit,
+                                settings, profile
     api/auth/login, logout      BFF: sets and clears the httpOnly session cookie
     api/proxy/[...path]         BFF: forwards allowlisted calls to the API with the bearer token
   components/

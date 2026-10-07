@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { addDays, daysBetween, isSameIstMonth, todayIst } from './dates';
+import { addDays, daysBetween, isSameIstMonth, todayIst, policyYearEnd } from './dates';
 
 describe('IST date helpers', () => {
   it('reads the IST calendar date around midnight', () => {
@@ -61,5 +61,14 @@ describe('IST date helpers', () => {
         },
       ),
     );
+  });
+});
+
+describe('policyYearEnd', () => {
+  it('ends a year on, less a day', () => {
+    expect(policyYearEnd('2026-11-01')).toBe('2027-10-31');
+    expect(policyYearEnd('2027-01-01')).toBe('2027-12-31');
+    expect(policyYearEnd('2028-02-29')).toBe('2029-02-28');
+    expect(policyYearEnd('2027-03-01')).toBe('2028-02-29');
   });
 });

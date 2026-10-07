@@ -1,7 +1,7 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,9 +15,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { itemSumInsured, locationTotal, type DataSheetForm } from '@/lib/data-sheet';
+import { formatAmountForInput } from '@/lib/amount-input';
+import { groupTotal, itemSumInsured, locationTotal, type DataSheetForm } from '@/lib/data-sheet';
 import { formatInr } from '@/lib/money';
-import { EQ_ZONE_LABELS, FIRE_ITEMS, RISK_DETAIL_FIELDS } from '@/shared';
+import { cn } from '@/lib/utils';
+import {
+  EQ_ZONE_LABELS,
+  FIRE_ITEM_HEADINGS,
+  FIRE_ITEMS,
+  HYPOTHECATION_LABEL,
+  OPEN_STOCK_LABEL,
+  RISK_DETAIL_FIELDS,
+} from '@/shared';
 import { RupeesField, TextAreaField, TextField } from './data-sheet-fields';
 
 /** What the Data Sheet shows about a risk location, from the proposal or the client master. */
@@ -31,8 +40,9 @@ export interface LocationInfo {
 }
 
 /**
- * One risk location of the Data Sheet: its Fire items (measured ones as area × rate, or a typed
- * amount), hypothecation, stock in the open and the RFQ's risk details.
+ * One risk location of the Data Sheet: Fire & Burglary laid out as the client's Data Sheet (7
+ * numbered items with sub-items, sq ft × rate for buildings, a running total), hypothecation and
+ * stock in open space (D-3, D-7), and the RFQ's risk details.
  */
 export function LocationCard({
   index,
@@ -84,87 +94,137 @@ export function LocationCard({
         </div>
       </CardHeader>
       <CardContent className="grid gap-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fire item</TableHead>
-              <TableHead className="text-right">Area (sq ft)</TableHead>
-              <TableHead className="text-right">Rate per sq ft</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-right">Sum insured</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {FIRE_ITEMS.map((item, itemIndex) => {
-              const values = fire?.[itemIndex];
-              const path = `locations.${index}.fire.${itemIndex}` as const;
-              return (
-                <TableRow key={item.key}>
-                  <TableCell className="min-w-48 whitespace-normal">{item.label}</TableCell>
-                  <TableCell className="align-top">
-                    {item.measured ? (
-                      <TextField
-                        name={`${path}.sqFt`}
-                        label={`${item.label} area in sq ft`}
-                        hideLabel
-                        inputMode="decimal"
-                        autoComplete="off"
-                        className="min-w-24"
-                      />
-                    ) : (
-                      <span className="block text-right text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="align-top">
-                    {item.measured ? (
-                      <RupeesField
-                        name={`${path}.ratePerSqFt`}
-                        label={`${item.label} rate per sq ft`}
-                        hideLabel
-                      />
-                    ) : (
-                      <span className="block text-right text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="align-top">
-                    <RupeesField name={`${path}.amount`} label={`${item.label} amount`} hideLabel />
-                  </TableCell>
-                  <TableCell className="text-right tabular whitespace-nowrap">
-                    {values ? formatInr(itemSumInsured({ ...values, key: item.key })) : '—'}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={4} className="font-medium">
-                Total for {name}
-              </TableCell>
-              <TableCell className="text-right font-medium tabular whitespace-nowrap">
-                {formatInr(locationTotal({ fire }))}
-              </TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
-        <p className="-mt-3 text-xs text-muted-foreground">
-          For buildings, enter the area and rate, or type the amount instead. A typed amount wins.
-        </p>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextAreaField
-            name={`locations.${index}.hypothecation`}
-            label="Hypothecation"
-            description="The bank or financier with an interest, if any."
-            maxLength={300}
-          />
-          <TextAreaField
-            name={`locations.${index}.openStock`}
-            label="Stock in open space"
-            description="What is stored in the open, if anything."
-            maxLength={300}
-          />
-        </div>
+        <section aria-label={`Fire & Burglary for ${name}`} className="grid gap-3">
+          <h3 className="text-sm font-semibold">Fire &amp; Burglary</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">S No</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">
+                  Sq. Feet
+                  <span className="block font-normal normal-case">(total builtup area)</span>
+                </TableHead>
+                <TableHead className="text-right">
+                  Rate / sq ft
+                  <span className="block font-normal normal-case">
+                    (construction cost per sq ft)
+                  </span>
+                </TableHead>
+                <TableHead className="text-right">Sum Insured</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {FIRE_ITEMS.map((item, itemIndex) => {
+                const values = fire?.[itemIndex];
+                const path = `locations.${index}.fire.${itemIndex}` as const;
+                const heading = FIRE_ITEM_HEADINGS[item.group];
+                const firstOfGroup =
+                  FIRE_ITEMS.findIndex((other) => other.group === item.group) === itemIndex;
+                const isSub = heading !== undefined || item.number.length > 1;
+                const computed =
+                  item.measured && values && !values.amount?.trim()
+                    ? itemSumInsured({ ...values, key: item.key })
+                    : null;
+                return (
+                  <Fragment key={item.key}>
+                    {heading && firstOfGroup ? (
+                      <TableRow className="bg-muted/40">
+                        <TableCell className="font-medium tabular">{heading.number}</TableCell>
+                        <TableCell colSpan={3} className="min-w-64 font-medium whitespace-normal">
+                          {heading.label}
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular whitespace-nowrap">
+                          {formatInr(groupTotal({ fire }, item.group))}
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                    <TableRow>
+                      <TableCell className="align-top text-muted-foreground tabular">
+                        {isSub ? item.number.slice(-1) : item.number}
+                      </TableCell>
+                      <TableCell
+                        className={cn('min-w-64 align-top whitespace-normal', isSub && 'pl-6')}
+                      >
+                        {item.label}
+                      </TableCell>
+                      <TableCell className="align-top">
+                        {item.measured ? (
+                          <TextField
+                            name={`${path}.sqFt`}
+                            label={`Item ${item.number} sq ft`}
+                            hideLabel
+                            inputMode="decimal"
+                            autoComplete="off"
+                            className="min-w-24"
+                          />
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="align-top">
+                        {item.measured ? (
+                          <RupeesField
+                            name={`${path}.ratePerSqFt`}
+                            label={`Item ${item.number} rate per sq ft`}
+                            hideLabel
+                          />
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <RupeesField
+                          name={`${path}.amount`}
+                          label={`Item ${item.number} sum insured`}
+                          hideLabel
+                          placeholder={
+                            computed && computed !== '0'
+                              ? formatAmountForInput(computed)
+                              : undefined
+                          }
+                          description={computed && computed !== '0' ? 'Sq ft × rate' : undefined}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  </Fragment>
+                );
+              })}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell />
+                <TableCell colSpan={3} className="font-medium">
+                  Total sum insured
+                </TableCell>
+                <TableCell
+                  className="text-right font-medium tabular whitespace-nowrap"
+                  aria-live="polite"
+                >
+                  {formatInr(locationTotal({ fire }))}
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+          <p className="text-xs text-muted-foreground">
+            For buildings, enter the area and the rate: the sum insured is sq ft × rate, kept exact
+            and shown to the rupee, as in the Excel Data Sheet. A typed sum insured is used instead.
+          </p>
+          <ol className="grid gap-4 sm:grid-cols-2">
+            <li>
+              <TextAreaField
+                name={`locations.${index}.hypothecation`}
+                label={`1. ${HYPOTHECATION_LABEL}`}
+                description="The bank or financier with an interest. Printed on the RFQ."
+                maxLength={300}
+              />
+            </li>
+            <li>
+              <TextAreaField
+                name={`locations.${index}.openStock`}
+                label={`2. ${OPEN_STOCK_LABEL}`}
+                description="What is stored in the open, and how much. Printed on the RFQ."
+                maxLength={300}
+              />
+            </li>
+          </ol>
+        </section>
 
         <details className="group rounded-md border" open={riskOpen || undefined}>
           <summary className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium outline-none select-none focus-visible:ring-2 focus-visible:ring-ring">

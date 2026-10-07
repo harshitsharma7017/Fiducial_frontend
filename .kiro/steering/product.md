@@ -72,12 +72,18 @@ insurers, the RFQ workbook download and marking it sent, which locks the Data Sh
 Built (M-4 to M-9): product and cover master screens (`/masters/products`, `/sections`, `/addons`, `/tax-rates`,
 `/notes`; `components/catalog/`) and their Excel upload on Import data.
 
-Not built yet: starting a renewal, quotes, QCR and placement slip screens, and the API for renewals.
+Built (D-1, D-2): creating a case (New or Renewal, client, policy period, assigned staff, case number), 9 stages on
+every case, and renewals that copy last year's policy from the policy software's public API.
+
+Built (R-3, R-4): Document templates (`/masters/templates`): upload the client's Excel templates; the RFQ downloads
+as that template filled (Excel) or as an A4 PDF with the letterhead.
+
+Not built yet: quotes, QCR and placement slip screens.
 
 ## Rules
 
 - Do not invent client business rules. Anything TBC stays unbuilt and is listed in the backend's `docs/OPEN_ITEMS.md`.
 - The API does every calculation. The UI displays the values it returns and never recomputes premiums. The Data
   Sheet's running totals are a typing preview with the API's own arithmetic; the saved figures come from the API.
-- Renewals run on sample data until the API serves them, and say so on screen. Sample company, person and
+- Demo mode runs on sample data and says so on screen. Sample company, person and
   insurer names are fictional.

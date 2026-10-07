@@ -13,7 +13,7 @@ import {
 /**
  * The dashboard figures for one proposal type, computed from the proposals so the KPI cards,
  * pipeline strip and chart always agree. Definitions follow design.md (KPI definitions, Q3):
- * "open" is any stage except Placed; "due" windows use IST calendar days; placed renewals never
+ * "open" is any stage except Placed and Closed; "pending approval" is QCR or Client Approval; "due" windows use IST calendar days; placed renewals never
  * count as due. The headline amount everywhere is the Fire SI (Proposed 1) (Q4).
  */
 export function computeDashboardStats(
@@ -44,14 +44,14 @@ export function computeDashboardStats(
     const fire = fireSumInsured(proposal);
     stageCounts[proposal.stage] += 1;
     if (proposal.product) productSums[proposal.product]?.push(fire);
-    const open = proposal.stage !== 'PLACED';
+    const open = proposal.stage !== 'PLACED' && proposal.stage !== 'CLOSED';
     if (open) openFire.push(fire);
 
     if (proposal.stage === 'RFQ_SENT') {
       awaitingQuotes += 1;
       awaitingQuotesInsurers += proposal.insurers.filter((i) => i.status === 'SENT').length;
     }
-    if (proposal.stage === 'QCR') {
+    if (proposal.stage === 'QCR' || proposal.stage === 'CLIENT_APPROVAL') {
       pendingApproval += 1;
       pendingFire.push(fire);
     }

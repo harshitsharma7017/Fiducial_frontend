@@ -2,14 +2,14 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { LoaderCircle, Search } from 'lucide-react';
+import { CircleAlert, LoaderCircle, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useForm, useFormContext, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { EmptyState, ErrorState, LoadingState, errorMessage } from '@/components/states';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,49 +24,80 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { toast } from '@/hooks/use-toast';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { apiFetch } from '@/lib/api-client';
 import { clientLocationsQuery } from '@/lib/api/new-business';
-import { addDays, todayIst } from '@/lib/dates';
+import { addDays, policyYearEnd, todayIst } from '@/lib/dates';
 import { applyServerFieldErrors } from '@/lib/form-errors';
+import { formatInr } from '@/lib/money';
 import { queryKeys } from '@/lib/query-keys';
 import { cn } from '@/lib/utils';
 import {
   ClientListResponseSchema,
   CreateProposalRequestSchema,
+  ExistingPolicyLookupSchema,
+  ProposalOwnersResponseSchema,
   ProposalRecordSchema,
+  formatDate,
+  wholeRupees,
   type Client,
+  type CreateProposalFormValues,
   type CreateProposalRequest,
+  type ProposalType,
 } from '@/shared';
 
 const RESULT_LIMIT = 20;
 
 /** The request, with a plain message while no client is chosen. */
-const NewProposalSchema = CreateProposalRequestSchema.extend({
+const NewCaseSchema = CreateProposalRequestSchema.safeExtend({
   clientId: z.string().regex(/^[a-f0-9]{24}$/i, 'Choose the insured client'),
 });
 /** Quotes are usually wanted within a week. */
 const DEFAULT_DAYS_TO_DUE = 7;
 
+const TYPE_CHOICES: { value: ProposalType; label: string; hint: string }[] = [
+  { value: 'NEW', label: 'New business', hint: 'No policy with us yet: start from a Data Sheet.' },
+  {
+    value: 'EXISTING',
+    label: 'Renewal',
+    hint: 'Last year’s policy is copied from the policy software as the Existing column.',
+  },
+];
+
 /**
- * Starts a new-business proposal: the insured, the risk locations it covers and the date quotes
- * are needed by. The Data Sheet is filled on the proposal's page.
+ * Creates a case (D-1): New business or Renewal, the insured and its risk locations, the policy
+ * period, the assigned staff and the date quotes are needed by. It gets the next case number and
+ * starts at stage 1 (Draft). A renewal shows last year's policy before it is created (D-2).
  */
-export function NewProposalForm() {
+export function NewProposalForm({ initialType = 'NEW' }: { initialType?: ProposalType }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const me = useCurrentUser();
   const [client, setClient] = useState<Client | null>(null);
   const [generalError, setGeneralError] = useState<unknown>(null);
 
-  const form = useForm<CreateProposalRequest>({
-    resolver: zodResolver(NewProposalSchema),
+  const form = useForm<CreateProposalFormValues, unknown, CreateProposalRequest>({
+    resolver: zodResolver(NewCaseSchema),
     defaultValues: {
+      type: initialType,
       clientId: '',
       locationIds: [],
+      ownerId: undefined,
+      policyStart: '',
+      policyEnd: '',
       dueDate: addDays(todayIst(), DEFAULT_DAYS_TO_DUE),
     },
   });
+  const type = useWatch({ control: form.control, name: 'type' }) ?? 'NEW';
+  const renewal = type === 'EXISTING';
+
+  // The signed-in user is the assigned staff unless someone else is chosen.
+  useEffect(() => {
+    if (me.data && !form.getValues('ownerId')) form.setValue('ownerId', me.data.id);
+  }, [me.data, form]);
 
   const create = useMutation({
     mutationFn: (body: CreateProposalRequest) =>
@@ -74,7 +105,11 @@ export function NewProposalForm() {
     onSuccess: (record) => {
       queryClient.setQueryData(queryKeys.proposals.record(record.id), record);
       void queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      toast({ title: 'Proposal created', description: record.reference, variant: 'success' });
+      toast({
+        title: record.type === 'EXISTING' ? 'Renewal created' : 'Proposal created',
+        description: record.reference,
+        variant: 'success',
+      });
       router.push(`/proposals/${record.id}`);
     },
     onError: (error) => {
@@ -88,16 +123,67 @@ export function NewProposalForm() {
     form.setValue('locationIds', []);
   };
 
+  const listHref = `/proposals?type=${renewal ? 'existing' : 'new'}`;
+
   return (
     <Form {...form}>
       <form
         noValidate
         className="grid max-w-3xl gap-6"
-        onSubmit={form.handleSubmit((values) => {
-          setGeneralError(null);
-          create.mutate(values);
-        })}
+        onSubmit={(event) =>
+          void form.handleSubmit((values) => {
+            setGeneralError(null);
+            create.mutate(values);
+          })(event)
+        }
       >
+        <Card>
+          <CardHeader>
+            <CardTitle>Type of case</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <fieldset className="grid gap-2 sm:grid-cols-2">
+                    <legend className="sr-only">Type of case</legend>
+                    {TYPE_CHOICES.map((choice) => {
+                      const id = `case-type-${choice.value}`;
+                      const checked = field.value === choice.value;
+                      return (
+                        <label
+                          key={choice.value}
+                          htmlFor={id}
+                          className={cn(
+                            'flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2',
+                            checked && 'border-primary bg-primary-soft/40',
+                          )}
+                        >
+                          <input
+                            id={id}
+                            type="radio"
+                            name={field.name}
+                            value={choice.value}
+                            checked={checked}
+                            onChange={() => field.onChange(choice.value)}
+                            className="mt-1 accent-[var(--primary)]"
+                          />
+                          <span className="grid gap-0.5">
+                            <span className="text-sm font-medium">{choice.label}</span>
+                            <span className="text-xs text-muted-foreground">{choice.hint}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </fieldset>
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Insured</CardTitle>
@@ -106,7 +192,7 @@ export function NewProposalForm() {
               RFQ.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-2">
+          <CardContent className="grid gap-3">
             <FormField
               control={form.control}
               name="clientId"
@@ -121,6 +207,7 @@ export function NewProposalForm() {
                 </FormItem>
               )}
             />
+            {client && renewal ? <LastPolicy client={client} /> : null}
           </CardContent>
         </Card>
 
@@ -128,14 +215,16 @@ export function NewProposalForm() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Timeline</CardTitle>
+            <CardTitle>Policy period and team</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <PolicyPeriodFields renewal={renewal} />
+            <OwnerField />
             <FormField
               control={form.control}
               name="dueDate"
               render={({ field }) => (
-                <FormItem className="max-w-xs">
+                <FormItem>
                   <FormLabel>Quotes needed by</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
@@ -157,14 +246,190 @@ export function NewProposalForm() {
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={create.isPending}>
             {create.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : null}
-            Create proposal
+            {renewal ? 'Create renewal' : 'Create proposal'}
           </Button>
           <Button asChild variant="outline">
-            <Link href="/proposals?type=new">Cancel</Link>
+            <Link href={listHref}>Cancel</Link>
           </Button>
         </div>
       </form>
     </Form>
+  );
+}
+
+/** Start and end of the policy period; the end follows the start (a year less a day) until typed. */
+function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
+  const form = useFormContext<CreateProposalFormValues, unknown, CreateProposalRequest>();
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="policyStart"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Policy period from{renewal ? '' : ' (optional)'}</FormLabel>
+            <FormControl>
+              <Input
+                type="date"
+                name={field.name}
+                ref={field.ref}
+                onBlur={field.onBlur}
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  const start = event.target.value;
+                  field.onChange(start);
+                  if (start && !form.getFieldState('policyEnd').isDirty) {
+                    form.setValue('policyEnd', policyYearEnd(start));
+                  }
+                }}
+              />
+            </FormControl>
+            <FormDescription>
+              {renewal
+                ? 'Usually the day after last year’s policy ends.'
+                : 'Leave blank for 1 year from the date of payment.'}
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="policyEnd"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Policy period to{renewal ? '' : ' (optional)'}</FormLabel>
+            <FormControl>
+              <Input
+                type="date"
+                name={field.name}
+                ref={field.ref}
+                onBlur={field.onBlur}
+                value={field.value ?? ''}
+                onChange={(event) => field.onChange(event.target.value)}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
+}
+
+/** The staff member the case is assigned to. */
+function OwnerField() {
+  const form = useFormContext<CreateProposalFormValues, unknown, CreateProposalRequest>();
+  const owners = useQuery({
+    queryKey: ['proposals', 'owners'],
+    queryFn: ({ signal }) =>
+      apiFetch('proposals/owners', { schema: ProposalOwnersResponseSchema, signal }),
+  });
+  return (
+    <FormField
+      control={form.control}
+      name="ownerId"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Assigned to</FormLabel>
+          <FormControl>
+            <NativeSelect
+              name={field.name}
+              ref={field.ref}
+              onBlur={field.onBlur}
+              value={field.value ?? ''}
+              disabled={owners.isPending}
+              onChange={(event) => field.onChange(event.target.value || undefined)}
+            >
+              {owners.isPending ? <option value="">Loading staff…</option> : null}
+              {(owners.data?.items ?? []).map((owner) => (
+                <option key={owner.id} value={owner.id}>
+                  {owner.name}
+                </option>
+              ))}
+            </NativeSelect>
+          </FormControl>
+          <FormDescription>Who works on the case. Staff who can edit proposals.</FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+/**
+ * Last year's policy for a renewal, from the policy software. When found, the new policy period
+ * starts the day after it ends.
+ */
+function LastPolicy({ client }: { client: Client }) {
+  const form = useFormContext<CreateProposalFormValues, unknown, CreateProposalRequest>();
+  const lookup = useQuery({
+    queryKey: ['proposals', 'last-policy', client.id],
+    queryFn: ({ signal }) =>
+      apiFetch(`proposals/last-policy?clientId=${client.id}`, {
+        schema: ExistingPolicyLookupSchema,
+        signal,
+      }),
+  });
+  const policy = lookup.data?.policy ?? null;
+
+  useEffect(() => {
+    if (!policy?.periodEnd || form.getFieldState('policyStart').isDirty) return;
+    const start = addDays(policy.periodEnd, 1);
+    form.setValue('policyStart', start);
+    if (!form.getFieldState('policyEnd').isDirty) form.setValue('policyEnd', policyYearEnd(start));
+  }, [policy, form]);
+
+  if (lookup.isPending) return <LoadingState label="Looking up last year’s policy" />;
+  if (lookup.isError) {
+    return <ErrorState error={lookup.error} onRetry={() => void lookup.refetch()} />;
+  }
+  if (!policy) {
+    return (
+      <Alert variant="warning" role="status">
+        <CircleAlert aria-hidden="true" />
+        <AlertTitle>Last year’s policy was not found</AlertTitle>
+        <AlertDescription>
+          {lookup.data.message} You can still create the renewal and fetch it again from the case.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  return (
+    <section
+      aria-label="Last year’s policy"
+      className="grid gap-2 rounded-md border bg-muted/30 p-3 text-sm"
+    >
+      <p className="font-medium">
+        Last year’s policy, from {policy.source}: {policy.policyNumber}
+      </p>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+        <PolicyFact label="Insurer">{policy.insurer}</PolicyFact>
+        <PolicyFact label="Period">
+          {policy.periodStart && policy.periodEnd
+            ? `${formatDate(policy.periodStart)} – ${formatDate(policy.periodEnd)}`
+            : '—'}
+        </PolicyFact>
+        <PolicyFact label="Sum insured">
+          {formatInr(wholeRupees(policy.totalSumInsured))}
+        </PolicyFact>
+        <PolicyFact label="Premium">
+          {policy.totalPremium ? formatInr(wholeRupees(policy.totalPremium)) : '—'}
+        </PolicyFact>
+      </dl>
+      <p className="text-xs text-muted-foreground">
+        Copied into the renewal as the Existing column when you create it.
+      </p>
+    </section>
+  );
+}
+
+function PolicyFact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-0.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="font-medium tabular">{children}</dd>
+    </div>
   );
 }
 
@@ -260,7 +525,7 @@ function ChosenClient({ client, onChange }: { client: Client; onChange: () => vo
 
 function LocationsCard({ client }: { client: Client }) {
   const locations = useQuery(clientLocationsQuery(client.id));
-  const form = useFormContext<CreateProposalRequest>();
+  const form = useFormContext<CreateProposalFormValues, unknown, CreateProposalRequest>();
   const chosen = useWatch({ control: form.control, name: 'locationIds' });
 
   // Every location is ticked when the client's list arrives; untick the ones not covered.

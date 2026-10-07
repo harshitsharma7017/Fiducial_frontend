@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CircleAlert, CircleCheck, LoaderCircle, Lock, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -35,7 +35,10 @@ import { ApiError, apiFetch } from '@/lib/api-client';
 import { clientLocationsQuery } from '@/lib/api/new-business';
 import {
   blankLocation,
+  contentsTotal,
   fireGroupTotals,
+  fireTotal,
+  sectionSumInsured,
   sumRupeesOf,
   toDataSheetForm,
   toDataSheetRequest,
@@ -49,13 +52,18 @@ import {
   FIRE_GROUPS,
   MAX_CLAIM_ROWS,
   OTHER_SECTION_LABELS,
+  SECTION_LINES,
+  SUM_INSURED_LINE,
+  isAnnexureSection,
   ProposalRecordSchema,
   formatDateTime,
+  wholeRupees,
   type ClientLocation,
   type DataSheetInput,
   type ProposalRecord,
 } from '@/shared';
 import { RupeesField, TextAreaField, TextField } from './data-sheet-fields';
+import { AnnexureGrid, SectionLines } from './section-details';
 import { LocationCard, type LocationInfo } from './location-card';
 
 function addressOf(address: ClientLocation['address']): string {
@@ -188,6 +196,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
               type="date"
               description="Leave blank for 1 year from the date of payment."
             />
+            <TextField name="policyEnd" label="Policy end" type="date" />
           </CardContent>
         </Card>
 
@@ -227,8 +236,12 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           )}
         </section>
 
-        <FireOptions />
-        <OtherSections names={new Map(record.sections.map((s) => [s.code, s.name]))} />
+        <FireOptions existing={record.existingPolicy} />
+        <OtherSections
+          names={new Map(record.sections.map((s) => [s.code, s.name]))}
+          existing={record.existingPolicy}
+          readOnly={readOnly}
+        />
         <Claims readOnly={readOnly} />
 
         <Card>
@@ -413,8 +426,15 @@ function AddLocationsDialog({
 }
 
 /** The RFQ's Fire lines: Option 1 adds up the locations; Option 2 is typed per line. */
-function FireOptions() {
+/** A renewal's last-year figure, shown to the rupee; a dash when the policy did not have it. */
+function existingAmount(value: string | undefined) {
+  return value === undefined ? '—' : formatInr(wholeRupees(value));
+}
+
+function FireOptions({ existing }: { existing: ProposalRecord['existingPolicy'] }) {
   const form = useFormContext<DataSheetFormValues>();
+  const existingLines = new Map(existing?.fireLines.map((line) => [line.group, line.sumInsured]));
+  const existingFire = existing?.sections.find((section) => section.code === 'FIRE')?.sumInsured;
   const locations = useWatch({ control: form.control, name: 'locations' });
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
   const totals = fireGroupTotals(locations ?? []);
@@ -434,6 +454,7 @@ function FireOptions() {
           <TableHeader>
             <TableRow>
               <TableHead>Line</TableHead>
+              {existing ? <TableHead className="text-right">Existing</TableHead> : null}
               <TableHead className="text-right">Option 1</TableHead>
               <TableHead className="text-right">Option 2</TableHead>
             </TableRow>
@@ -444,6 +465,11 @@ function FireOptions() {
                 <TableCell className="min-w-56 whitespace-normal">
                   {FIRE_GROUP_LABELS[group]}
                 </TableCell>
+                {existing ? (
+                  <TableCell className="text-right text-muted-foreground tabular whitespace-nowrap">
+                    {existingAmount(existingLines.get(group))}
+                  </TableCell>
+                ) : null}
                 <TableCell className="text-right tabular whitespace-nowrap">
                   {formatInr(totals[group])}
                 </TableCell>
@@ -460,8 +486,13 @@ function FireOptions() {
           <TableFooter>
             <TableRow>
               <TableCell className="font-medium">Total sum insured</TableCell>
+              {existing ? (
+                <TableCell className="text-right font-medium tabular whitespace-nowrap">
+                  {existingAmount(existingFire)}
+                </TableCell>
+              ) : null}
               <TableCell className="text-right font-medium tabular whitespace-nowrap">
-                {formatInr(sumRupeesOf(Object.values(totals)))}
+                {formatInr(fireTotal(locations ?? []))}
               </TableCell>
               <TableCell className="text-right font-medium tabular whitespace-nowrap">
                 {seconds.length > 0 && seconds.every((value) => /^\d+$/.test(value))
@@ -477,17 +508,31 @@ function FireOptions() {
 }
 
 /** The other coverage sections: included or not, with Proposed 1 and 2. */
-function OtherSections({ names }: { names: ReadonlyMap<string, string> }) {
+function OtherSections({
+  names,
+  existing,
+  readOnly,
+}: {
+  names: ReadonlyMap<string, string>;
+  existing: ProposalRecord['existingPolicy'];
+  readOnly: boolean;
+}) {
+  const existingSections = new Map(
+    existing?.sections.map((section) => [section.code, section.sumInsured]),
+  );
   const form = useFormContext<DataSheetFormValues>();
   const sections = useWatch({ control: form.control, name: 'sections' });
+  const locations = useWatch({ control: form.control, name: 'locations' });
+  // Burglary covers "all the contents as per Fire section except building" (the RFQ schedule).
+  const contents = contentsTotal(locations ?? []);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Other sections</CardTitle>
         <CardDescription>
-          Tick the covers to quote and enter their sums insured. The RFQ lists the rest as not
-          required.
+          Tick the covers to quote and fill their details; untick a cover to mark it not required
+          (the RFQ lists it so). An annexure’s items add up to its sum insured.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -495,6 +540,7 @@ function OtherSections({ names }: { names: ReadonlyMap<string, string> }) {
           <TableHeader>
             <TableRow>
               <TableHead>Section</TableHead>
+              {existing ? <TableHead className="text-right">Existing</TableHead> : null}
               <TableHead className="text-right">Proposed 1</TableHead>
               <TableHead className="text-right">Proposed 2</TableHead>
             </TableRow>
@@ -503,52 +549,118 @@ function OtherSections({ names }: { names: ReadonlyMap<string, string> }) {
             {(sections ?? []).map((section, index) => {
               const { code, included } = section;
               const name = names.get(code) ?? OTHER_SECTION_LABELS[code];
+              const annexureSection = isAnnexureSection(code);
+              const hasLines = code in SECTION_LINES;
+              // D-5: the sum insured comes from the annexure (or FLOP's gross profit) when given.
+              const derived =
+                (annexureSection && (section.annexure?.length ?? 0) > 0) ||
+                Boolean(SUM_INSURED_LINE[code] && section.lines?.[SUM_INSURED_LINE[code]]?.trim());
+              const columnCount = existing ? 4 : 3;
               return (
-                <TableRow key={code}>
-                  <TableCell>
-                    <FormField
-                      control={form.control}
-                      name={`sections.${index}.included`}
-                      render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <FormControl>
-                            <Checkbox
-                              ref={field.ref}
-                              name={field.name}
-                              disabled={field.disabled}
-                              checked={field.value}
-                              onCheckedChange={(value) => field.onChange(value === true)}
-                              onBlur={field.onBlur}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">{name}</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </TableCell>
-                  <TableCell className="align-top">
-                    {included ? (
-                      <RupeesField
-                        name={`sections.${index}.proposed1`}
-                        label={`${name} Proposed 1`}
-                        hideLabel
+                <Fragment key={code}>
+                  <TableRow
+                    className={included && (annexureSection || hasLines) ? 'border-b-0' : undefined}
+                  >
+                    <TableCell>
+                      <FormField
+                        control={form.control}
+                        name={`sections.${index}.included`}
+                        render={({ field }) => (
+                          <FormItem className="flex items-center gap-2">
+                            <FormControl>
+                              <Checkbox
+                                ref={field.ref}
+                                name={field.name}
+                                disabled={field.disabled}
+                                checked={field.value}
+                                onCheckedChange={(value) => field.onChange(value === true)}
+                                onBlur={field.onBlur}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">{name}</FormLabel>
+                          </FormItem>
+                        )}
                       />
-                    ) : (
-                      <span className="block text-right text-sm text-muted-foreground">
-                        Not required
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="align-top">
-                    {included ? (
-                      <RupeesField
-                        name={`sections.${index}.proposed2`}
-                        label={`${name} Proposed 2`}
-                        hideLabel
-                      />
+                    </TableCell>
+                    {existing ? (
+                      <TableCell className="text-right align-top text-muted-foreground tabular whitespace-nowrap">
+                        {existingAmount(existingSections.get(code))}
+                      </TableCell>
                     ) : null}
-                  </TableCell>
-                </TableRow>
+                    <TableCell className="align-top">
+                      {included ? (
+                        <div className="grid justify-items-end gap-1">
+                          {derived ? (
+                            <span
+                              className="py-2 text-right text-sm font-medium tabular"
+                              aria-label={`${name} Proposed 1`}
+                            >
+                              {formatInr(sectionSumInsured(section) ?? '0')}
+                              <span className="block text-xs font-normal text-muted-foreground">
+                                {annexureSection ? 'From the annexure' : 'Annual Gross Profit'}
+                              </span>
+                            </span>
+                          ) : (
+                            <RupeesField
+                              name={`sections.${index}.proposed1`}
+                              label={`${name} Proposed 1`}
+                              hideLabel
+                            />
+                          )}
+                          {code === 'BURGLARY' && contents !== '0' && !form.formState.disabled ? (
+                            <Button
+                              type="button"
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs"
+                              onClick={() =>
+                                form.setValue(`sections.${index}.proposed1`, contents, {
+                                  shouldDirty: true,
+                                })
+                              }
+                            >
+                              Use contents total {formatInr(contents)}
+                            </Button>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="block text-right text-sm text-muted-foreground">
+                          Not required
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="align-top">
+                      {included ? (
+                        <RupeesField
+                          name={`sections.${index}.proposed2`}
+                          label={`${name} Proposed 2`}
+                          hideLabel
+                        />
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                  {included && (annexureSection || hasLines) ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columnCount}
+                        className="bg-muted/30 pb-4 whitespace-normal"
+                      >
+                        <section aria-label={`${name} details`} className="grid gap-2">
+                          {annexureSection ? (
+                            <AnnexureGrid
+                              index={index}
+                              code={code}
+                              name={name}
+                              readOnly={readOnly}
+                            />
+                          ) : (
+                            <SectionLines index={index} code={code} name={name} />
+                          )}
+                        </section>
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </Fragment>
               );
             })}
           </TableBody>

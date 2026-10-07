@@ -8,6 +8,7 @@ const ALLOWED_AREAS = new Set([
   'insurers',
   'imports',
   'catalog',
+  'templates',
   'proposals',
   'rating',
   'health',

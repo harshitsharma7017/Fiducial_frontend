@@ -1,12 +1,14 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { DemoModeGate } from '@/components/demo-mode-gate';
 import { StageBadge, TypeBadge } from '@/components/proposals/badges';
 import { StageStepper } from '@/components/proposals/sections';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +16,8 @@ import { usePermission } from '@/hooks/use-permission';
 import { ApiError } from '@/lib/api-client';
 import { proposalRecordQuery } from '@/lib/api/new-business';
 import { formatInr } from '@/lib/money';
-import { formatDate, formatDateTime, type ProposalRecord } from '@/shared';
+import { formatDate, formatDateTime, wholeRupees, type ProposalRecord } from '@/shared';
+import { ExistingPolicyCard, StageControls } from './case-controls';
 import { DataSheetForm } from './data-sheet-form';
 import { InsurersRfqPanel } from './insurers-rfq-panel';
 
@@ -77,12 +80,12 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
           <h1 className="text-xl font-semibold tracking-tight text-primary">
             {record.client.name}
           </h1>
-          <TypeBadge type="NEW" />
+          <TypeBadge type={record.type} />
           <StageBadge stage={record.stage} />
         </div>
         <p className="text-sm text-muted-foreground tabular">
           {record.reference} · {record.client.city || record.client.state} ·{' '}
-          {record.client.gstin ?? 'No GSTIN'} · Owner {record.owner.name}
+          {record.client.gstin ?? 'No GSTIN'} · Assigned to {record.owner.name}
         </p>
         {record.suggestedProducts.length > 0 ? (
           <p className="text-sm">
@@ -103,11 +106,27 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
         ) : null}
       </div>
 
+      {record.stage === 'CLOSED' ? (
+        <Alert variant="info" className="mb-6">
+          <XCircle aria-hidden="true" />
+          <AlertTitle>This case is closed</AlertTitle>
+          <AlertDescription>{record.closedReason}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="mb-6 grid gap-4 *:min-w-0 lg:grid-cols-[1fr_auto]">
-        <StageStepper stage={record.stage} />
+        <div className="grid gap-3">
+          <StageStepper stage={record.stage} />
+          {canEdit ? <StageControls record={record} /> : null}
+        </div>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4 lg:grid-cols-2">
+          <Fact label="Policy period">
+            {record.policyStart
+              ? `${formatDate(record.policyStart)} – ${record.policyEnd ? formatDate(record.policyEnd) : '1 year'}`
+              : '1 year from payment'}
+          </Fact>
           <Fact label="Quotes needed by">{formatDate(record.dueDate)}</Fact>
-          <Fact label="Fire sum insured">{formatInr(record.fire.proposed1)}</Fact>
+          <Fact label="Fire sum insured">{formatInr(wholeRupees(record.fire.proposed1))}</Fact>
           <Fact label="Locations">{record.locations.length}</Fact>
           <Fact label="RFQ sent to">
             {sent} of {record.insurers.length} insurers
@@ -130,7 +149,14 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
         {/* Mounted while hidden, so unsaved Data Sheet entries survive a look at another tab. */}
-        <TabsContent value="data-sheet" forceMount className="min-w-0 data-[state=inactive]:hidden">
+        <TabsContent
+          value="data-sheet"
+          forceMount
+          className="grid min-w-0 gap-6 *:min-w-0 data-[state=inactive]:hidden"
+        >
+          {record.type === 'EXISTING' ? (
+            <ExistingPolicyCard record={record} canEdit={canEdit} />
+          ) : null}
           <DataSheetForm record={record} canEdit={canEdit} />
         </TabsContent>
         <TabsContent value="rfq" className="min-w-0">

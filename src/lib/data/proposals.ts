@@ -27,14 +27,20 @@ export const PRODUCT_BANDS: Record<Product, { min: number; max: number }> = {
 const INSURERS = ['Suraksha', 'Kavach', 'Abhay', 'Dhruva', 'Nirbhay', 'Sankalp'] as const;
 const DOCUMENT_ORDER: readonly DocumentKind[] = ['DATA_SHEET', 'RFQ', 'QCR', 'PLACEMENT_SLIP'];
 
-/** How far through the pipeline a stage is (0 = Draft, 5 = Placed). */
+/**
+ * How far through the documents a stage is (0 = Draft, 5 = Placed), for the sample documents.
+ * The samples use the original six stages; the later ones count as their nearest document step.
+ */
 const STAGE_INDEX: Record<Stage, number> = {
   DRAFT: 0,
   DATA_SHEET: 1,
   RFQ_SENT: 2,
   QUOTES_RECEIVED: 3,
   QCR: 4,
+  CLIENT_APPROVAL: 4,
+  PLACEMENT_SLIP: 4,
   PLACED: 5,
+  CLOSED: 0,
 };
 
 interface Spec {

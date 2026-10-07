@@ -2,6 +2,7 @@ import {
   Building2,
   BriefcaseBusiness,
   FileCheck2,
+  FileSpreadsheet,
   FileText,
   FileUp,
   Flame,
@@ -109,6 +110,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'Standard notes',
         href: '/masters/notes',
         icon: NotebookText,
+        permission: 'masters.view',
+      },
+      {
+        label: 'Document templates',
+        href: '/masters/templates',
+        icon: FileSpreadsheet,
         permission: 'masters.view',
       },
       {

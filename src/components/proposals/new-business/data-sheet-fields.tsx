@@ -32,7 +32,14 @@ interface FieldProps {
 const asText = (value: unknown) => (typeof value === 'string' ? value : '');
 
 /** Whole rupees with Indian grouping as you type; decimals are dropped. */
-export function RupeesField({ name, label, hideLabel, description, className }: FieldProps) {
+export function RupeesField({
+  name,
+  label,
+  hideLabel,
+  description,
+  className,
+  placeholder,
+}: FieldProps & { placeholder?: string }) {
   const form = useFormContext<DataSheetForm>();
   return (
     <FormField
@@ -48,6 +55,7 @@ export function RupeesField({ name, label, hideLabel, description, className }: 
               onBlur={field.onBlur}
               disabled={field.disabled}
               value={asText(field.value)}
+              placeholder={placeholder}
               onValueChange={(value) => field.onChange(value.split('.')[0] ?? '')}
               className="min-w-32 text-right"
             />

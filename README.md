@@ -12,8 +12,8 @@ never calls it directly: this app's own server routes (a backend-for-frontend) h
 call.
 
 New-business proposals are real: created, filled in and taken to the RFQ through the API (see
-[New proposals to the RFQ](#new-proposals-to-the-rfq)). Renewals still read **sample data** (see
-[Sample proposal data](#sample-proposal-data)).
+[New proposals to the RFQ](#new-proposals-to-the-rfq)), and so are renewals, which start from last year's policy.
+Demo mode shows **sample data** (see [Sample proposal data](#sample-proposal-data)).
 To click through everything without running the backend, use [demo mode](#demo-mode-no-backend).
 
 Project documents and open questions live in the backend repository: `docs/` and `docs/OPEN_ITEMS.md` there
@@ -121,6 +121,15 @@ masters from Excel.
   **Add-on Covers** has the four lists (filter and search) and a "BSUS & BLUS limits and rates" tab. **Tax rates**
   marks the rate in force today; a proposal keeps the rate it was created with.
 
+## Document templates
+
+Masters → Document templates (`/masters/templates`, R-3 and R-4) holds the client's Excel templates, one each for the
+RFQ, QCR and Placement Slip. Every role can see and download them; Admins upload or replace one with the button on
+its card. An RFQ template is checked before it is kept: the card lists its sheets and whether the logo and the broker's
+address were found, or the problems that stopped it. Once it is uploaded, Download RFQ fills that file (Excel) or
+draws it on A4 with the letterhead (PDF); until then the built-in layout is used, and the RFQ tab says which.
+QCR and Placement Slip templates are stored only, until those documents are built.
+
 ## Audit log
 
 `/audit` (Admin) lists sign-ins and every create, edit and approval, newest first: when, who, what, which record, and
@@ -131,34 +140,43 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
 
 ## New proposals to the RFQ
 
-- **Create** (`/proposals/new?type=new`, `proposals.create`): choose the insured from the client master, untick any
-  risk location the proposal does not cover, set the date quotes are needed by. Start renewal
-  (`?type=existing`) is still a placeholder.
+- **Create** (`/proposals/new?type=new`, or `?type=existing` from Start renewal; `proposals.create`): New business
+  or Renewal, the insured from the client master, its risk locations, the policy period (the end follows the start:
+  a year less a day), who it is assigned to, and the date quotes are needed by. For a renewal, last year's policy is
+  fetched from the policy software and shown first, and the new period starts the day after it ends.
+- **Stages**: 9 on every case (the stepper, dashboard chips and chart). After the RFQ is sent, "Move to …" takes the
+  case to its next stage; "Close case" (with a reason) ends it.
+- **Renewals** show the Existing policy card (with Fetch again) and an Existing column in the Fire lines and other
+  sections.
 - **Workspace** (`/proposals/{id}` for an id from the API; sample ids keep the read-only page):
-  - **Data Sheet**: dates; per location the 16 Fire items (buildings as area × rate or a typed amount),
-    hypothecation, stock in the open and the nine risk details; add or remove the client's locations; Fire Option 2
-    per line; the 13 other sections (include, Proposed 1 and 2); up to three years of claims; notes. Saved as a
+  - **Data Sheet**: dates; per location the Fire & Burglary block laid out as the client's Data Sheet (7 numbered
+    items with sub-items, sq ft × rate for buildings, heading subtotals and a running total), hypothecation and stock
+    kept at open space, and the nine risk details; add or remove the client's locations; Fire Option 2
+    per line; the 13 other sections (include or not required, Proposed 1 and 2, the Data Sheet's lines for FLOP, Money, Fidelity
+    and Public Liability, and add-row annexure grids for Plate Glass, Neon Sign, All Risk, EEI, MBD and Boiler whose
+    total is the section's sum insured); up to three years of claims; notes. Saved as a
     whole. The checklist of what is still needed comes from the API. Totals update as you type
-    (`src/lib/data-sheet.ts`, the API's arithmetic in BigInt), and the API's figures replace them on save.
-  - **Insurers and RFQ**: up to five active insurers, their RFQ addresses with copy buttons, Download RFQ (Excel)
-    once the Data Sheet is complete, and Mark as sent per insurer or for all, after a confirmation. Sending locks
+    (`src/lib/data-sheet.ts`: exact paise in BigInt, shown to the rupee, as Excel does), and the API's figures replace
+    them on save. The Burglary row offers the contents total (all Fire items except buildings).
+  - **Insurers and RFQ**: up to five active insurers, their RFQ addresses with copy buttons, Download RFQ (Excel
+    or PDF) once the Data Sheet is complete, and Mark as sent per insurer or for all, after a confirmation. Sending locks
     the Data Sheet.
   - **Activity**: the proposal's history, newest first. `?tab=data-sheet|rfq|activity` opens a given tab.
 - **RFQ page** (`/rfq`, sidebar Workflow → RFQ, `proposals.view`): every new-business RFQ, ready to send first, with
   status chips (Data Sheet incomplete, Ready to send, Partly sent, Sent; `?status=`), search by reference, client or
   insurer (`?q=`), the insurers each went to, the due date and the last send. A reference opens the proposal on the
   tab that needs work. Statuses come from `src/lib/rfq-status.ts`.
-- New proposals from the API appear on the dashboard, in the list, drawer and palette next to the renewals:
-  `src/lib/api/new-business.ts` maps each one onto the screen model (product and add-ons are chosen at the QCR).
+- Cases from the API appear on the dashboard, in the lists, drawer and palette: `src/lib/api/new-business.ts` maps each
+  one onto the screen model (product and add-ons are chosen at the QCR; a renewal's Existing figures and expiry come
+  from last year's policy).
 
 ## Sample proposal data
 
-Renewals (and, in demo mode, new business too) on the dashboard, proposal lists, drawer, full proposal page, palette
-search and notifications read sample data built in
-`src/lib/data/` (14 fictional proposals, with dates relative to today in IST). Components never import it: they call
-the hooks in `src/lib/api/` (`useProposals`, `useProposal`, `useDashboardStats`, `useNotifications`).
-`proposalsOf()` in `src/lib/api/proposals.ts` decides the source per type. When the API serves renewals, change it
-there and delete `src/lib/data/`; no component changes.
+In demo mode only, the dashboard, proposal lists, drawer, full proposal page, palette search and notifications read
+sample data built in `src/lib/data/` (14 fictional proposals, with dates relative to today in IST; they use the
+original six stages). Components never import it: they call the hooks in `src/lib/api/` (`useProposals`,
+`useProposal`, `useDashboardStats`, `useNotifications`). `proposalsOf()` in `src/lib/api/proposals.ts` reads the API
+(`fetchCases`) and falls back to the samples in demo mode.
 
 ## Scripts
 

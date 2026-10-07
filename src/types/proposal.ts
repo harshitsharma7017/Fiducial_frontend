@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PROPOSAL_STAGE_LABELS, PROPOSAL_STAGES, type ProposalStage } from '@/shared';
 
 /**
  * Proposal domain for the frontend shell: enums, labels and schemas, defined once and reused.
@@ -13,23 +14,10 @@ export const PROPOSAL_TYPE_LABELS: Record<ProposalType, string> = {
   EXISTING: 'Renewal',
 };
 
-export const STAGES = [
-  'DRAFT',
-  'DATA_SHEET',
-  'RFQ_SENT',
-  'QUOTES_RECEIVED',
-  'QCR',
-  'PLACED',
-] as const;
-export type Stage = (typeof STAGES)[number];
-export const STAGE_LABELS: Record<Stage, string> = {
-  DRAFT: 'Draft',
-  DATA_SHEET: 'Data Sheet',
-  RFQ_SENT: 'RFQ Sent',
-  QUOTES_RECEIVED: 'Quotes Received',
-  QCR: 'QCR',
-  PLACED: 'Placed',
-};
+/** The 9 stages of every case, from the shared contract (Fiducial_backend src/shared). */
+export const STAGES = PROPOSAL_STAGES;
+export type Stage = ProposalStage;
+export const STAGE_LABELS: Record<Stage, string> = PROPOSAL_STAGE_LABELS;
 /** URL slug for each stage (the dashboard's ?stage= parameter). */
 export const STAGE_SLUGS: Record<Stage, string> = {
   DRAFT: 'draft',
@@ -37,7 +25,10 @@ export const STAGE_SLUGS: Record<Stage, string> = {
   RFQ_SENT: 'rfq-sent',
   QUOTES_RECEIVED: 'quotes-received',
   QCR: 'qcr',
+  CLIENT_APPROVAL: 'client-approval',
+  PLACEMENT_SLIP: 'placement-slip',
   PLACED: 'placed',
+  CLOSED: 'closed',
 };
 
 export const PRODUCTS = ['BSUS', 'BLUS', 'SFSP', 'PAR'] as const;
@@ -182,6 +173,11 @@ export type NewProposal = z.infer<typeof NewProposalSchema>;
 
 export const RenewalProposalSchema = ProposalBaseSchema.extend({
   type: z.literal('EXISTING'),
+  // Chosen at the QCR, as for new business; a renewal from the API has none yet.
+  product: z.enum(PRODUCTS).nullable(),
+  addOns: z
+    .object({ selected: z.array(z.string()), catalogueSize: z.number().int().positive() })
+    .nullable(),
   existingPolicy: z.object({
     insurer: z.string().min(1),
     policyNumber: z.string().min(1),

@@ -21,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { usePermission } from '@/hooks/use-permission';
-import { fetchNewBusiness } from '@/lib/api/new-business';
+import { fetchCases } from '@/lib/api/new-business';
 import { daysBetween, todayIst } from '@/lib/dates';
 import { formatInrCompact } from '@/lib/money';
 import {
@@ -37,7 +37,7 @@ import {
 } from '@/lib/rfq-status';
 import { useUrlSearchParams } from '@/lib/use-url-search-params';
 import { cn } from '@/lib/utils';
-import { formatDate, formatDateTime, type ProposalRecord } from '@/shared';
+import { formatDate, formatDateTime, wholeRupees, type ProposalRecord } from '@/shared';
 
 const COLUMNS = 7;
 
@@ -64,7 +64,7 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
 
   const rfqs = useQuery({
     queryKey: ['proposals', 'rfq'],
-    queryFn: async () => (await fetchNewBusiness()) ?? [],
+    queryFn: async () => (await fetchCases()) ?? [],
   });
 
   const setParam = (name: string, value: string | null) => {
@@ -123,7 +123,7 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
     <>
       <PageHeader
         title="RFQ"
-        description="Every new-business request for quotation: ready to send, partly sent and sent, with the insurers each went to."
+        description="Every request for quotation, new business and renewals: ready to send, partly sent and sent, with the insurers each went to."
         actions={
           canCreate ? (
             <Button asChild variant="accent">
@@ -247,6 +247,11 @@ function RfqRow({ record }: { record: ProposalRecord }) {
         >
           {record.reference}
         </Link>
+        {record.type === 'EXISTING' ? (
+          <Badge variant="accent" className="ml-2">
+            Renewal
+          </Badge>
+        ) : null}
       </TableCell>
       <TableCell className="min-w-44 whitespace-normal">
         {record.client.name}
@@ -282,7 +287,7 @@ function RfqRow({ record }: { record: ProposalRecord }) {
         )}
       </TableCell>
       <TableCell className="text-right tabular whitespace-nowrap">
-        {formatInrCompact(record.fire.proposed1)}
+        {formatInrCompact(wholeRupees(record.fire.proposed1))}
       </TableCell>
       <TableCell className="whitespace-nowrap">
         <span className="tabular">{formatDate(record.dueDate)}</span>

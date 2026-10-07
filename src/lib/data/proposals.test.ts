@@ -38,7 +38,13 @@ function checkRules(proposals: Proposal[], now: Date) {
   for (const type of PROPOSAL_TYPES) {
     const ofType = proposals.filter((p) => p.type === type);
     expect(ofType).toHaveLength(7);
-    expect(new Set(ofType.map((p) => p.stage))).toEqual(new Set(STAGES));
+    // The demo samples cover the original six stages; Client Approval, Placement Slip and Closed
+    // came with the 9-stage workflow and are not in the samples.
+    expect(new Set(ofType.map((p) => p.stage))).toEqual(
+      new Set(
+        STAGES.filter((stage) => !['CLIENT_APPROVAL', 'PLACEMENT_SLIP', 'CLOSED'].includes(stage)),
+      ),
+    );
     expect(new Set(ofType.map((p) => p.product))).toEqual(new Set(PRODUCTS));
     // At least one of each type placed this IST month.
     expect(

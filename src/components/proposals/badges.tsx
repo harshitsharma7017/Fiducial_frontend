@@ -27,7 +27,10 @@ const STAGE_VARIANT: Record<Stage, Variant> = {
   RFQ_SENT: 'info',
   QUOTES_RECEIVED: 'info',
   QCR: 'warning',
+  CLIENT_APPROVAL: 'warning',
+  PLACEMENT_SLIP: 'accent',
   PLACED: 'success',
+  CLOSED: 'outline',
 };
 
 export function StageBadge({ stage }: { stage: Stage }) {

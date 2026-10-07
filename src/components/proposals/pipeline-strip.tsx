@@ -23,7 +23,7 @@ export function PipelineStrip({
     <div
       role="group"
       aria-label="Filter by stage"
-      className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]"
+      className="flex min-w-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]"
     >
       {STAGES.map((stage) => {
         const active = selected === stage;

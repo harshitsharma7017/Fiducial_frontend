@@ -13,12 +13,7 @@ import { queryKeys } from '@/lib/query-keys';
 import type { Proposal, ProposalType, Stage } from '@/types/proposal';
 import { computeDashboardStats } from './dashboard-stats';
 import { delay } from './latency';
-import {
-  fetchNewBusiness,
-  fetchProposalRecord,
-  isRecordId,
-  toScreenProposal,
-} from './new-business';
+import { fetchCases, fetchProposalRecord, isRecordId, toScreenProposal } from './new-business';
 
 export interface ListParams {
   type?: ProposalType;
@@ -36,8 +31,8 @@ export interface ProposalListResult {
   pageSize: number;
 }
 
-/** The sample proposals, rebuilt once per IST day (dates are relative to today). Renewals only:
- * new business comes from the API (see new-business.ts), except in demo mode. */
+/** The sample proposals, rebuilt once per IST day (dates are relative to today). Demo mode only:
+ * otherwise every case comes from the API (see new-business.ts). */
 let cache: { day: string; proposals: Proposal[] } | null = null;
 function sampleProposals(): Proposal[] {
   const day = todayIst();
@@ -46,21 +41,15 @@ function sampleProposals(): Proposal[] {
 }
 
 /**
- * The proposals of one type, or of both: new business from the API (the sample new proposals in
- * demo mode, which has no API) and renewals from the sample data.
+ * The cases of one type, or of both, from the API; the sample proposals in demo mode, which has
+ * no API.
  */
 async function proposalsOf(type: ProposalType | undefined): Promise<Proposal[]> {
-  const renewals = () => sampleProposals().filter((proposal) => proposal.type === 'EXISTING');
-  if (type === 'EXISTING') {
-    await delay(450);
-    return renewals();
+  const records = await fetchCases(type);
+  if (records === null) {
+    return sampleProposals().filter((proposal) => !type || proposal.type === type);
   }
-  const records = await fetchNewBusiness();
-  const newBusiness =
-    records === null
-      ? sampleProposals().filter((proposal) => proposal.type === 'NEW')
-      : records.map(toScreenProposal);
-  return type === 'NEW' ? newBusiness : [...newBusiness, ...renewals()];
+  return records.map(toScreenProposal);
 }
 
 /**
