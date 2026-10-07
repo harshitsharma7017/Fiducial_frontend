@@ -105,6 +105,22 @@ client still has to confirm the table (Q12 in the backend's `docs/OPEN_ITEMS.md`
   the ticked rows and leaves the rest out. Import clients before their risk locations.
 - These pages read live data, so they show the demo-mode state in mock mode.
 
+## Product and cover masters
+
+Masters → Products, Coverage sections, Add-on Covers, Tax rates and Standard notes (M-4 to M-9). Every role can view
+them; Admins (`masters.manage`) edit rows on screen, move products, sections and notes up or down, and replace the
+masters from Excel.
+
+- **Excel**: "Download as Excel" gives one workbook with a sheet per master. Upload it on Import data → "Product and
+  cover masters": the preview checks every sheet, and "Replace" saves each sheet in the file as the whole of its
+  master once everything passes.
+- **Screens** are one generic table and form (`components/catalog/`) built from the column definitions in
+  `src/shared/catalog.ts`; the form runs the same checks as the upload before saving.
+- **Products** has "Try a sum insured" to see which products a range suggests. A proposal shows its suggestion under
+  its header. **Coverage sections** sets the Data Sheet's and RFQ's section order and names; Fire stays first.
+  **Add-on Covers** has the four lists (filter and search) and a "BSUS & BLUS limits and rates" tab. **Tax rates**
+  marks the rate in force today; a proposal keeps the rate it was created with.
+
 ## Audit log
 
 `/audit` (Admin) lists sign-ins and every create, edit and approval, newest first: when, who, what, which record, and
@@ -127,7 +143,11 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
   - **Insurers and RFQ**: up to five active insurers, their RFQ addresses with copy buttons, Download RFQ (Excel)
     once the Data Sheet is complete, and Mark as sent per insurer or for all, after a confirmation. Sending locks
     the Data Sheet.
-  - **Activity**: the proposal's history, newest first.
+  - **Activity**: the proposal's history, newest first. `?tab=data-sheet|rfq|activity` opens a given tab.
+- **RFQ page** (`/rfq`, sidebar Workflow → RFQ, `proposals.view`): every new-business RFQ, ready to send first, with
+  status chips (Data Sheet incomplete, Ready to send, Partly sent, Sent; `?status=`), search by reference, client or
+  insurer (`?q=`), the insurers each went to, the due date and the last send. A reference opens the proposal on the
+  tab that needs work. Statuses come from `src/lib/rfq-status.ts`.
 - New proposals from the API appear on the dashboard, in the list, drawer and palette next to the renewals:
   `src/lib/api/new-business.ts` maps each one onto the screen model (product and add-ons are chosen at the QCR).
 

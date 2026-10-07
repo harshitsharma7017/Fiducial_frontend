@@ -12,11 +12,22 @@ const PROPOSALS_AND_MASTERS = [
   'Quotes and QCR',
   'Placement Slips',
 ];
-const MASTERS = ['Clients', 'Insurers', 'Occupancy', 'Pincodes', 'Add-on Covers', 'Clauses'];
+const MASTERS = [
+  'Clients',
+  'Insurers',
+  'Occupancy',
+  'Pincodes',
+  'Products',
+  'Coverage sections',
+  'Add-on Covers',
+  'Tax rates',
+  'Standard notes',
+  'Clauses',
+];
 const WORKING_ROLE = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS];
 const VIEW_ONLY = [...PROPOSALS_AND_MASTERS, ...MASTERS];
 // Import data needs clients.manage: Admins and Relationship Managers.
-const MASTERS_WITH_IMPORT = MASTERS.toSpliced(4, 0, 'Import data');
+const MASTERS_WITH_IMPORT = MASTERS.toSpliced(9, 0, 'Import data');
 const CLIENT_OWNER = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS_WITH_IMPORT];
 
 describe('visibleGroups', () => {
@@ -53,11 +64,15 @@ describe('pagePermission', () => {
     ['/proposals', 'proposals.view'],
     ['/proposals/prp-0101', 'proposals.view'],
     ['/proposals/new', 'proposals.create'],
+    ['/rfq', 'proposals.view'],
     ['/masters/occupancy', 'masters.view'],
     ['/masters/clients', 'clients.view'],
     ['/masters/clients/0123456789abcdef01234567', 'clients.view'],
     ['/masters/insurers', 'masters.view'],
     ['/masters/import', 'clients.manage'],
+    ['/masters/products', 'masters.view'],
+    ['/masters/addons', 'masters.view'],
+    ['/masters/tax-rates', 'masters.view'],
     ['/rating/fire', 'rating.use'],
     ['/users', 'users.manage'],
     ['/audit', 'audit.view'],

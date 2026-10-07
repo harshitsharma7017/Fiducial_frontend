@@ -9,8 +9,11 @@ import {
   type Role,
 } from '@/shared';
 
-/** What the Import data page loads: a record type with a template, or the IIB master workbook. */
-export type RecordType = ImportEntity | 'masters';
+/**
+ * What the Import data page loads: a record type with a template, the IIB master workbook, or the
+ * product and cover masters workbook.
+ */
+export type RecordType = ImportEntity | 'masters' | 'catalog';
 
 export interface RecordTypeInfo {
   label: string;
@@ -44,10 +47,19 @@ export const RECORD_TYPES: Record<RecordType, RecordTypeInfo> = {
     templateUrl: '/api/proxy/masters/workbook?template=true',
     maxBytes: MASTER_WORKBOOK_MAX_BYTES,
   },
+  catalog: {
+    label: 'Product and cover masters',
+    description:
+      'Products and their sum insured ranges, the 14 coverage sections, the add-on lists, the BSUS and BLUS add-on limits and rates, GST rates and the standard notes. One workbook, a sheet per master.',
+    permission: 'masters.manage',
+    templateLabel: 'Download current masters',
+    templateUrl: '/api/proxy/catalog/workbook',
+    maxBytes: MASTER_WORKBOOK_MAX_BYTES,
+  },
 };
 
-/** The record types in page order: the master first, as clients and locations depend on it. */
-export const RECORD_TYPE_ORDER: readonly RecordType[] = ['masters', ...IMPORT_ENTITIES];
+/** The record types in page order: the masters first, as clients and locations depend on them. */
+export const RECORD_TYPE_ORDER: readonly RecordType[] = ['masters', 'catalog', ...IMPORT_ENTITIES];
 
 export function isRecordType(value: string | null): value is RecordType {
   return value !== null && (RECORD_TYPE_ORDER as readonly string[]).includes(value);

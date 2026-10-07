@@ -56,7 +56,30 @@ function MasterHints() {
   );
 }
 
-function RecordHints({ type }: { type: Exclude<RecordType, 'masters'> }) {
+/** The hints for the product and cover masters: one sheet per master, replaced as a whole. */
+function CatalogHints() {
+  return (
+    <>
+      <Hint icon={<FileSpreadsheet />}>
+        One sheet per master: Products, Coverage sections, Add-on covers, BSUS BLUS add-on rates,
+        Tax rates and Standard notes. The Instructions sheet explains each column.
+      </Hint>
+      <Hint icon={<History />}>
+        <a href="/api/proxy/catalog/workbook" download className={linkClass}>
+          Download the current masters
+        </a>
+        , edit them in Excel and upload the file. Each sheet in the file replaces that master; a
+        sheet you remove leaves its master as it is.
+      </Hint>
+      <Hint icon={<ShieldCheck />}>
+        Preview saves nothing. The masters are replaced only when every sheet passes. Single rows
+        can also be edited on each master’s page.
+      </Hint>
+    </>
+  );
+}
+
+function RecordHints({ type }: { type: Exclude<RecordType, 'masters' | 'catalog'> }) {
   const info = RECORD_TYPES[type];
   return (
     <>
@@ -133,7 +156,13 @@ export function ImportPanel({
             <p className="text-xs text-muted-foreground">{info.description}</p>
           </div>
           <ul className="grid gap-2.5 text-sm text-muted-foreground">
-            {type === 'masters' ? <MasterHints /> : <RecordHints type={type} />}
+            {type === 'masters' ? (
+              <MasterHints />
+            ) : type === 'catalog' ? (
+              <CatalogHints />
+            ) : (
+              <RecordHints type={type} />
+            )}
           </ul>
         </div>
         <div className="grid content-start gap-4">

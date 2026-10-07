@@ -5,7 +5,7 @@ src/
   app/
     layout.tsx, providers.tsx   root layout, theme, React Query and toast providers
     (auth)/                     login and forgot-password with a shared two-column layout
-    (app)/                      signed-in pages inside the app shell: dashboard, proposals (list, new, [id]),
+    (app)/                      signed-in pages inside the app shell: dashboard, proposals (list, new, [id]), rfq,
                                 masters/occupancy, masters/pincodes, masters/clients (list, [id]),
                                 masters/insurers, masters/import, rating/fire, users, audit, settings, profile
     api/auth/login, logout      BFF: sets and clears the httpOnly session cookie
@@ -13,6 +13,7 @@ src/
   components/
     layout/                     app shell, page gate, sidebar, navbar, breadcrumbs, command palette, notifications,
                                 user menu, theme toggle; nav-config.ts holds the navigation and page permissions
+    catalog/                    product and cover masters: generic table and row form from src/shared/catalog.ts
     proposals/                  dashboard header, type switch, KPI cards, pipeline, chart, table, drawer, badges,
                                 sections/ (shared by the drawer and the full proposal page), new-business/
                                 (create form and the workspace: Data Sheet, insurers and RFQ, activity)

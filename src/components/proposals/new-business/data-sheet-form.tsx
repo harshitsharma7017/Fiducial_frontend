@@ -49,7 +49,6 @@ import {
   FIRE_GROUPS,
   MAX_CLAIM_ROWS,
   OTHER_SECTION_LABELS,
-  OTHER_SECTIONS,
   ProposalRecordSchema,
   formatDateTime,
   type ClientLocation,
@@ -229,7 +228,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
         </section>
 
         <FireOptions />
-        <OtherSections />
+        <OtherSections names={new Map(record.sections.map((s) => [s.code, s.name]))} />
         <Claims readOnly={readOnly} />
 
         <Card>
@@ -478,7 +477,7 @@ function FireOptions() {
 }
 
 /** The other coverage sections: included or not, with Proposed 1 and 2. */
-function OtherSections() {
+function OtherSections({ names }: { names: ReadonlyMap<string, string> }) {
   const form = useFormContext<DataSheetFormValues>();
   const sections = useWatch({ control: form.control, name: 'sections' });
 
@@ -501,8 +500,9 @@ function OtherSections() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {OTHER_SECTIONS.map((code, index) => {
-              const included = sections?.[index]?.included ?? false;
+            {(sections ?? []).map((section, index) => {
+              const { code, included } = section;
+              const name = names.get(code) ?? OTHER_SECTION_LABELS[code];
               return (
                 <TableRow key={code}>
                   <TableCell>
@@ -521,9 +521,7 @@ function OtherSections() {
                               onBlur={field.onBlur}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal">
-                            {OTHER_SECTION_LABELS[code]}
-                          </FormLabel>
+                          <FormLabel className="font-normal">{name}</FormLabel>
                         </FormItem>
                       )}
                     />
@@ -532,7 +530,7 @@ function OtherSections() {
                     {included ? (
                       <RupeesField
                         name={`sections.${index}.proposed1`}
-                        label={`${OTHER_SECTION_LABELS[code]} Proposed 1`}
+                        label={`${name} Proposed 1`}
                         hideLabel
                       />
                     ) : (
@@ -545,7 +543,7 @@ function OtherSections() {
                     {included ? (
                       <RupeesField
                         name={`sections.${index}.proposed2`}
-                        label={`${OTHER_SECTION_LABELS[code]} Proposed 2`}
+                        label={`${name} Proposed 2`}
                         hideLabel
                       />
                     ) : null}

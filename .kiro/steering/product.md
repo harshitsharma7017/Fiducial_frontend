@@ -67,7 +67,10 @@ Excel templates and a preview-then-import of chosen valid rows for all three (`/
 
 Built (new business to the RFQ): create a proposal from the client master, the Data Sheet, choosing up to five
 insurers, the RFQ workbook download and marking it sent, which locks the Data Sheet (`/proposals/new?type=new`,
-`/proposals/{id}`; `components/proposals/new-business/`).
+`/proposals/{id}`; `components/proposals/new-business/`), and the RFQ page listing every RFQ by status (`/rfq`).
+
+Built (M-4 to M-9): product and cover master screens (`/masters/products`, `/sections`, `/addons`, `/tax-rates`,
+`/notes`; `components/catalog/`) and their Excel upload on Import data.
 
 Not built yet: starting a renewal, quotes, QCR and placement slip screens, and the API for renewals.
 

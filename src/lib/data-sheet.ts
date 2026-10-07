@@ -1,7 +1,6 @@
 import {
   FIRE_GROUPS,
   FIRE_ITEMS,
-  OTHER_SECTIONS,
   RISK_DETAIL_FIELDS,
   type DataSheetFormValues,
   type DataSheetInput,
@@ -98,7 +97,6 @@ export function blankLocation(locationId: string): LocationForm {
 /** The saved Data Sheet as form values: every Fire item and section in order, blanks as "". */
 export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
   const option2 = new Map(record.fire.groups.map((line) => [line.group, line.proposed2]));
-  const sections = new Map(record.sections.map((section) => [section.code, section]));
   return {
     dueDate: record.dueDate,
     policyStart: record.policyStart ?? '',
@@ -123,15 +121,13 @@ export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
       };
     }),
     fireOption2: FIRE_GROUPS.map((group) => ({ group, amount: option2.get(group) ?? '' })),
-    sections: OTHER_SECTIONS.map((code) => {
-      const section = sections.get(code);
-      return {
-        code,
-        included: section?.included ?? false,
-        proposed1: section?.proposed1 ?? '',
-        proposed2: section?.proposed2 ?? '',
-      };
-    }),
+    // In the coverage section master's order; sections switched off there are not offered.
+    sections: record.sections.map((section) => ({
+      code: section.code,
+      included: section.included,
+      proposed1: section.proposed1 ?? '',
+      proposed2: section.proposed2 ?? '',
+    })),
     claims: record.claims.map((claim) => ({
       period: claim.period,
       policyType: claim.policyType ?? '',

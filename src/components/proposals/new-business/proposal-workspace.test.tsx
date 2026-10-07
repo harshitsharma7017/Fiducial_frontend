@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   FIRE_GROUPS,
+  OTHER_SECTION_LABELS,
   OTHER_SECTIONS,
   RISK_DETAIL_FIELDS,
   type ProposalRecord,
@@ -67,10 +68,13 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
     },
     sections: OTHER_SECTIONS.map((code) => ({
       code,
+      name: OTHER_SECTION_LABELS[code],
       included: false,
       proposed1: null,
       proposed2: null,
     })),
+    suggestedProducts: [],
+    gstRatePercent: '18',
     claims: [],
     notes: null,
     missing: ['Enter the Fire sums insured for Plant 1.'],

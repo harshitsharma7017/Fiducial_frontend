@@ -34,8 +34,12 @@ const TABS = [
  * The full proposal page. A new-business proposal from the API opens its workspace (Data Sheet,
  * insurers and RFQ); a sample proposal keeps the read-only tabs below.
  */
-export function ProposalDetailView({ id }: { id: string }) {
-  return isRecordId(id) ? <ProposalWorkspace id={id} /> : <SampleProposalDetail id={id} />;
+export function ProposalDetailView({ id, tab }: { id: string; tab?: string }) {
+  return isRecordId(id) ? (
+    <ProposalWorkspace id={id} initialTab={tab} />
+  ) : (
+    <SampleProposalDetail id={id} />
+  );
 }
 
 /** Header plus WAI-ARIA tabs reusing the drawer's section components. */

@@ -7,6 +7,7 @@ const ALLOWED_AREAS = new Set([
   'clients',
   'insurers',
   'imports',
+  'catalog',
   'proposals',
   'rating',
   'health',

@@ -22,15 +22,17 @@ import { InsurersRfqPanel } from './insurers-rfq-panel';
  * A new-business proposal from the API, worked from creation to the RFQ: the Data Sheet, the
  * insurers and the RFQ, and what happened so far.
  */
-export function ProposalWorkspace({ id }: { id: string }) {
+export function ProposalWorkspace({ id, initialTab }: { id: string; initialTab?: string }) {
   return (
     <DemoModeGate>
-      <Workspace id={id} />
+      <Workspace id={id} initialTab={initialTab} />
     </DemoModeGate>
   );
 }
 
-function Workspace({ id }: { id: string }) {
+const TABS = ['data-sheet', 'rfq', 'activity'] as const;
+
+function Workspace({ id, initialTab }: { id: string; initialTab?: string }) {
   const proposal = useQuery(proposalRecordQuery(id));
 
   if (proposal.isPending) return <LoadingState label="Loading proposal" className="max-w-xl" />;
@@ -54,13 +56,18 @@ function Workspace({ id }: { id: string }) {
     }
     return <ErrorState error={proposal.error} onRetry={() => void proposal.refetch()} />;
   }
-  return <Loaded record={proposal.data} />;
+  return <Loaded record={proposal.data} initialTab={initialTab} />;
 }
 
-function Loaded({ record }: { record: ProposalRecord }) {
+function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: string }) {
   const canEdit = usePermission('proposals.edit');
-  // Start where the work is: the Data Sheet until it is complete, then the RFQ.
-  const [tab, setTab] = useState(() => (record.missing.length === 0 ? 'rfq' : 'data-sheet'));
+  // The tab asked for in the link (?tab=rfq from the RFQ page), else where the work is: the
+  // Data Sheet until it is complete, then the RFQ.
+  const [tab, setTab] = useState<string>(
+    () =>
+      TABS.find((value) => value === initialTab) ??
+      (record.missing.length === 0 ? 'rfq' : 'data-sheet'),
+  );
   const sent = record.insurers.filter((insurer) => insurer.status === 'SENT').length;
 
   return (
@@ -77,6 +84,23 @@ function Loaded({ record }: { record: ProposalRecord }) {
           {record.reference} · {record.client.city || record.client.state} ·{' '}
           {record.client.gstin ?? 'No GSTIN'} · Owner {record.owner.name}
         </p>
+        {record.suggestedProducts.length > 0 ? (
+          <p className="text-sm">
+            <span className="text-muted-foreground">Suggested product: </span>
+            {record.suggestedProducts.map((product, index) => (
+              <span key={product.code}>
+                {index > 0 ? ' or ' : null}
+                <abbr
+                  title={`${product.name} (${product.range})`}
+                  className="font-medium no-underline"
+                >
+                  {product.code}
+                </abbr>
+              </span>
+            ))}
+            <span className="text-muted-foreground"> — chosen at the QCR</span>
+          </p>
+        ) : null}
       </div>
 
       <div className="mb-6 grid gap-4 *:min-w-0 lg:grid-cols-[1fr_auto]">

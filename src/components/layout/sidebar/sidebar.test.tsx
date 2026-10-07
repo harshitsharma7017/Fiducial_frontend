@@ -20,7 +20,7 @@ function renderNav(roles: readonly Role[] | undefined, collapsed = false) {
   return screen.getByRole('navigation', { name: 'Main' });
 }
 
-const PLANNED = ['RFQ', 'Quotes and QCR', 'Placement Slips', 'Add-on Covers', 'Clauses'];
+const PLANNED = ['Quotes and QCR', 'Placement Slips', 'Clauses'];
 
 describe('SidebarNav', () => {
   beforeEach(() => {

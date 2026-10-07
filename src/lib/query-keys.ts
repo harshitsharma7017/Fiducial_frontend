@@ -19,6 +19,10 @@ export const queryKeys = {
     all: ['insurers'] as const,
     list: (filters: unknown) => ['insurers', 'list', filters] as const,
   },
+  catalog: {
+    all: ['catalog'] as const,
+    master: (master: string) => ['catalog', master] as const,
+  },
   auditLog: (filters: unknown) => ['audit', filters] as const,
   notifications: ['notifications'] as const,
   proposals: {

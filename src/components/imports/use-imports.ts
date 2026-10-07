@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 import {
+  CatalogImportReportSchema,
   IMPORT_SHEETS,
   ImportReportSchema,
   MasterImportResultSchema,
@@ -121,6 +122,46 @@ export function useMasterImport() {
       preview.reset();
       save.reset();
       activate.reset();
+    },
+  };
+}
+
+function sendCatalog(file: File, dryRun: boolean) {
+  const query = new URLSearchParams({ dryRun: String(dryRun), fileName: file.name });
+  return apiFetch(`catalog/import?${query.toString()}`, {
+    method: 'POST',
+    body: asXlsx(file),
+    schema: CatalogImportReportSchema,
+  });
+}
+
+/** Preview the product and cover masters workbook, then replace the masters it holds. */
+export function useCatalogImport() {
+  const queryClient = useQueryClient();
+  const preview = useMutation({ mutationFn: (file: File) => sendCatalog(file, true) });
+  const save = useMutation({
+    mutationFn: (file: File) => sendCatalog(file, false),
+    onSuccess: (report) => {
+      if (!report.imported) return;
+      // Proposals read products and sections from these masters.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all });
+      void queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      toast({
+        title: 'Masters replaced',
+        description: report.sheets
+          .filter((sheet) => sheet.present)
+          .map((sheet) => sheet.label)
+          .join(', '),
+        variant: 'success',
+      });
+    },
+  });
+  return {
+    preview,
+    save,
+    reset() {
+      preview.reset();
+      save.reset();
     },
   };
 }

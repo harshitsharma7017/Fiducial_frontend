@@ -9,7 +9,11 @@ import {
   Landmark,
   LayoutDashboard,
   MapPin,
+  Layers,
+  NotebookText,
+  Package,
   PackagePlus,
+  Percent,
   Scale,
   ScrollText,
   Send,
@@ -59,7 +63,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     title: 'Workflow',
     items: [
-      { label: 'RFQ', icon: Send, permission: 'proposals.view', planned: true },
+      { label: 'RFQ', href: '/rfq', icon: Send, permission: 'proposals.view' },
       { label: 'Quotes and QCR', icon: Scale, permission: 'proposals.view', planned: true },
       { label: 'Placement Slips', icon: FileCheck2, permission: 'proposals.view', planned: true },
       { label: 'Fire rate check', href: '/rating/fire', icon: Flame, permission: 'rating.use' },
@@ -87,6 +91,26 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'masters.view',
       },
       { label: 'Pincodes', href: '/masters/pincodes', icon: MapPin, permission: 'masters.view' },
+      { label: 'Products', href: '/masters/products', icon: Package, permission: 'masters.view' },
+      {
+        label: 'Coverage sections',
+        href: '/masters/sections',
+        icon: Layers,
+        permission: 'masters.view',
+      },
+      {
+        label: 'Add-on Covers',
+        href: '/masters/addons',
+        icon: PackagePlus,
+        permission: 'masters.view',
+      },
+      { label: 'Tax rates', href: '/masters/tax-rates', icon: Percent, permission: 'masters.view' },
+      {
+        label: 'Standard notes',
+        href: '/masters/notes',
+        icon: NotebookText,
+        permission: 'masters.view',
+      },
       {
         label: 'Import data',
         href: '/masters/import',
@@ -94,7 +118,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         // Clients and risk locations need clients.manage; the insurer import also masters.manage.
         permission: 'clients.manage',
       },
-      { label: 'Add-on Covers', icon: PackagePlus, permission: 'masters.view', planned: true },
       { label: 'Clauses', icon: ScrollText, permission: 'masters.view', planned: true },
     ],
   },
