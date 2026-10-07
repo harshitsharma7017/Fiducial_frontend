@@ -16,14 +16,22 @@ export function SummarySection({ proposal }: { proposal: Proposal }) {
         </Field>
         <Field label="Owner">{proposal.owner}</Field>
         <Field label="Product">
-          <abbr title={PRODUCT_NAMES[proposal.product]} className="no-underline">
-            {proposal.product}
-          </abbr>
+          {proposal.product ? (
+            <abbr title={PRODUCT_NAMES[proposal.product]} className="no-underline">
+              {proposal.product}
+            </abbr>
+          ) : (
+            <span className="text-muted-foreground">Chosen at QCR</span>
+          )}
         </Field>
         <Field label="Policy period">
-          <span className="tabular">
-            {formatDate(proposal.policyPeriod.start)} – {formatDate(proposal.policyPeriod.end)}
-          </span>
+          {proposal.policyPeriod ? (
+            <span className="tabular">
+              {formatDate(proposal.policyPeriod.start)} – {formatDate(proposal.policyPeriod.end)}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">1 year from date of payment</span>
+          )}
         </Field>
         <Field label="Client">
           {proposal.client.name}

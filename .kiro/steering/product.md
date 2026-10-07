@@ -65,12 +65,16 @@ Built (masters M-1 to M-3): the client master with GSTIN validation and duplicat
 locations per client, and the insurer master with RFQ email addresses (`/masters/clients`, `/masters/insurers`), with
 Excel templates and a preview-then-import of chosen valid rows for all three (`/masters/import`).
 
-Not built yet: risks, Data Sheet, RFQ, quotes, QCR and placement slip screens, proposal create and edit forms, a
-proposals API.
+Built (new business to the RFQ): create a proposal from the client master, the Data Sheet, choosing up to five
+insurers, the RFQ workbook download and marking it sent, which locks the Data Sheet (`/proposals/new?type=new`,
+`/proposals/{id}`; `components/proposals/new-business/`).
+
+Not built yet: starting a renewal, quotes, QCR and placement slip screens, and the API for renewals.
 
 ## Rules
 
 - Do not invent client business rules. Anything TBC stays unbuilt and is listed in the backend's `docs/OPEN_ITEMS.md`.
-- The API does every calculation. The UI displays the values it returns and never recomputes premiums.
-- Proposal screens run on sample data until a proposals API exists, and say so on screen. Sample company, person and
+- The API does every calculation. The UI displays the values it returns and never recomputes premiums. The Data
+  Sheet's running totals are a typing preview with the API's own arithmetic; the saved figures come from the API.
+- Renewals run on sample data until the API serves them, and say so on screen. Sample company, person and
   insurer names are fictional.

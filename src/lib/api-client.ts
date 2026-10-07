@@ -53,7 +53,7 @@ export function redirectToLogin(): void {
 }
 
 export interface ApiRequestOptions<T> {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Sent as JSON, or as-is with its own content type when it is a Blob (a File upload). */
   body?: unknown;
   /** Validates the response against the shared contract. */
@@ -106,4 +106,53 @@ export async function apiFetch<T>(path: string, options: ApiRequestOptions<T> = 
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) throw toApiError(response.status, data);
   return options.schema ? options.schema.parse(data) : (data as T);
+}
+
+/** A file from the API, such as a generated workbook, with the name the server gave it. */
+export interface DownloadedFile {
+  blob: Blob;
+  fileName: string;
+}
+
+function fileNameOf(response: Response, fallback: string): string {
+  const disposition = response.headers.get('content-disposition') ?? '';
+  return /filename="([^"]+)"/i.exec(disposition)?.[1] ?? fallback;
+}
+
+/**
+ * Downloads a file through the proxy. Unlike a plain link, an API refusal (such as an incomplete
+ * Data Sheet) becomes an ApiError the screen can show, instead of a saved error page.
+ */
+export async function apiDownload(path: string, fallbackName: string): Promise<DownloadedFile> {
+  let response: Response;
+  try {
+    response = await fetch(`/api/proxy/${path.replace(/^\/+/, '')}`, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      'NETWORK_ERROR',
+      'Cannot reach the server. Check your connection and try again.',
+    );
+  }
+  if (response.status === 401) {
+    redirectToLogin();
+    throw new ApiError(401, 'UNAUTHENTICATED', 'Your session has ended. Sign in again.');
+  }
+  if (!response.ok) throw toApiError(response.status, await response.json().catch(() => null));
+  return { blob: await response.blob(), fileName: fileNameOf(response, fallbackName) };
+}
+
+/** Hands a downloaded file to the browser to save. */
+export function saveFile({ blob, fileName }: DownloadedFile): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }

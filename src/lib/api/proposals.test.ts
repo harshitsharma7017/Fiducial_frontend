@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildSampleProposals } from '@/lib/data/proposals';
 import { todayIst } from '@/lib/dates';
 import { fireSumInsured } from '@/lib/proposal-metrics';
@@ -19,7 +19,21 @@ const SORTS = [
   'owner',
 ] as const;
 
+/** The BFF's mock-mode answer: new proposals then come from the sample data, as these tests expect. */
+function demoModeFetch() {
+  return Promise.resolve(
+    new Response(JSON.stringify({ code: 'DEMO_MODE', message: 'Not available in demo mode' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  );
+}
+
 describe('listProposals', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn(demoModeFetch));
+  });
+
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -93,7 +107,8 @@ describe('listProposals', () => {
     const result = await listProposals({ sort: { by: 'product', dir: 'asc' }, pageSize: 20 });
     const byProduct = new Map<string, string[]>();
     for (const item of result.items) {
-      byProduct.set(item.product, [...(byProduct.get(item.product) ?? []), item.reference]);
+      const product = item.product ?? '';
+      byProduct.set(product, [...(byProduct.get(product) ?? []), item.reference]);
     }
     for (const refs of byProduct.values()) {
       expect(refs).toEqual([...refs].sort((a, b) => a.localeCompare(b)));

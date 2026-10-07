@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { User } from '@/shared';
 import { DashboardView } from './dashboard-view';
@@ -40,7 +40,21 @@ function renderDashboard() {
   return userEvent.setup();
 }
 
+/** The BFF's mock-mode answer: new proposals then come from the sample data, as these tests expect. */
+function demoModeFetch() {
+  return Promise.resolve(
+    new Response(JSON.stringify({ code: 'DEMO_MODE', message: 'Not available in demo mode' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  );
+}
+
 describe('DashboardView', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn(demoModeFetch));
+  });
+
   afterEach(() => {
     // Reset the URL that useUrlSearchParams reads and writes between tests.
     window.history.replaceState(null, '', '/');

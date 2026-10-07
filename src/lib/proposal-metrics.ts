@@ -2,6 +2,7 @@ import { daysBetween } from '@/lib/dates';
 import { sumRupees } from '@/lib/money';
 import {
   STAGES,
+  type Product,
   type Proposal,
   type ProposalType,
   type Rupees,
@@ -153,7 +154,7 @@ function rawCompare(a: ProposalSummary, b: ProposalSummary, by: SortBy): number 
     case 'client':
       return a.client.name.localeCompare(b.client.name);
     case 'product':
-      return a.product.localeCompare(b.product);
+      return (a.product ?? '').localeCompare(b.product ?? '');
     case 'fireSumInsured': {
       const diff = BigInt(a.fireSumInsured) - BigInt(b.fireSumInsured);
       return diff < 0n ? -1 : diff > 0n ? 1 : 0;
@@ -178,7 +179,7 @@ export interface DashboardStats {
   type: ProposalType;
   total: number;
   stageCounts: Record<Stage, number>;
-  sumInsuredByProduct: Record<Proposal['product'], Rupees>;
+  sumInsuredByProduct: Record<Product, Rupees>;
   openCount: number;
   awaitingQuotes: number;
   awaitingQuotesInsurers: number;

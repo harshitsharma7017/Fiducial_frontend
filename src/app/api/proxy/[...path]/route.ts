@@ -99,4 +99,4 @@ async function forward(request: NextRequest, { params }: RouteParams): Promise<R
   return response;
 }
 
-export { forward as DELETE, forward as GET, forward as PATCH, forward as POST };
+export { forward as DELETE, forward as GET, forward as PATCH, forward as POST, forward as PUT };

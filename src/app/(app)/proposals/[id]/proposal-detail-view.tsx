@@ -15,7 +15,9 @@ import {
 } from '@/components/proposals/sections';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ApiError } from '@/lib/api-client';
+import { isRecordId } from '@/lib/api/new-business';
 import { useProposal } from '@/lib/api/proposals';
+import { ProposalWorkspace } from '@/components/proposals/new-business/proposal-workspace';
 import type { Proposal } from '@/types/proposal';
 
 const TABS = [
@@ -28,8 +30,16 @@ const TABS = [
   { value: 'activity', label: 'Activity' },
 ] as const;
 
-/** The full proposal page: header plus WAI-ARIA tabs reusing the drawer's section components. */
+/**
+ * The full proposal page. A new-business proposal from the API opens its workspace (Data Sheet,
+ * insurers and RFQ); a sample proposal keeps the read-only tabs below.
+ */
 export function ProposalDetailView({ id }: { id: string }) {
+  return isRecordId(id) ? <ProposalWorkspace id={id} /> : <SampleProposalDetail id={id} />;
+}
+
+/** Header plus WAI-ARIA tabs reusing the drawer's section components. */
+function SampleProposalDetail({ id }: { id: string }) {
   const proposal = useProposal(id);
 
   if (proposal.isPending) {

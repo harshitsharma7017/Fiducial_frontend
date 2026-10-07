@@ -9,6 +9,7 @@ describe('isAllowedProxyPath', () => {
     [['clients', '0123456789abcdef01234567', 'locations']],
     [['insurers', '0123456789abcdef01234567']],
     [['imports', 'clients', 'template']],
+    [['proposals', '0123456789abcdef01234567', 'rfq']],
     [['rating', 'fire']],
     [['health']],
     [['audit']],
@@ -21,7 +22,7 @@ describe('isAllowedProxyPath', () => {
     [[]],
     [['auth', 'login']],
     [['auth']],
-    [['proposals']],
+    [['quotes']],
     [['clients', '..', 'auth', 'login']],
     [['clients', '']],
   ])('rejects %j', (segments) => {

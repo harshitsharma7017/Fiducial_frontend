@@ -17,7 +17,7 @@ describe('parseAuditFilters', () => {
   });
 
   it('ignores unknown values, malformed ids and a record id without its type', () => {
-    expect(parseAuditFilters(new URLSearchParams('kind=DELETE&entity=proposal'))).toEqual({});
+    expect(parseAuditFilters(new URLSearchParams('kind=DELETE&entity=quote'))).toEqual({});
     expect(parseAuditFilters(new URLSearchParams(`entityId=${ID}`))).toEqual({});
     expect(parseAuditFilters(new URLSearchParams('entity=user&entityId=12&actorId=x'))).toEqual({
       entity: 'user',

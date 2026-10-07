@@ -62,10 +62,7 @@ describe('/api/proxy in mock mode', () => {
   it('still returns 404 for paths outside the allowlist', async () => {
     vi.stubEnv('USE_MOCK_API', 'true');
     vi.stubGlobal('fetch', vi.fn());
-    const response = await GET(
-      request(['proposals'], `erp_session=${token}`),
-      context(['proposals']),
-    );
+    const response = await GET(request(['quotes'], `erp_session=${token}`), context(['quotes']));
     expect(response.status).toBe(404);
   });
 });

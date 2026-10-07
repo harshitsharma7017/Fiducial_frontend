@@ -14,7 +14,8 @@ src/
     layout/                     app shell, page gate, sidebar, navbar, breadcrumbs, command palette, notifications,
                                 user menu, theme toggle; nav-config.ts holds the navigation and page permissions
     proposals/                  dashboard header, type switch, KPI cards, pipeline, chart, table, drawer, badges,
-                                sections/ (shared by the drawer and the full proposal page)
+                                sections/ (shared by the drawer and the full proposal page), new-business/
+                                (create form and the workspace: Data Sheet, insurers and RFQ, activity)
     audit/                      audit log toolbar and entry row
     clients/                    client form sheet, address fieldset, details card, locations card and dialog
     insurers/                   insurer form sheet, RFQ emails field, activate / deactivate dialog
@@ -30,7 +31,8 @@ src/
   hooks/                        useCurrentUser, usePermission, useAuditLog, useDemoMode, useIstNow, usePincode, …
   lib/
     api-client.ts               apiFetch() and ApiError (browser side)
-    api/                        proposal and notification data layer and its TanStack Query hooks
+    api/                        proposal and notification data layer and its TanStack Query hooks;
+                                new-business.ts reads proposals from the API and maps them onto the screen model
     data/                       sample data (imported only by lib/api and tests)
     form-errors.ts              puts the API's field errors (and codes such as GSTIN_TAKEN) on form fields
     client-query.ts             one client's query (key and fetch), shared by its page and breadcrumb

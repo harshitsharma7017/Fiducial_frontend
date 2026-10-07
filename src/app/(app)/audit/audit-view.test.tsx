@@ -150,12 +150,12 @@ describe('AuditView', () => {
     expect(within(failedRow).getByText('Wrong password')).toBeInTheDocument();
   });
 
-  it('filters by kind through the URL and lists send and export as not recorded yet', async () => {
+  it('filters by kind through the URL, including send and export (the RFQ)', async () => {
     const user = renderView();
     await screen.findByText('User edited');
     const kind = screen.getByRole('combobox', { name: 'Kind' });
-    expect(within(kind).getByRole('option', { name: 'Send (none yet)' })).toBeDisabled();
-    expect(within(kind).getByRole('option', { name: 'Export (none yet)' })).toBeDisabled();
+    expect(within(kind).getByRole('option', { name: 'Send' })).toBeEnabled();
+    expect(within(kind).getByRole('option', { name: 'Export' })).toBeEnabled();
 
     await user.selectOptions(kind, 'EDIT');
     await waitFor(() => expect(window.location.search).toBe('?kind=EDIT'));

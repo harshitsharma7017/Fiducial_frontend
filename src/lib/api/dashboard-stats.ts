@@ -43,7 +43,7 @@ export function computeDashboardStats(
   for (const proposal of proposals) {
     const fire = fireSumInsured(proposal);
     stageCounts[proposal.stage] += 1;
-    productSums[proposal.product]?.push(fire);
+    if (proposal.product) productSums[proposal.product]?.push(fire);
     const open = proposal.stage !== 'PLACED';
     if (open) openFire.push(fire);
 

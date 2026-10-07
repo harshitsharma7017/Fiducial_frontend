@@ -13,6 +13,12 @@ import { queryKeys } from '@/lib/query-keys';
 import type { Proposal, ProposalType, Stage } from '@/types/proposal';
 import { computeDashboardStats } from './dashboard-stats';
 import { delay } from './latency';
+import {
+  fetchNewBusiness,
+  fetchProposalRecord,
+  isRecordId,
+  toScreenProposal,
+} from './new-business';
 
 export interface ListParams {
   type?: ProposalType;
@@ -30,7 +36,8 @@ export interface ProposalListResult {
   pageSize: number;
 }
 
-/** The sample proposals, rebuilt once per IST day (dates are relative to today). */
+/** The sample proposals, rebuilt once per IST day (dates are relative to today). Renewals only:
+ * new business comes from the API (see new-business.ts), except in demo mode. */
 let cache: { day: string; proposals: Proposal[] } | null = null;
 function sampleProposals(): Proposal[] {
   const day = todayIst();
@@ -39,15 +46,31 @@ function sampleProposals(): Proposal[] {
 }
 
 /**
+ * The proposals of one type, or of both: new business from the API (the sample new proposals in
+ * demo mode, which has no API) and renewals from the sample data.
+ */
+async function proposalsOf(type: ProposalType | undefined): Promise<Proposal[]> {
+  const renewals = () => sampleProposals().filter((proposal) => proposal.type === 'EXISTING');
+  if (type === 'EXISTING') {
+    await delay(450);
+    return renewals();
+  }
+  const records = await fetchNewBusiness();
+  const newBusiness =
+    records === null
+      ? sampleProposals().filter((proposal) => proposal.type === 'NEW')
+      : records.map(toScreenProposal);
+  return type === 'NEW' ? newBusiness : [...newBusiness, ...renewals()];
+}
+
+/**
  * A page of proposal summaries matching the filters. Without `type` it covers both types (the
- * command palette uses this). Replace the body with `apiFetch('proposals', …)` when the API exists.
+ * command palette uses this).
  */
 export async function listProposals(params: ListParams = {}): Promise<ProposalListResult> {
-  await delay(450);
   const today = todayIst();
   const needle = params.q?.trim().toLowerCase() ?? '';
-  const summaries = sampleProposals()
-    .filter((proposal) => !params.type || proposal.type === params.type)
+  const summaries = (await proposalsOf(params.type))
     .filter((proposal) => !params.stage || proposal.stage === params.stage)
     .map((proposal) => toSummary(proposal, today))
     .filter(
@@ -76,6 +99,7 @@ export async function listProposals(params: ListParams = {}): Promise<ProposalLi
 
 /** One proposal by id, or an ApiError(404) for an unknown id. */
 export async function getProposal(id: string): Promise<Proposal> {
+  if (isRecordId(id)) return toScreenProposal(await fetchProposalRecord(id));
   await delay(300);
   const proposal = sampleProposals().find((candidate) => candidate.id === id);
   if (!proposal) throw new ApiError(404, 'NOT_FOUND', 'Proposal not found');
@@ -84,12 +108,7 @@ export async function getProposal(id: string): Promise<Proposal> {
 
 /** Counts, KPI inputs, stage counts and Fire SI by product for one type. */
 export async function getDashboardStats(type: ProposalType): Promise<DashboardStats> {
-  await delay(450);
-  return computeDashboardStats(
-    sampleProposals().filter((proposal) => proposal.type === type),
-    type,
-    todayIst(),
-  );
+  return computeDashboardStats(await proposalsOf(type), type, todayIst());
 }
 
 export function useProposals(params: ListParams = {}) {

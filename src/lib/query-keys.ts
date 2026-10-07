@@ -13,6 +13,7 @@ export const queryKeys = {
     list: (q: string) => ['clients', 'list', q] as const,
     detail: (id: string) => ['clients', 'detail', id] as const,
     locations: (id: string) => ['clients', 'locations', id] as const,
+    allLocations: (id: string) => ['clients', 'locations', id, 'all'] as const,
   },
   insurers: {
     all: ['insurers'] as const,
@@ -23,6 +24,8 @@ export const queryKeys = {
   proposals: {
     list: (params: unknown) => ['proposals', 'list', params] as const,
     detail: (id: string) => ['proposals', 'detail', id] as const,
+    /** A new-business proposal as the API returns it, for its workspace. */
+    record: (id: string) => ['proposals', 'record', id] as const,
     stats: (type: string) => ['proposals', 'stats', type] as const,
   },
 };

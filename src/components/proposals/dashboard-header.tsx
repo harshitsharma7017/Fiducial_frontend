@@ -4,6 +4,7 @@ import { FilePlus2, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useCurrentUser } from '@/hooks/use-current-user';
+import { useDemoMode } from '@/hooks/use-demo-mode';
 import { useIstNow } from '@/hooks/use-ist-now';
 import { can, formatDate } from '@/shared';
 import type { ProposalType } from '@/types/proposal';
@@ -36,6 +37,12 @@ export function DashboardHeader({ type }: { type: ProposalType }) {
   const nowMs = useIstNow();
   const firstName = me.data?.name.split(/\s+/)[0];
   const canCreate = me.data ? can(me.data.roles, 'proposals.create') : false;
+  // New business comes from the API; renewals (and everything in demo mode) are still samples.
+  const sampleNote = useDemoMode()
+    ? 'Demo mode: sample proposals.'
+    : type === 'EXISTING'
+      ? 'Sample data: renewals are not connected to the API yet.'
+      : 'New business proposals.';
 
   const action =
     type === 'EXISTING'
@@ -60,7 +67,7 @@ export function DashboardHeader({ type }: { type: ProposalType }) {
           ) : (
             `${formatDate(new Date(nowMs))} · `
           )}
-          Sample data: proposals are not connected to the API yet.
+          {sampleNote}
         </p>
       </div>
       {canCreate ? (

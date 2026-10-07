@@ -161,6 +161,13 @@ const ProposalBaseSchema = z.object({
 
 export const NewProposalSchema = ProposalBaseSchema.extend({
   type: z.literal('NEW'),
+  // A new proposal gets its product, policy dates and add-ons at the QCR stage (the RFQ format
+  // says "to be picked from QCR"), so until then they are null.
+  product: z.enum(PRODUCTS).nullable(),
+  policyPeriod: z.object({ start: IsoDate, end: IsoDate }).nullable(),
+  addOns: z
+    .object({ selected: z.array(z.string()), catalogueSize: z.number().int().positive() })
+    .nullable(),
   dueDate: IsoDate,
   sections: z.array(
     z.strictObject({

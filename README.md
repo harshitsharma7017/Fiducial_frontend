@@ -11,7 +11,9 @@ system setting and can be switched by hand. The API lives in the separate **Fidu
 never calls it directly: this app's own server routes (a backend-for-frontend) hold the session and forward each
 call.
 
-The dashboard and proposal screens read **sample data**, not the API yet (see [Sample proposal data](#sample-proposal-data)).
+New-business proposals are real: created, filled in and taken to the RFQ through the API (see
+[New proposals to the RFQ](#new-proposals-to-the-rfq)). Renewals still read **sample data** (see
+[Sample proposal data](#sample-proposal-data)).
 To click through everything without running the backend, use [demo mode](#demo-mode-no-backend).
 
 Project documents and open questions live in the backend repository: `docs/` and `docs/OPEN_ITEMS.md` there
@@ -49,8 +51,8 @@ accepts five built-in demo users, one per role, and never calls the API; a "Demo
 | `demo.readonly@example.com`  | Read-only                | `READ_ONLY`       |
 
 In demo mode the pages that read live data (Occupancy, Pincodes, Fire rate check, Users, Audit log and Settings) show
-a short "Not available in demo mode" notice instead of calling the API. The dashboard and proposal screens work fully,
-because they already use sample data. Turn demo mode off (`USE_MOCK_API=false` or unset) and the app signs in against
+a short "Not available in demo mode" notice instead of calling the API, as do creating a proposal and a real
+proposal's page. The dashboard and proposal lists work fully on sample data, new business included. Turn demo mode off (`USE_MOCK_API=false` or unset) and the app signs in against
 the real API again, unchanged.
 
 ## Roles and permissions
@@ -77,7 +79,8 @@ The web app reads the same table:
 - Actions use `usePermission()` or `can()`; components never compare role codes.
 - The API checks the same permission on every route, so the screens are a convenience, not the security boundary.
 
-The approve and send permissions exist for the RFQ, QCR and placement slip screens, which are not built yet. The
+Marking the RFQ sent needs `proposals.send`; downloading it, `proposals.export`. The approve permission waits for the
+QCR and placement slip screens, which are not built yet. The
 client still has to confirm the table (Q12 in the backend's `docs/OPEN_ITEMS.md`).
 
 ## Clients and insurers
@@ -108,15 +111,34 @@ client still has to confirm the table (Q12 in the backend's `docs/OPEN_ITEMS.md`
 each changed field's old and new value (a new record shows its values). Filter by kind and record type; select a
 person or a record in the list to narrow it to their entries or its history, and remove the filter from the chip.
 The filters live in the URL, so the Users page links each user to `/audit?entity=user&entityId=<id>`. Send and export
-entries arrive with RFQ email and document export. Entries are never changed or deleted.
+entries come from the RFQ (download and marking it sent). Entries are never changed or deleted.
+
+## New proposals to the RFQ
+
+- **Create** (`/proposals/new?type=new`, `proposals.create`): choose the insured from the client master, untick any
+  risk location the proposal does not cover, set the date quotes are needed by. Start renewal
+  (`?type=existing`) is still a placeholder.
+- **Workspace** (`/proposals/{id}` for an id from the API; sample ids keep the read-only page):
+  - **Data Sheet**: dates; per location the 16 Fire items (buildings as area × rate or a typed amount),
+    hypothecation, stock in the open and the nine risk details; add or remove the client's locations; Fire Option 2
+    per line; the 13 other sections (include, Proposed 1 and 2); up to three years of claims; notes. Saved as a
+    whole. The checklist of what is still needed comes from the API. Totals update as you type
+    (`src/lib/data-sheet.ts`, the API's arithmetic in BigInt), and the API's figures replace them on save.
+  - **Insurers and RFQ**: up to five active insurers, their RFQ addresses with copy buttons, Download RFQ (Excel)
+    once the Data Sheet is complete, and Mark as sent per insurer or for all, after a confirmation. Sending locks
+    the Data Sheet.
+  - **Activity**: the proposal's history, newest first.
+- New proposals from the API appear on the dashboard, in the list, drawer and palette next to the renewals:
+  `src/lib/api/new-business.ts` maps each one onto the screen model (product and add-ons are chosen at the QCR).
 
 ## Sample proposal data
 
-The dashboard, proposal lists, drawer, full proposal page, palette search and notifications read sample data built in
+Renewals (and, in demo mode, new business too) on the dashboard, proposal lists, drawer, full proposal page, palette
+search and notifications read sample data built in
 `src/lib/data/` (14 fictional proposals, with dates relative to today in IST). Components never import it: they call
-the hooks in `src/lib/api/` (`useProposals`, `useProposal`, `useDashboardStats`, `useNotifications`). When the
-proposals API exists, replace the bodies of the functions in `src/lib/api/proposals.ts` and `notifications.ts` with
-`apiFetch()` calls, add `proposals` to the proxy allowlist, and delete `src/lib/data/`; no component changes.
+the hooks in `src/lib/api/` (`useProposals`, `useProposal`, `useDashboardStats`, `useNotifications`).
+`proposalsOf()` in `src/lib/api/proposals.ts` decides the source per type. When the API serves renewals, change it
+there and delete `src/lib/data/`; no component changes.
 
 ## Scripts
 
@@ -182,7 +204,7 @@ src/
   lib/                  api-client, api/ (proposal data layer) and data/ (sample data), display helpers;
                         server/ is the BFF code (server only)
   shared/               copy of the backend's API contracts (do not edit here)
-  types/proposal.ts     proposal enums, labels and schemas (until the backend has a proposals API)
+  types/proposal.ts     the screens' proposal model (new business from the API is mapped onto it)
   proxy.ts              redirects signed-out visitors to /login
 scripts/sync-shared.mjs keeps src/shared identical to the backend's copy
 ```

@@ -163,9 +163,15 @@ export function ProposalsTable({
                     <TypeBadge type={item.type} />
                   </TableCell>
                   <TableCell>
-                    <abbr title={PRODUCT_NAMES[item.product]} className="no-underline">
-                      {item.product}
-                    </abbr>
+                    {item.product ? (
+                      <abbr title={PRODUCT_NAMES[item.product]} className="no-underline">
+                        {item.product}
+                      </abbr>
+                    ) : (
+                      <span className="text-muted-foreground" title="Chosen at QCR">
+                        —
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right tabular">
                     {formatInrCompact(item.fireSumInsured)}

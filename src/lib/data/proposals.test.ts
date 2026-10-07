@@ -52,7 +52,8 @@ function checkRules(proposals: Proposal[], now: Date) {
     expect(included.length).toBeLessThanOrEqual(14);
     expect(proposal.insurers.length).toBeLessThanOrEqual(5);
 
-    const band = PRODUCT_BANDS[proposal.product];
+    // Sample proposals always have a product; only real new proposals wait for the QCR.
+    const band = PRODUCT_BANDS[proposal.product!];
     for (const option of SUM_INSURED_OPTIONS) {
       if (proposal.type === 'NEW' && option === 'EXISTING') {
         expect(optionValue(proposal, option, 'FIRE')).toBeNull();

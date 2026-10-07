@@ -4,6 +4,7 @@ import {
   type DocStatus,
   type DocumentKind,
   type NewProposal,
+  type Product,
   type Proposal,
   type QuoteStatus,
   type RenewalProposal,
@@ -16,7 +17,7 @@ const CRORE = 10_000_000;
 const LAKH = 100_000;
 
 /** Inclusive rupee band each product's sum insured must fall in (document 07, F2). */
-export const PRODUCT_BANDS: Record<NewProposal['product'], { min: number; max: number }> = {
+export const PRODUCT_BANDS: Record<Product, { min: number; max: number }> = {
   BSUS: { min: 0, max: 5 * CRORE },
   BLUS: { min: 5 * CRORE, max: 50 * CRORE },
   SFSP: { min: 50 * CRORE, max: Number.MAX_SAFE_INTEGER },
@@ -40,7 +41,7 @@ interface Spec {
   n: string; // last 4 digits of the reference
   client: string;
   city: string;
-  product: NewProposal['product'];
+  product: Product;
   /** Fire SI (Proposed 1), in rupees. The headline figure. */
   fireProposed1: number;
   stage: Stage;

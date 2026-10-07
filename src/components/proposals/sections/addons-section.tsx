@@ -6,6 +6,13 @@ const PREVIEW = 6;
 
 /** How many add-ons are selected out of the product's catalogue, with the first few names. */
 export function AddonsSection({ proposal }: { proposal: Proposal }) {
+  if (!proposal.addOns) {
+    return (
+      <Section title="Add-ons">
+        <p className="text-sm text-muted-foreground">Chosen with the product at the QCR stage.</p>
+      </Section>
+    );
+  }
   const { selected, catalogueSize } = proposal.addOns;
   const shown = selected.slice(0, PREVIEW);
   const extra = selected.length - shown.length;
