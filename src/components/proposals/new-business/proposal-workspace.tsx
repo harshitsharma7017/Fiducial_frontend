@@ -88,21 +88,17 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
           {record.reference} · {record.client.city || record.client.state} ·{' '}
           {record.client.gstin ?? 'No GSTIN'} · Assigned to {record.owner.name}
         </p>
-        {record.suggestedProducts.length > 0 ? (
+        {record.product ? (
           <p className="text-sm">
-            <span className="text-muted-foreground">Suggested product: </span>
-            {record.suggestedProducts.map((product, index) => (
-              <span key={product.code}>
-                {index > 0 ? ' or ' : null}
-                <abbr
-                  title={`${product.name} (${product.range})`}
-                  className="font-medium no-underline"
-                >
-                  {product.code}
-                </abbr>
-              </span>
-            ))}
-            <span className="text-muted-foreground"> — chosen at the QCR</span>
+            <span className="text-muted-foreground">Product: </span>
+            <span className="font-medium">{record.product.name}</span>
+            <span className="text-muted-foreground">
+              {record.product.source === 'SUGGESTED'
+                ? ' — suggested by the Fire sum insured'
+                : record.product.source === 'CHOSEN'
+                  ? ' — chosen'
+                  : ` — chosen over ${record.suggestedProducts.map((p) => p.code).join(' or ')}${record.product.reason ? `: ${record.product.reason}` : ''}`}
+            </span>
           </p>
         ) : null}
       </div>

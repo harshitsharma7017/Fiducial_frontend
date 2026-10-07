@@ -35,9 +35,11 @@ import { ApiError, apiFetch } from '@/lib/api-client';
 import { clientLocationsQuery } from '@/lib/api/new-business';
 import {
   blankLocation,
+  contentsOptions,
   contentsTotal,
   fireGroupTotals,
   fireTotal,
+  onBasis,
   sectionSumInsured,
   sumRupeesOf,
   toDataSheetForm,
@@ -54,17 +56,31 @@ import {
   OTHER_SECTION_LABELS,
   SECTION_LINES,
   SUM_INSURED_LINE,
+  hasBasis,
   isAnnexureSection,
   ProposalRecordSchema,
   formatDateTime,
-  wholeRupees,
   type ClientLocation,
   type DataSheetInput,
   type ProposalRecord,
 } from '@/shared';
 import { RupeesField, TextAreaField, TextField } from './data-sheet-fields';
-import { AnnexureGrid, SectionLines } from './section-details';
+import { AnnexureGrid, BasisField, CoverToggles, SectionLines } from './section-details';
 import { LocationCard, type LocationInfo } from './location-card';
+import { ProductAndAddons, useProductChoice } from './product-addons';
+
+/** The field messages of a 400 from the API, as { path, message }. */
+function fieldIssues(error: unknown): { path: string; message: string }[] {
+  if (!(error instanceof ApiError) || !Array.isArray(error.details)) return [];
+  return error.details.flatMap((detail: unknown) => {
+    if (typeof detail !== 'object' || detail === null) return [];
+    const { path, message } = detail as { path?: unknown; message?: unknown };
+    return typeof path === 'string' && typeof message === 'string' ? [{ path, message }] : [];
+  });
+}
+
+/** Fields the API may name in a 400, shown under the field itself. */
+const FIELD_PATHS = ['product.code', 'product.reason', 'existing.insurer'] as const;
 
 function addressOf(address: ClientLocation['address']): string {
   return [address.line1, address.line2, address.city, `${address.state} ${address.pincode}`]
@@ -119,6 +135,8 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
   });
   const locations = useFieldArray({ control: form.control, name: 'locations' });
   const { isDirty } = form.formState;
+  const renewal = record.type === 'EXISTING';
+  const choice = useProductChoice(form.control);
 
   // A newer saved version (another tab, or a change of insurers) replaces an untouched form.
   useEffect(() => {
@@ -147,6 +165,10 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
     },
     onError: (error) => {
       setSaveError(error);
+      for (const issue of fieldIssues(error)) {
+        const path = FIELD_PATHS.find((item) => item === issue.path);
+        if (path) form.setError(path, { message: issue.message });
+      }
       if (error instanceof ApiError && error.code === 'PROPOSAL_LOCKED') {
         void queryClient.invalidateQueries({ queryKey: queryKeys.proposals.record(record.id) });
       }
@@ -156,8 +178,25 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
   const onSubmit = form.handleSubmit(
     (values) => {
       setSaveError(null);
+      // C-1: a product the Fire sum insured does not suggest is saved with the reason.
+      if (choice.override && !values.product.reason) {
+        form.setError('product.reason', {
+          message: `Say why this product is chosen over ${choice.suggested.map((p) => p.code).join(' or ')}`,
+        });
+        setInvalidSubmit(true);
+        return;
+      }
       setInvalidSubmit(false);
-      save.mutate(toDataSheetRequest(values));
+      const request = toDataSheetRequest(values);
+      // C-4: add-ons from another product's lists are left out (the picker lists them).
+      save.mutate(
+        choice.loaded
+          ? {
+              ...request,
+              addons: request.addons.filter((addon) => choice.lists.includes(addon.list)),
+            }
+          : request,
+      );
     },
     () => setInvalidSubmit(true),
   );
@@ -236,12 +275,10 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           )}
         </section>
 
-        <FireOptions existing={record.existingPolicy} />
-        <OtherSections
-          names={new Map(record.sections.map((s) => [s.code, s.name]))}
-          existing={record.existingPolicy}
-          readOnly={readOnly}
-        />
+        {renewal ? <ExistingPolicyFields record={record} /> : null}
+        <FireOptions record={record} renewal={renewal} readOnly={readOnly} />
+        <ProductAndAddons clientId={record.client.id} readOnly={readOnly} canEdit={canEdit} />
+        <OtherSections record={record} renewal={renewal} readOnly={readOnly} />
         <Claims readOnly={readOnly} />
 
         <Card>
@@ -262,7 +299,16 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           <div className="sticky bottom-0 z-10 -mx-1 grid gap-2 rounded-lg border bg-card/95 p-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/80">
             {saveError ? (
               <Alert variant="destructive" role="alert">
-                <AlertDescription>{errorMessage(saveError)}</AlertDescription>
+                <AlertDescription>
+                  {errorMessage(saveError)}
+                  {fieldIssues(saveError).length > 0 ? (
+                    <ul className="list-disc pl-4">
+                      {fieldIssues(saveError).map((issue) => (
+                        <li key={`${issue.path}-${issue.message}`}>{issue.message}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </AlertDescription>
               </Alert>
             ) : null}
             {invalidSubmit && Object.keys(form.formState.errors).length > 0 ? (
@@ -425,36 +471,75 @@ function AddLocationsDialog({
   );
 }
 
-/** The RFQ's Fire lines: Option 1 adds up the locations; Option 2 is typed per line. */
-/** A renewal's last-year figure, shown to the rupee; a dash when the policy did not have it. */
-function existingAmount(value: string | undefined) {
-  return value === undefined ? '—' : formatInr(wholeRupees(value));
+/**
+ * A renewal's Existing column (C-2): last year's insurer and policy number. The figures are typed
+ * in the Existing columns below; they start as the policy software's copy.
+ */
+function ExistingPolicyFields({ record }: { record: ProposalRecord }) {
+  const copy = record.existingPolicy;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Existing policy (last year)</CardTitle>
+        <CardDescription>
+          {record.existing?.source === 'DATA_SHEET'
+            ? 'The Existing column as typed on this Data Sheet.'
+            : copy
+              ? `The Existing column as copied from ${copy.source}; change any figure that differs.`
+              : 'Last year’s policy was not copied: type its insurer and figures in the Existing columns.'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        <TextField name="existing.insurer" label="Insurer" maxLength={200} autoComplete="off" />
+        <TextField
+          name="existing.policyNumber"
+          label="Policy number"
+          maxLength={100}
+          autoComplete="off"
+        />
+      </CardContent>
+    </Card>
+  );
 }
 
-function FireOptions({ existing }: { existing: ProposalRecord['existingPolicy'] }) {
+/**
+ * The RFQ's Fire lines in three options (C-2): Existing (a renewal's last year), Option 1 adding
+ * up the locations, and Option 2 typed per line; then Fire's add-on covers (C-6).
+ */
+function FireOptions({
+  record,
+  renewal,
+  readOnly,
+}: {
+  record: ProposalRecord;
+  renewal: boolean;
+  readOnly: boolean;
+}) {
   const form = useFormContext<DataSheetFormValues>();
-  const existingLines = new Map(existing?.fireLines.map((line) => [line.group, line.sumInsured]));
-  const existingFire = existing?.sections.find((section) => section.code === 'FIRE')?.sumInsured;
   const locations = useWatch({ control: form.control, name: 'locations' });
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
+  const existingLines = useWatch({ control: form.control, name: 'existing.fireLines' });
   const totals = fireGroupTotals(locations ?? []);
   const seconds = (option2 ?? []).map((line) => line.amount?.trim() ?? '').filter(Boolean);
+  const typedLines = (existingLines ?? [])
+    .map((line) => line.amount?.trim() ?? '')
+    .filter((value) => /^\d+$/.test(value));
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Fire and allied perils</CardTitle>
         <CardDescription>
-          Proposed sum insured by line. Option 2 is optional: enter it for the lines the client
-          wants quoted at a second figure.
+          Sum insured by line. Option 2 is optional: enter it for the lines the client wants quoted
+          at a second figure.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-6">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Line</TableHead>
-              {existing ? <TableHead className="text-right">Existing</TableHead> : null}
+              {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
               <TableHead className="text-right">Option 1</TableHead>
               <TableHead className="text-right">Option 2</TableHead>
             </TableRow>
@@ -465,9 +550,13 @@ function FireOptions({ existing }: { existing: ProposalRecord['existingPolicy'] 
                 <TableCell className="min-w-56 whitespace-normal">
                   {FIRE_GROUP_LABELS[group]}
                 </TableCell>
-                {existing ? (
-                  <TableCell className="text-right text-muted-foreground tabular whitespace-nowrap">
-                    {existingAmount(existingLines.get(group))}
+                {renewal ? (
+                  <TableCell className="align-top">
+                    <RupeesField
+                      name={`existing.fireLines.${index}.amount`}
+                      label={`Existing for ${FIRE_GROUP_LABELS[group]}`}
+                      hideLabel
+                    />
                   </TableCell>
                 ) : null}
                 <TableCell className="text-right tabular whitespace-nowrap">
@@ -486,9 +575,18 @@ function FireOptions({ existing }: { existing: ProposalRecord['existingPolicy'] 
           <TableFooter>
             <TableRow>
               <TableCell className="font-medium">Total sum insured</TableCell>
-              {existing ? (
+              {renewal ? (
                 <TableCell className="text-right font-medium tabular whitespace-nowrap">
-                  {existingAmount(existingFire)}
+                  {typedLines.length > 0 ? (
+                    formatInr(sumRupeesOf(typedLines))
+                  ) : (
+                    <RupeesField
+                      name="existing.fireTotal"
+                      label="Existing Fire total"
+                      hideLabel
+                      placeholder="Total"
+                    />
+                  )}
                 </TableCell>
               ) : null}
               <TableCell className="text-right font-medium tabular whitespace-nowrap">
@@ -502,29 +600,41 @@ function FireOptions({ existing }: { existing: ProposalRecord['existingPolicy'] 
             </TableRow>
           </TableFooter>
         </Table>
+        <CoverToggles
+          path="fireCovers"
+          covers={record.fire.covers}
+          name="Fire"
+          readOnly={readOnly}
+        />
       </CardContent>
     </Card>
   );
 }
 
-/** The other coverage sections: included or not, with Proposed 1 and 2. */
+/**
+ * The other coverage sections: included or not, in three options (C-2), with their lines,
+ * annexure, Burglary basis (C-3) and add-on covers (C-6).
+ */
 function OtherSections({
-  names,
-  existing,
+  record,
+  renewal,
   readOnly,
 }: {
-  names: ReadonlyMap<string, string>;
-  existing: ProposalRecord['existingPolicy'];
+  record: ProposalRecord;
+  renewal: boolean;
   readOnly: boolean;
 }) {
-  const existingSections = new Map(
-    existing?.sections.map((section) => [section.code, section.sumInsured]),
-  );
+  const saved = new Map(record.sections.map((section) => [section.code, section]));
   const form = useFormContext<DataSheetFormValues>();
   const sections = useWatch({ control: form.control, name: 'sections' });
   const locations = useWatch({ control: form.control, name: 'locations' });
+  const option2 = useWatch({ control: form.control, name: 'fireOption2' });
   // Burglary covers "all the contents as per Fire section except building" (the RFQ schedule).
   const contents = contentsTotal(locations ?? []);
+  const fromContents = contentsOptions(
+    locations ?? [],
+    (option2 ?? []).map((line) => ({ group: line.group, amount: line.amount ?? null })),
+  );
 
   return (
     <Card>
@@ -540,7 +650,7 @@ function OtherSections({
           <TableHeader>
             <TableRow>
               <TableHead>Section</TableHead>
-              {existing ? <TableHead className="text-right">Existing</TableHead> : null}
+              {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
               <TableHead className="text-right">Proposed 1</TableHead>
               <TableHead className="text-right">Proposed 2</TableHead>
             </TableRow>
@@ -548,19 +658,28 @@ function OtherSections({
           <TableBody>
             {(sections ?? []).map((section, index) => {
               const { code, included } = section;
-              const name = names.get(code) ?? OTHER_SECTION_LABELS[code];
+              const savedSection = saved.get(code);
+              const name = savedSection?.name ?? OTHER_SECTION_LABELS[code];
+              const covers = savedSection?.covers ?? [];
               const annexureSection = isAnnexureSection(code);
               const hasLines = code in SECTION_LINES;
+              const basis = hasBasis(code) ? (section.basis ?? null) : null;
+              // C-3: on a basis, Burglary's sum insured is the Fire contents.
+              const contentsBased = code === 'BURGLARY' && basis !== null;
               // D-5: the sum insured comes from the annexure (or FLOP's gross profit) when given.
               const derived =
                 (annexureSection && (section.annexure?.length ?? 0) > 0) ||
                 Boolean(SUM_INSURED_LINE[code] && section.lines?.[SUM_INSURED_LINE[code]]?.trim());
-              const columnCount = existing ? 4 : 3;
+              const option1 = contentsBased ? fromContents.proposed1 : sectionSumInsured(section);
+              const option2Value = contentsBased
+                ? fromContents.proposed2
+                : section.proposed2?.trim() || null;
+              const details =
+                included && (annexureSection || hasLines || hasBasis(code) || covers.length > 0);
+              const columnCount = renewal ? 4 : 3;
               return (
                 <Fragment key={code}>
-                  <TableRow
-                    className={included && (annexureSection || hasLines) ? 'border-b-0' : undefined}
-                  >
+                  <TableRow className={details ? 'border-b-0' : undefined}>
                     <TableCell>
                       <FormField
                         control={form.control}
@@ -582,22 +701,30 @@ function OtherSections({
                         )}
                       />
                     </TableCell>
-                    {existing ? (
-                      <TableCell className="text-right align-top text-muted-foreground tabular whitespace-nowrap">
-                        {existingAmount(existingSections.get(code))}
+                    {renewal ? (
+                      <TableCell className="align-top">
+                        <RupeesField
+                          name={`sections.${index}.existing`}
+                          label={`${name} Existing`}
+                          hideLabel
+                        />
                       </TableCell>
                     ) : null}
                     <TableCell className="align-top">
                       {included ? (
                         <div className="grid justify-items-end gap-1">
-                          {derived ? (
+                          {derived || contentsBased ? (
                             <span
                               className="py-2 text-right text-sm font-medium tabular"
                               aria-label={`${name} Proposed 1`}
                             >
-                              {formatInr(sectionSumInsured(section) ?? '0')}
+                              {formatInr(option1 ?? '0')}
                               <span className="block text-xs font-normal text-muted-foreground">
-                                {annexureSection ? 'From the annexure' : 'Annual Gross Profit'}
+                                {contentsBased
+                                  ? 'Fire contents'
+                                  : annexureSection
+                                    ? 'From the annexure'
+                                    : 'Annual Gross Profit'}
                               </span>
                             </span>
                           ) : (
@@ -607,7 +734,10 @@ function OtherSections({
                               hideLabel
                             />
                           )}
-                          {code === 'BURGLARY' && contents !== '0' && !form.formState.disabled ? (
+                          {code === 'BURGLARY' &&
+                          !contentsBased &&
+                          contents !== '0' &&
+                          !form.formState.disabled ? (
                             <Button
                               type="button"
                               variant="link"
@@ -630,22 +760,46 @@ function OtherSections({
                       )}
                     </TableCell>
                     <TableCell className="align-top">
-                      {included ? (
+                      {!included ? null : contentsBased ? (
+                        <span
+                          className="block py-2 text-right text-sm font-medium tabular"
+                          aria-label={`${name} Proposed 2`}
+                        >
+                          {option2Value ? formatInr(option2Value) : '—'}
+                        </span>
+                      ) : (
                         <RupeesField
                           name={`sections.${index}.proposed2`}
                           label={`${name} Proposed 2`}
                           hideLabel
                         />
-                      ) : null}
+                      )}
                     </TableCell>
                   </TableRow>
-                  {included && (annexureSection || hasLines) ? (
+                  {details ? (
                     <TableRow>
                       <TableCell
                         colSpan={columnCount}
                         className="bg-muted/30 pb-4 whitespace-normal"
                       >
-                        <section aria-label={`${name} details`} className="grid gap-2">
+                        <section aria-label={`${name} details`} className="grid gap-4">
+                          {hasBasis(code) ? (
+                            <BasisField
+                              index={index}
+                              name={name}
+                              allowTyped={
+                                savedSection?.basis === null && savedSection.proposed1 !== null
+                              }
+                              amounts={
+                                basis
+                                  ? {
+                                      proposed1: onBasis(option1, basis),
+                                      proposed2: onBasis(option2Value, basis),
+                                    }
+                                  : null
+                              }
+                            />
+                          ) : null}
                           {annexureSection ? (
                             <AnnexureGrid
                               index={index}
@@ -653,14 +807,15 @@ function OtherSections({
                               name={name}
                               readOnly={readOnly}
                             />
-                          ) : (
-                            <SectionLines
-                              index={index}
-                              code={code}
-                              name={name}
-                              renewal={existing !== null && existing !== undefined}
-                            />
-                          )}
+                          ) : hasLines ? (
+                            <SectionLines index={index} code={code} name={name} renewal={renewal} />
+                          ) : null}
+                          <CoverToggles
+                            path={`sections.${index}.covers`}
+                            covers={covers}
+                            name={name}
+                            readOnly={readOnly}
+                          />
                         </section>
                       </TableCell>
                     </TableRow>

@@ -14,6 +14,7 @@ export const queryKeys = {
     detail: (id: string) => ['clients', 'detail', id] as const,
     locations: (id: string) => ['clients', 'locations', id] as const,
     allLocations: (id: string) => ['clients', 'locations', id, 'all'] as const,
+    addonFavourites: (id: string) => ['clients', 'addon-favourites', id] as const,
   },
   insurers: {
     all: ['insurers'] as const,

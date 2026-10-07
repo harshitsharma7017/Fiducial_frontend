@@ -144,10 +144,53 @@ const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promis
  * A small fake of the API: reads return the current proposal; `onWrite` answers PUT and POST with
  * the next proposal, which later reads then return, as the server would.
  */
+const CR = 10_000_000;
+const item = { updatedAt: '2026-10-07T04:00:00.000Z' };
+const PRODUCTS = [
+  ['BSUS', 'Bharat Sookshma Udyam Suraksha (BSUS)', null, String(5 * CR)],
+  ['BLUS', 'Bharat Laghu Udyam Suraksha (BLUS)', String(5 * CR), String(50 * CR)],
+  ['SFSP', 'Standard Fire & Special Perils Policy (SFSP)', String(50 * CR), null],
+  ['PAR', 'Property All Risk (PAR)', String(5 * CR), null],
+].map(([code, name, aboveSi, upToSi], index) => ({
+  ...item,
+  id: String(index + 1).padStart(24, '0'),
+  code,
+  name,
+  aboveSi,
+  upToSi,
+  order: index + 1,
+  active: true,
+  notes: null,
+  addonLists: [],
+}));
+const ADDONS = [
+  ['PAR', 'Debris removal'],
+  ['PAR', 'Waiver of recourse'],
+  ['SFSP', 'Spontaneous combustion'],
+].map(([list, name], index) => ({
+  ...item,
+  id: String(index + 11).padStart(24, '0'),
+  list,
+  seq: index + 1,
+  name,
+  kind: null,
+  limit: null,
+  active: true,
+}));
+
 function serve(initial: ProposalRecord, onWrite?: (url: string, body: unknown) => ProposalRecord) {
   let current = initial;
+  let favourites: unknown[] = [];
   fetchMock.mockImplementation((input, init) => {
     const url = input instanceof Request ? input.url : input.toString();
+    if (url.includes('/addon-favourites')) {
+      if (init?.method === 'PUT' && typeof init.body === 'string') {
+        favourites = (JSON.parse(init.body) as { items: unknown[] }).items;
+      }
+      return Promise.resolve(json({ items: favourites, updatedAt: null }));
+    }
+    if (url.endsWith('/catalog/products')) return Promise.resolve(json({ items: PRODUCTS }));
+    if (url.endsWith('/catalog/addons')) return Promise.resolve(json({ items: ADDONS }));
     if (init?.method && init.method !== 'GET') {
       if (!onWrite) return Promise.resolve(json({}, 500));
       const body: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
@@ -213,15 +256,107 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
   });
 
-  it('offers the contents total (all but buildings) as the Burglary sum insured', async () => {
+  it('C-3: takes Burglary from the Fire contents (all but buildings) on its basis', async () => {
     serve(record());
     const user = renderWorkspace();
     await user.type(await screen.findByLabelText('Item 1a sum insured'), '5000000');
     await user.type(screen.getByLabelText('Item 2 sum insured'), '200000');
     await user.type(screen.getByLabelText('Item 6 sum insured'), '300000');
     await user.click(screen.getByRole('checkbox', { name: 'Burglary' }));
-    await user.click(screen.getByRole('button', { name: 'Use contents total ₹5,00,000.00' }));
-    expect(screen.getByLabelText('Burglary Proposed 1')).toHaveValue('5,00,000');
+    // A new Burglary starts on 100%: its sum insured is the contents, kept up to date.
+    expect(screen.getByLabelText('Burglary Proposed 1')).toHaveTextContent('₹5,00,000.00');
+    await user.selectOptions(
+      screen.getByLabelText('Burglary basis'),
+      '1st loss basis 25% of sum insured',
+    );
+    expect(screen.getByText(/On this basis: Option 1 ₹1,25,000\.00/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Item 6 sum insured'), '0');
+    expect(screen.getByLabelText('Burglary Proposed 1')).toHaveTextContent('₹32,00,000.00');
+    expect(screen.getByText(/On this basis: Option 1 ₹8,00,000\.00/)).toBeInTheDocument();
+  });
+
+  it('C-1, C-4: follows the suggested product, asks why on an override, and picks its add-ons', async () => {
+    let sent: { product: unknown; addons: unknown } | undefined;
+    serve(record(), (_url, body) => {
+      sent = body as typeof sent;
+      return record();
+    });
+    const user = renderWorkspace();
+    await user.type(await screen.findByLabelText('Item 6 sum insured'), String(20 * CR));
+    const product = screen.getByLabelText('Product');
+    expect(
+      await within(product).findByRole('option', { name: 'Follow the suggestion (BLUS)' }),
+    ).toBeInTheDocument();
+
+    // PAR is offered above 5 Cr: its own add-ons only, favourites kept for the client.
+    await user.selectOptions(product, 'PAR');
+    const list = await screen.findByRole('list', { name: 'PAR add-on covers' });
+    expect(within(list).queryByText('Spontaneous combustion')).not.toBeInTheDocument();
+    await user.click(within(list).getByLabelText('Debris removal'));
+    await user.click(
+      within(list).getByRole('button', { name: 'Favourite for this client: Debris removal' }),
+    );
+    await waitFor(() =>
+      expect(
+        within(list).getByRole('button', { name: 'Favourite for this client: Debris removal' }),
+      ).toHaveAttribute('aria-pressed', 'true'),
+    );
+    expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('Debris removal');
+    await user.type(screen.getByLabelText('Search add-on covers'), 'waiver');
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+
+    // BSUS at 20 Cr is outside its range: the reason is asked for, and PAR's add-ons go.
+    await user.selectOptions(product, 'BSUS');
+    expect(screen.getByText(/so left out when you save: Debris removal/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
+    expect(
+      await screen.findByText('Say why this product is chosen over BLUS or PAR'),
+    ).toBeInTheDocument();
+    expect(sent).toBeUndefined();
+    await user.type(screen.getByLabelText('Reason for this product'), 'Board decision');
+    await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
+    await waitFor(() =>
+      expect(sent).toMatchObject({
+        product: { code: 'BSUS', reason: 'Board decision' },
+        addons: [],
+      }),
+    );
+  });
+
+  it('C-6: asks for each add-on cover of a section, or not', async () => {
+    let sent: { fireCovers: unknown } | undefined;
+    serve(
+      record({
+        fire: {
+          ...record().fire,
+          covers: [
+            { name: 'Earthquake', required: null },
+            { name: 'Terrorism', required: null },
+          ],
+        },
+      }),
+      (_url, body) => {
+        sent = body as typeof sent;
+        return record();
+      },
+    );
+    const user = renderWorkspace();
+    const earthquake = await screen.findByRole('group', { name: 'Fire: Earthquake' });
+    await user.click(within(earthquake).getByRole('button', { name: 'Required' }));
+    expect(within(earthquake).getByRole('button', { name: 'Required' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    const terrorism = screen.getByRole('group', { name: 'Fire: Terrorism' });
+    await user.click(within(terrorism).getByRole('button', { name: 'Not required' }));
+    await user.type(screen.getByLabelText('Item 6 sum insured'), '5000000');
+    await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
+    await waitFor(() =>
+      expect(sent?.fireCovers).toEqual([
+        { name: 'Earthquake', required: true },
+        { name: 'Terrorism', required: false },
+      ]),
+    );
   });
 
   it('opens a renewal with last year’s policy and an Existing column', async () => {
@@ -253,6 +388,27 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
           message: null,
           checkedAt: '2026-10-07T04:00:00.000Z',
         },
+        existing: {
+          insurer: 'Example General, Fort',
+          policyNumber: 'EGI/2025/42',
+          source: 'POLICY_SOFTWARE',
+        },
+        fire: {
+          groups: FIRE_GROUPS.map((group) => ({
+            group,
+            existing: group === 'STOCKS' ? '50000000' : null,
+            proposed1: '0',
+            proposed2: null,
+          })),
+          existing: '120000000',
+          proposed1: '0',
+          proposed2: null,
+          covers: [],
+        },
+        sections: OTHER_SECTIONS.map((code) => ({
+          ...record().sections.find((section) => section.code === code)!,
+          existing: code === 'BURGLARY' ? '15000000' : null,
+        })),
       }),
     );
     renderWorkspace();
@@ -260,16 +416,18 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     expect(card).toBeInTheDocument();
     expect(screen.getByText(/EGI\/2025\/42 with Example General, Fort/)).toBeInTheDocument();
     expect(screen.getByText('Renewal')).toBeInTheDocument();
-    const stocks = screen.getByRole('row', { name: /^All types of stock pertaining/ });
-    expect(within(stocks).getByText('₹5,00,00,000.00')).toBeInTheDocument();
+    // C-2: the Existing column starts as the copy and can be changed.
+    expect(screen.getByLabelText('Insurer')).toHaveValue('Example General, Fort');
+    expect(
+      screen.getByLabelText('Existing for All types of stock pertaining to insured business'),
+    ).toHaveValue('5,00,00,000');
     const otherSections = screen
       .getByText('Other sections')
       .closest<HTMLElement>('[data-slot=card]')!;
     expect(
       within(otherSections).getByRole('columnheader', { name: 'Existing' }),
     ).toBeInTheDocument();
-    const burglary = within(otherSections).getByRole('row', { name: /^Burglary ₹/ });
-    expect(within(burglary).getByText('₹1,50,00,000.00')).toBeInTheDocument();
+    expect(within(otherSections).getByLabelText('Burglary Existing')).toHaveValue('1,50,00,000');
   });
 
   it('moves a case to its next stage and closes one with a reason', async () => {

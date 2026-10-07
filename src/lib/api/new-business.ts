@@ -4,6 +4,7 @@ import { addDays } from '@/lib/dates';
 import { isDemoModeError } from '@/lib/demo-mode';
 import { queryKeys } from '@/lib/query-keys';
 import {
+  AddonFavouritesSchema,
   ClientLocationListResponseSchema,
   ProposalListResponseSchema,
   ProposalRecordSchema,
@@ -54,6 +55,15 @@ export function proposalRecordQuery(id: string) {
   return queryOptions({
     queryKey: queryKeys.proposals.record(id),
     queryFn: isRecordId(id) ? ({ signal }) => fetchProposalRecord(id, signal) : skipToken,
+  });
+}
+
+/** A client's favourite add-on covers (C-4), listed first in the add-on picker. */
+export function addonFavouritesQuery(clientId: string) {
+  return queryOptions({
+    queryKey: queryKeys.clients.addonFavourites(clientId),
+    queryFn: ({ signal }) =>
+      apiFetch(`clients/${clientId}/addon-favourites`, { schema: AddonFavouritesSchema, signal }),
   });
 }
 
@@ -135,9 +145,14 @@ export function toScreenProposal(record: ProposalRecord): Proposal {
     : null;
 
   if (record.type === 'EXISTING') {
-    const existing = record.existingPolicy;
+    // The Existing column: typed on the Data Sheet, else the policy software's copy (C-2).
+    const existing = record.existing;
     const existingOf = (code: string) =>
-      rupees(existing?.sections.find((section) => section.code === code)?.sumInsured ?? null);
+      rupees(
+        code === 'FIRE'
+          ? record.fire.existing
+          : (record.sections.find((section) => section.code === code)?.existing ?? null),
+      );
     const start = record.policyStart ?? record.dueDate;
     return {
       ...base,
@@ -147,7 +162,7 @@ export function toScreenProposal(record: ProposalRecord): Proposal {
         insurer: existing?.insurer ?? 'Not yet fetched',
         policyNumber: existing?.policyNumber ?? '—',
         // Last year's policy ends the day before the renewal starts.
-        expiresOn: existing?.periodEnd ?? addDays(start, -1),
+        expiresOn: record.existingPolicy?.periodEnd ?? addDays(start, -1),
       },
       sections: [
         {

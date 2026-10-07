@@ -171,6 +171,12 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
     whole. The checklist of what is still needed comes from the API. Totals update as you type
     (`src/lib/data-sheet.ts`: exact paise in BigInt, shown to the rupee, as Excel does), and the API's figures replace
     them on save. The Burglary row offers the contents total (all Fire items except buildings).
+  - **Case options** (C-1 to C-6, `product-addons.tsx`, `section-details.tsx`): the Product card follows the Fire
+    sum insured as you type and asks for a reason when another product is chosen; its add-on picker lists the
+    product's add-ons with search, a star per add-on for the client's favourites (listed first) and chips for the
+    chosen ones. Fire lines, sections and section lines have Existing (renewals, editable), Option 1 and Option 2.
+    Burglary has a basis (100% or first loss 25/50/75%) and then follows the Fire contents. Each section's add-on
+    covers have Required / Not required toggles.
   - **Insurers and RFQ** (`components/proposals/rfq/`): up to five active insurers, Download RFQ (Excel or PDF)
     once the Data Sheet is complete, and **Email the RFQ**: each Not sent insurer with its RFQ addresses ticked and
     its contacts unticked (no typed addresses), the quote due date and the attachment format, a preview of each

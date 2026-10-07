@@ -74,6 +74,10 @@ insurers, the RFQ workbook download and marking it sent, which locks the Data Sh
 Built (M-4 to M-9): product and cover master screens (`/masters/products`, `/sections`, `/addons`, `/tax-rates`,
 `/notes`; `components/catalog/`) and their Excel upload on Import data.
 
+Built (C-1 to C-6): product with override and reason, three options per schedule line with an editable Existing
+column for renewals, Burglary basis from the Fire contents, add-on picker with favourites per client, cover toggles
+(`components/proposals/new-business/product-addons.tsx`, `section-details.tsx`).
+
 Built (D-1, D-2): creating a case (New or Renewal, client, policy period, assigned staff, case number), 9 stages on
 every case, and renewals that copy last year's policy from the policy software's public API.
 
