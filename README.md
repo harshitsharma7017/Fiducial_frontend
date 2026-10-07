@@ -51,8 +51,9 @@ accepts five built-in demo users, one per role, and never calls the API; a "Demo
 | `demo.readonly@example.com`  | Read-only                | `READ_ONLY`       |
 
 In demo mode the pages that read live data (Occupancy, Pincodes, Fire rate check, Users, Audit log and Settings) show
-a short "Not available in demo mode" notice instead of calling the API, as do creating a proposal and a real
-proposal's page. The dashboard and proposal lists work fully on sample data, new business included. Turn demo mode off (`USE_MOCK_API=false` or unset) and the app signs in against
+a short "Not available in demo mode" notice instead of calling the API, as do Email templates, creating a proposal
+and a real proposal's page (so no RFQ is emailed, reminded or logged in demo mode).
+The sample cases show the insurer statuses, including Reminded and Overdue. The dashboard and proposal lists work fully on sample data, new business included. Turn demo mode off (`USE_MOCK_API=false` or unset) and the app signs in against
 the real API again, unchanged.
 
 ## Roles and permissions
@@ -79,7 +80,9 @@ The web app reads the same table:
 - Actions use `usePermission()` or `can()`; components never compare role codes.
 - The API checks the same permission on every route, so the screens are a convenience, not the security boundary.
 
-Marking the RFQ sent needs `proposals.send`; downloading it, `proposals.export`. The approve permission waits for the
+Emailing the RFQ, reminding an insurer and marking it sent need `proposals.send`; recording an insurer's answer,
+`proposals.edit`; downloading the RFQ or a mail's attachment, `proposals.export`; editing email templates,
+`masters.manage`. The approve permission waits for the
 QCR and placement slip screens, which are not built yet. The
 client still has to confirm the table (Q12 in the backend's `docs/OPEN_ITEMS.md`).
 
@@ -130,6 +133,16 @@ address were found, or the problems that stopped it. Once it is uploaded, Downlo
 draws it on A4 with the letterhead (PDF); until then the built-in layout is used, and the RFQ tab says which.
 QCR and Placement Slip templates are stored only, until those documents are built.
 
+## Email templates
+
+Masters → Email templates (`/masters/email-templates`, E-2): the subject and message of the RFQ and reminder mails.
+Every role with `masters.view` can read them; Admins edit them. The merge field buttons put `{{insuredName}}`,
+`{{policyPeriod}}`, `{{dueDate}}`, `{{reference}}`, `{{insurerName}}`, `{{contactName}}` or `{{senderName}}` in at the
+cursor; an unknown field or a stray `{{` is flagged as you type and again by the API. The preview uses the shared
+`renderMail()`, the function the API sends with, on sample values or a recent case. "Default" marks wording that has
+not been edited; saving sends the version loaded, and if someone saved meanwhile the card says so and offers to
+reload.
+
 ## Audit log
 
 `/audit` (Admin) lists sign-ins and every create, edit and approval, newest first: when, who, what, which record, and
@@ -158,14 +171,28 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
     whole. The checklist of what is still needed comes from the API. Totals update as you type
     (`src/lib/data-sheet.ts`: exact paise in BigInt, shown to the rupee, as Excel does), and the API's figures replace
     them on save. The Burglary row offers the contents total (all Fire items except buildings).
-  - **Insurers and RFQ**: up to five active insurers, their RFQ addresses with copy buttons, Download RFQ (Excel
-    or PDF) once the Data Sheet is complete, and Mark as sent per insurer or for all, after a confirmation. Sending locks
-    the Data Sheet.
-  - **Activity**: the proposal's history, newest first. `?tab=data-sheet|rfq|activity` opens a given tab.
+  - **Insurers and RFQ** (`components/proposals/rfq/`): up to five active insurers, Download RFQ (Excel or PDF)
+    once the Data Sheet is complete, and **Email the RFQ**: each Not sent insurer with its RFQ addresses ticked and
+    its contacts unticked (no typed addresses), the quote due date and the attachment format, a preview of each
+    insurer's mail from the API, then one mail per insurer. The results list each insurer, with the reason and
+    **Try again** (a new send id) for a failure. **Sent outside the app** records an RFQ sent another way, with its
+    due date. Each insurer shows its status (Not sent, Sent, Reminded, Quoted, Declined, No response), Overdue after
+    its due date, when and by whom it was sent, its reminders and its answer's note; **Remind** (Sent or Reminded,
+    starting with the last mail's addresses, the RFQ attached again unless unticked) and **Record answer** (only the
+    changes `canMoveInsurer()` allows). The first insurer sent locks the Data Sheet. When the API has mail turned off
+    (a 409 `MAIL_DISABLED`, or Settings' mail card for Admins), the tab falls back to copying the addresses and
+    marking the RFQ sent.
+  - **Activity**: the mails of the case (kind, insurer, To, who, when, Delivered, Outbox or Failed; select one for its
+    subject, message and attachment), then the proposal's history, newest first. `?tab=data-sheet|rfq|activity` opens
+    a given tab.
 - **RFQ page** (`/rfq`, sidebar Workflow → RFQ, `proposals.view`): every new-business RFQ, ready to send first, with
-  status chips (Data Sheet incomplete, Ready to send, Partly sent, Sent; `?status=`), search by reference, client or
-  insurer (`?q=`), the insurers each went to, the due date and the last send. A reference opens the proposal on the
+  status chips (Data Sheet incomplete, Ready to send, Partly sent, Sent; `?status=`), an Overdue responses chip
+  (`?filter=overdue`, linked from the dashboard), search by reference, client or insurer (`?q=`), each insurer's
+  status, the due date and the last send. An insurer counts as sent once it has the RFQ, whatever it answered. A reference opens the proposal on the
   tab that needs work. Statuses come from `src/lib/rfq-status.ts`.
+- **Dashboard**: Awaiting quotes counts insurers that are Sent or Reminded on open cases; Overdue responses counts
+  those past their due date and links to the RFQ page. The table's Insurers column (responded out of listed) has a
+  tooltip with the count per status.
 - Cases from the API appear on the dashboard, in the lists, drawer and palette: `src/lib/api/new-business.ts` maps each
   one onto the screen model (product and add-ons are chosen at the QCR; a renewal's Existing figures and expiry come
   from last year's policy).

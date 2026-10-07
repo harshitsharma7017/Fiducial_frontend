@@ -34,6 +34,12 @@ first) · `npm run build` · `npm run shared:check` · `npm run shared:sync`
   `src/components/states.tsx`, and keep keyboard support for custom widgets.
 - Imports: external packages first, then `@/` aliases, then relative paths. Use `import type` for types.
 
+- **RFQ mail**: addresses are only ever chosen from the insurer master (checkboxes, never a text field); the API
+  checks them again. Each send gets a new `crypto.randomUUID()` send id (`newSendId()` in
+  `components/proposals/rfq/use-rfq.ts`), and each "Try again" another, so a repeated request mails nobody twice.
+  Previews come from the API; the template editor's preview uses the shared `renderMail()`. Whether mail is on comes
+  from `GET mail/status` for Admins, otherwise from a 409 `MAIL_DISABLED`, after which the tab offers "Mark as sent".
+
 ## Frontend shell conventions
 
 These apply to the code added by `.kiro/specs/frontend-shell` (see its design.md for details).

@@ -15,9 +15,12 @@ src/
     layout/                     app shell, page gate, sidebar, navbar, breadcrumbs, command palette, notifications,
                                 user menu, theme toggle; nav-config.ts holds the navigation and page permissions
     catalog/                    product and cover masters: generic table and row form from src/shared/catalog.ts
+    email-templates/            email template editor (merge field buttons, live preview with renderMail())
     proposals/                  dashboard header, type switch, KPI cards, pipeline, chart, table, drawer, badges,
                                 sections/ (shared by the drawer and the full proposal page), new-business/
-                                (create form and the workspace: Data Sheet, insurers and RFQ, activity)
+                                (create form and the workspace: Data Sheet, activity), rfq/ (the Insurers and RFQ
+                                tab: insurers card and rows, choose insurers, download, Email the RFQ with
+                                previews and results, Sent outside the app, reminder and answer dialogs, mail log)
     audit/                      audit log toolbar and entry row
     clients/                    client form sheet, address fieldset, details card, locations card and dialog
     insurers/                   insurer form sheet, RFQ emails field, activate / deactivate dialog

@@ -9,6 +9,7 @@ import {
   RISK_DETAIL_FIELDS,
   type ProposalRecord,
   type Role,
+  type InsurerStatus,
 } from '@/shared';
 import { ProposalWorkspace } from './proposal-workspace';
 
@@ -33,6 +34,10 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
     policyEnd: null,
     existingPolicy: null,
     existingPolicyLookup: null,
+    existing: null,
+    product: null,
+    addonLists: [],
+    addons: [],
     client: {
       id: CLIENT_ID,
       name: 'Example Fabrics Pvt Ltd',
@@ -67,17 +72,30 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
       },
     ],
     fire: {
-      groups: FIRE_GROUPS.map((group) => ({ group, proposed1: '0', proposed2: null })),
+      groups: FIRE_GROUPS.map((group) => ({
+        group,
+        existing: null,
+        proposed1: '0',
+        proposed2: null,
+      })),
+      existing: null,
       proposed1: '0',
       proposed2: null,
+      covers: [],
     },
     sections: OTHER_SECTIONS.map((code) => ({
       code,
       name: OTHER_SECTION_LABELS[code],
       included: false,
+      existing: null,
       proposed1: null,
       proposed2: null,
       lines: {},
+      lines2: {},
+      existingLines: {},
+      basis: null,
+      basisAmounts: null,
+      covers: [],
       annexure: [],
     })),
     suggestedProducts: [],
@@ -99,10 +117,18 @@ const INSURER = {
   company: 'Example General Insurance',
   branch: 'Fort, Mumbai',
   rfqEmails: ['fire.uw@insurer.example', 'rfq@insurer.example'],
+  contacts: [],
   active: true,
-  status: 'NOT_SENT' as const,
-  sentAt: null,
-  sentBy: null,
+  status: 'NOT_SENT' as InsurerStatus,
+  sentVia: null as 'APP' | 'OUTSIDE' | null,
+  sentAt: null as string | null,
+  sentBy: null as string | null,
+  dueDate: null as string | null,
+  overdue: false,
+  reminderCount: 0,
+  lastRemindedAt: null,
+  response: null,
+  lastMail: null,
 };
 
 function json(body: unknown, status = 200): Response {
@@ -369,11 +395,14 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
         fire: {
           groups: FIRE_GROUPS.map((group) => ({
             group,
+            existing: null,
             proposed1: group === 'STOCKS' ? '5000000' : '0',
             proposed2: null,
           })),
+          existing: null,
           proposed1: '5000000',
           proposed2: null,
+          covers: [],
         },
       });
     });
@@ -395,7 +424,8 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     const user = renderWorkspace();
     await user.click(await screen.findByRole('tab', { name: 'Insurers and RFQ' }));
     expect(screen.getByRole('button', { name: 'Download RFQ (Excel)' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Mark as sent to 1 insurer' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Email the RFQ' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sent outside the app' })).toBeDisabled();
     expect(screen.getByText(/Complete the Data Sheet first: 1 item is still needed/)).toBeVisible();
   });
 
@@ -417,16 +447,22 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     const user = renderWorkspace();
     // A complete Data Sheet opens on the RFQ tab.
     expect(
-      await screen.findByText('fire.uw@insurer.example, rfq@insurer.example', { selector: 'p' }),
+      await screen.findByText('fire.uw@insurer.example, rfq@insurer.example', { selector: 'span' }),
     ).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Mark as sent to 1 insurer' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Mark the RFQ as sent?' });
+    await user.click(screen.getByRole('button', { name: 'Sent outside the app' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Sent outside the app?' });
     expect(within(dialog).getByText('The Data Sheet will lock')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Quotes due by')).not.toHaveValue('');
     await user.click(within(dialog).getByRole('button', { name: 'Mark as sent' }));
 
-    await waitFor(() => expect(sent).toEqual({ insurerIds: [INSURER_ID] }));
+    await waitFor(() =>
+      expect(sent).toEqual({
+        insurerIds: [INSURER_ID],
+        dueDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) as unknown,
+      }),
+    );
     expect(await screen.findByText('Sent')).toBeInTheDocument();
-    expect(screen.getByText(/Asha Rao$/, { selector: 'span' })).toBeInTheDocument();
+    expect(screen.getByText(/Asha Rao$/, { selector: 'dd' })).toBeInTheDocument();
   });
 
   it('shows a sent proposal’s Data Sheet locked', async () => {

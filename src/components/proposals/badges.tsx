@@ -2,14 +2,13 @@ import type * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { expiryLabel, expiryUrgency, type ExpiryUrgency } from '@/lib/proposal-metrics';
+import { INSURER_STATUS_LABELS, type InsurerStatus } from '@/shared';
 import {
   DOC_STATUS_LABELS,
   PROPOSAL_TYPE_LABELS,
-  QUOTE_STATUS_LABELS,
   STAGE_LABELS,
   type DocStatus,
   type ProposalType,
-  type QuoteStatus,
   type Stage,
 } from '@/types/proposal';
 
@@ -37,16 +36,23 @@ export function StageBadge({ stage }: { stage: Stage }) {
   return <Badge variant={STAGE_VARIANT[stage]}>{STAGE_LABELS[stage]}</Badge>;
 }
 
-const QUOTE_VARIANT: Record<QuoteStatus, Variant> = {
+const INSURER_VARIANT: Record<InsurerStatus, Variant> = {
   NOT_SENT: 'muted',
   SENT: 'info',
+  REMINDED: 'info',
   QUOTED: 'success',
   DECLINED: 'destructive',
   NO_RESPONSE: 'warning',
 };
 
-export function QuoteStatusBadge({ status }: { status: QuoteStatus }) {
-  return <Badge variant={QUOTE_VARIANT[status]}>{QUOTE_STATUS_LABELS[status]}</Badge>;
+/** An insurer's status on a case, with the shared label (never colour alone). */
+export function InsurerStatusBadge({ status }: { status: InsurerStatus }) {
+  return <Badge variant={INSURER_VARIANT[status]}>{INSURER_STATUS_LABELS[status]}</Badge>;
+}
+
+/** Sent or Reminded after the quote due date. */
+export function OverdueBadge() {
+  return <Badge variant="destructive">Overdue</Badge>;
 }
 
 const DOC_VARIANT: Record<DocStatus, Variant> = {

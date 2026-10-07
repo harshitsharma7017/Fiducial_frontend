@@ -19,6 +19,7 @@ import { formatDate } from '@/shared';
 import { PRODUCT_NAMES, type ProposalType, type Stage } from '@/types/proposal';
 import { ExpiryChip, StageBadge, TypeBadge } from '../badges';
 import { SortableHead, type SortState } from './header-cell';
+import { InsurersCell } from './insurers-cell';
 import { TablePagination } from './pagination';
 import { TableToolbar } from './toolbar';
 
@@ -181,9 +182,7 @@ export function ProposalsTable({
                     <StageBadge stage={item.stage} />
                   </TableCell>
                   <TableCell className="tabular">
-                    {item.insurersListed === 0
-                      ? 'None yet'
-                      : `${item.insurersResponded}/${item.insurersListed}`}
+                    <InsurersCell item={item} />
                   </TableCell>
                   <TableCell className="tabular whitespace-nowrap">
                     {formatDate(item.date)}

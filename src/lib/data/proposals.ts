@@ -1,4 +1,5 @@
 import { addDays, toIstDate } from '@/lib/dates';
+import { isOverdue, type InsurerStatus } from '@/shared';
 import {
   SECTION_CODES,
   type DocStatus,
@@ -6,7 +7,6 @@ import {
   type NewProposal,
   type Product,
   type Proposal,
-  type QuoteStatus,
   type RenewalProposal,
   type Rupees,
   type Stage,
@@ -280,13 +280,13 @@ function sectionAmounts(
   return amounts;
 }
 
-/** The quote status for insurer i, given how many have responded. */
-function quoteStatus(index: number, responded: number, stage: Stage): QuoteStatus {
+/** The status of insurer i, given how many have responded; every other waiting one was reminded. */
+function insurerStatus(index: number, responded: number, stage: Stage): InsurerStatus {
   if (STAGE_INDEX[stage] < STAGE_INDEX.RFQ_SENT) return 'NOT_SENT';
   if (index < responded) return index % 3 === 2 ? 'DECLINED' : 'QUOTED';
   if (STAGE_INDEX[stage] >= STAGE_INDEX.QUOTES_RECEIVED && index === responded)
     return 'NO_RESPONSE';
-  return 'SENT';
+  return index % 2 === 1 ? 'REMINDED' : 'SENT';
 }
 
 /** Document statuses that match the stage (illustrative, not a workflow rule). */
@@ -340,11 +340,20 @@ function buildActivity(
 
 function buildInsurers(spec: Spec, nowMs: number) {
   const dayMs = 24 * 60 * 60 * 1000;
+  const today = toIstDate(nowMs);
   return INSURERS.slice(0, spec.insurerCount).map((insurer, index) => {
-    const status = quoteStatus(index, spec.responded, spec.stage);
+    const status = insurerStatus(index, spec.responded, spec.stage);
     const updatedAt =
       status === 'NOT_SENT' ? null : new Date(nowMs - (index + 1) * dayMs).toISOString();
-    return { insurer: `${insurer} General Insurance`, status, updatedAt };
+    // Quotes were asked for within a week of sending; some waiting insurers are past it.
+    const dueDate = status === 'NOT_SENT' ? null : addDays(today, index % 3 === 1 ? -2 : 5);
+    return {
+      insurer: `${insurer} General Insurance`,
+      status,
+      updatedAt,
+      dueDate,
+      overdue: isOverdue({ status, dueDate }, today),
+    };
   });
 }
 

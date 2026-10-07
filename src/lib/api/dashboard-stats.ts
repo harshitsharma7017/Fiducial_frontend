@@ -1,6 +1,7 @@
 import { daysBetween, isSameIstMonth } from '@/lib/dates';
 import { sumRupees } from '@/lib/money';
 import { fireSumInsured, type DashboardStats } from '@/lib/proposal-metrics';
+import { isAwaitingResponse } from '@/shared';
 import {
   PRODUCTS,
   STAGES,
@@ -14,7 +15,9 @@ import {
  * The dashboard figures for one proposal type, computed from the proposals so the KPI cards,
  * pipeline strip and chart always agree. Definitions follow design.md (KPI definitions, Q3):
  * "open" is any stage except Placed and Closed; "pending approval" is QCR or Client Approval; "due" windows use IST calendar days; placed renewals never
- * count as due. The headline amount everywhere is the Fire SI (Proposed 1) (Q4).
+ * count as due. The headline amount everywhere is the Fire SI (Proposed 1) (Q4). Awaiting quotes
+ * counts insurers that are Sent or Reminded on open cases; overdue ones are past their due date
+ * (rfq-email requirement 9).
  */
 export function computeDashboardStats(
   proposals: Proposal[],
@@ -34,6 +37,8 @@ export function computeDashboardStats(
 
   let awaitingQuotes = 0;
   let awaitingQuotesInsurers = 0;
+  let overdueInsurers = 0;
+  let overdueCases = 0;
   let pendingApproval = 0;
   let placedThisMonth = 0;
   let dueIn30 = 0;
@@ -47,9 +52,13 @@ export function computeDashboardStats(
     const open = proposal.stage !== 'PLACED' && proposal.stage !== 'CLOSED';
     if (open) openFire.push(fire);
 
-    if (proposal.stage === 'RFQ_SENT') {
-      awaitingQuotes += 1;
-      awaitingQuotesInsurers += proposal.insurers.filter((i) => i.status === 'SENT').length;
+    if (open) {
+      const waiting = proposal.insurers.filter((i) => isAwaitingResponse(i.status)).length;
+      const overdue = proposal.insurers.filter((i) => i.overdue).length;
+      awaitingQuotesInsurers += waiting;
+      if (waiting > 0) awaitingQuotes += 1;
+      overdueInsurers += overdue;
+      if (overdue > 0) overdueCases += 1;
     }
     if (proposal.stage === 'QCR' || proposal.stage === 'CLIENT_APPROVAL') {
       pendingApproval += 1;
@@ -91,6 +100,8 @@ export function computeDashboardStats(
     openCount: openFire.length,
     awaitingQuotes,
     awaitingQuotesInsurers,
+    overdueInsurers,
+    overdueCases,
     pendingApproval,
     placedThisMonth,
     placedThisMonthSum: sumRupees(placedFire),

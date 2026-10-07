@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import type { ProposalInsurer } from '@/shared';
+import type { InsurerStatus, ProposalInsurer } from '@/shared';
 import { countByStatus, lastSent, matchesSearch, parseRfqStatus, rfqStatusOf } from './rfq-status';
 
-function insurer(status: 'SENT' | 'NOT_SENT', sentAt: string | null = null): ProposalInsurer {
+function insurer(status: InsurerStatus, sentAt: string | null = null): ProposalInsurer {
   return {
     insurerId: 'a'.repeat(24),
     company: 'Example General Insurance',
     branch: 'Pune',
     rfqEmails: [],
+    contacts: [],
     active: true,
     status,
+    sentVia: status === 'NOT_SENT' ? null : 'APP',
     sentAt,
     sentBy: sentAt ? 'Asha Rao' : null,
+    dueDate: null,
+    overdue: false,
+    reminderCount: 0,
+    lastRemindedAt: null,
+    response: null,
+    lastMail: null,
   };
 }
 

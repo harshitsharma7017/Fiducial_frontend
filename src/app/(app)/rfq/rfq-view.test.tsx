@@ -23,10 +23,18 @@ function insurer(n: number, sentAt: string | null): ProposalInsurer {
     company: `Insurer ${n}`,
     branch: 'Pune',
     rfqEmails: [`rfq${n}@insurer.example`],
+    contacts: [],
     active: true,
     status: sentAt ? 'SENT' : 'NOT_SENT',
+    sentVia: sentAt ? 'APP' : null,
     sentAt,
     sentBy: sentAt ? 'Asha Rao' : null,
+    dueDate: sentAt ? '2099-01-10' : null,
+    overdue: false,
+    reminderCount: 0,
+    lastRemindedAt: null,
+    response: null,
+    lastMail: null,
   };
 }
 
@@ -45,6 +53,10 @@ function proposal(
     policyEnd: null,
     existingPolicy: null,
     existingPolicyLookup: null,
+    existing: null,
+    product: null,
+    addonLists: [],
+    addons: [],
     stage: insurers.some((i) => i.status === 'SENT')
       ? 'RFQ_SENT'
       : missing.length
@@ -56,17 +68,30 @@ function proposal(
     policyStart: null,
     locations: [],
     fire: {
-      groups: FIRE_GROUPS.map((group) => ({ group, proposed1: '0', proposed2: null })),
+      groups: FIRE_GROUPS.map((group) => ({
+        group,
+        existing: null,
+        proposed1: '0',
+        proposed2: null,
+      })),
+      existing: null,
       proposed1: '25000000',
       proposed2: null,
+      covers: [],
     },
     sections: OTHER_SECTIONS.map((code) => ({
       code,
       name: OTHER_SECTION_LABELS[code],
       included: false,
+      existing: null,
       proposed1: null,
       proposed2: null,
       lines: {},
+      lines2: {},
+      existingLines: {},
+      basis: null,
+      basisAmounts: null,
+      covers: [],
       annexure: [],
     })),
     suggestedProducts: [],
@@ -163,4 +188,52 @@ describe('RfqView', () => {
     expect(screen.getByText('Partly Spices')).toBeInTheDocument();
     expect(screen.queryByText('Sent Steel')).not.toBeInTheDocument();
   });
+
+  it('counts every insurer with the RFQ as sent and filters overdue responses (?filter=overdue)', async () => {
+    const answered = { ...insurer(1, SENT_AT), status: 'DECLINED' as const };
+    const reminded = { ...insurer(2, SENT_AT), status: 'REMINDED' as const };
+    const late = { ...insurer(3, SENT_AT), status: 'SENT' as const, overdue: true };
+    const items = [
+      ...ITEMS,
+      proposal(5, 'Answered Mills', [], [answered, reminded]),
+      proposal(6, 'Late Foods', [], [late]),
+    ];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ items, nextCursor: null }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      ),
+    );
+    window.history.replaceState(null, '', '/rfq?filter=overdue');
+    const user = renderOverdue();
+    expect(await screen.findByText('Late Foods')).toBeInTheDocument();
+    expect(screen.queryByText('Answered Mills')).not.toBeInTheDocument();
+    const overdue = screen.getByRole('button', { name: 'Overdue responses (1)' });
+    expect(overdue).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Sent, overdue')).toBeInTheDocument();
+
+    await user.click(overdue);
+    expect(window.location.search).toBe('');
+    // Declined and Reminded both have the RFQ: the case is sent to both insurers.
+    const row = screen.getByText('Answered Mills').closest('tr');
+    expect(row).not.toBeNull();
+    expect(within(row as HTMLElement).getByText('2 of 2 sent')).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByText('Declined')).toBeInTheDocument();
+    expect(within(row as HTMLElement).getByText('Reminded')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sent (3)' })).toBeInTheDocument();
+  });
+
+  function renderOverdue() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RfqView serverSearch="filter=overdue" />
+      </QueryClientProvider>,
+    );
+    return userEvent.setup();
+  }
 });

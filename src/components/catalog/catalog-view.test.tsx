@@ -22,6 +22,7 @@ const PRODUCTS = [
     order: 1,
     active: true,
     notes: null,
+    addonLists: [],
     updatedAt: AT,
   },
   {
@@ -33,6 +34,7 @@ const PRODUCTS = [
     order: 2,
     active: true,
     notes: null,
+    addonLists: [],
     updatedAt: AT,
   },
 ];
@@ -118,6 +120,7 @@ describe('CatalogTable', () => {
         order: 1,
         active: true,
         notes: null,
+        addonLists: [],
       }),
     );
     expect(urlOf(fetchMock.mock.calls.find(([, init]) => init?.method === 'PUT')![0])).toBe(

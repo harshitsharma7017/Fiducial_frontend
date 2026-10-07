@@ -9,6 +9,8 @@ const ALLOWED_AREAS = new Set([
   'imports',
   'catalog',
   'templates',
+  'email-templates',
+  'mail',
   'proposals',
   'rating',
   'health',

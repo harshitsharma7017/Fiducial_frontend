@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   MapPin,
   Layers,
+  Mail,
   NotebookText,
   Package,
   PackagePlus,
@@ -116,6 +117,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'Document templates',
         href: '/masters/templates',
         icon: FileSpreadsheet,
+        permission: 'masters.view',
+      },
+      {
+        label: 'Email templates',
+        href: '/masters/email-templates',
+        icon: Mail,
         permission: 'masters.view',
       },
       {

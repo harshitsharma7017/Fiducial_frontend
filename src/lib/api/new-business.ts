@@ -7,6 +7,7 @@ import {
   ClientLocationListResponseSchema,
   ProposalListResponseSchema,
   ProposalRecordSchema,
+  hasRfq,
   wholeRupees,
   type ClientLocation,
   type ProposalRecord,
@@ -82,7 +83,7 @@ export function clientLocationsQuery(clientId: string | null) {
 }
 
 function documentStatuses(record: ProposalRecord): Proposal['documents'] {
-  const sent = record.insurers.filter((insurer) => insurer.status === 'SENT');
+  const sent = record.insurers.filter((insurer) => hasRfq(insurer.status));
   const lastSent = sent
     .map((insurer) => insurer.sentAt)
     .filter((at): at is string => at !== null)
@@ -117,7 +118,9 @@ export function toScreenProposal(record: ProposalRecord): Proposal {
     insurers: record.insurers.map((insurer) => ({
       insurer: `${insurer.company}, ${insurer.branch}`,
       status: insurer.status,
-      updatedAt: insurer.sentAt,
+      updatedAt: insurer.response?.at ?? insurer.lastRemindedAt ?? insurer.sentAt,
+      dueDate: insurer.dueDate,
+      overdue: insurer.overdue,
     })),
     documents: documentStatuses(record),
     activity: record.activity.map((entry) => ({

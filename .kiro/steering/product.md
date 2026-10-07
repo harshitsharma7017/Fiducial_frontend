@@ -47,7 +47,9 @@ screen). It follows the PRD personas and waits for the client's confirmation (Q1
   Fidelity Guarantee, Plate Glass, Neon / Glow Sign, All Risk, EEI, Mechanical Breakdown, Boiler and Pressure Plant,
   Public Liability.
 - **Sum-insured options**: Existing (renewals only), Proposed 1, Proposed 2. A new proposal never shows Existing.
-- **Quote status** per insurer (up to 5): Not sent, Sent, Quoted, Declined, No response.
+- **Insurer status** per insurer (up to 5), shared with the API (`INSURER_STATUSES` in `src/shared/proposals.ts`):
+  Not sent, Sent, Reminded, Quoted, Declined, No response. Overdue is shown next to Sent or Reminded after the
+  insurer's quote due date; it is not a status.
 - **Documents**: Data Sheet, RFQ, QCR, Placement Slip, each Not started, Draft, Ready, Sent or Approved.
 - **Add-on catalogues** (client's RFQ workbook): BSUS and BLUS 20 entries, PAR 125, SFSP 185.
 
@@ -77,6 +79,12 @@ every case, and renewals that copy last year's policy from the policy software's
 
 Built (R-3, R-4): Document templates (`/masters/templates`): upload the client's Excel templates; the RFQ downloads
 as that template filled (Excel) or as an A4 PDF with the letterhead.
+
+Built (E-2, E-3, E-4, E-6): Email templates (`/masters/email-templates`), Email the RFQ from the case (one mail per
+insurer, addresses from the insurer master only, preview, results with Try again), Sent outside the app, reminders,
+recording answers, Overdue, the mail log on the Activity tab, the dashboard's Awaiting quotes and Overdue responses
+figures, the RFQ page's `?filter=overdue`, and the Settings mail card (`components/proposals/rfq/`,
+`components/email-templates/`).
 
 Not built yet: quotes, QCR and placement slip screens.
 

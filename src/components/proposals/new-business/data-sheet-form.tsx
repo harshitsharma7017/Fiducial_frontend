@@ -654,7 +654,12 @@ function OtherSections({
                               readOnly={readOnly}
                             />
                           ) : (
-                            <SectionLines index={index} code={code} name={name} />
+                            <SectionLines
+                              index={index}
+                              code={code}
+                              name={name}
+                              renewal={existing !== null && existing !== undefined}
+                            />
                           )}
                         </section>
                       </TableCell>

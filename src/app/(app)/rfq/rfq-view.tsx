@@ -25,10 +25,12 @@ import { fetchCases } from '@/lib/api/new-business';
 import { daysBetween, todayIst } from '@/lib/dates';
 import { formatInrCompact } from '@/lib/money';
 import {
+  OVERDUE_FILTER,
   RFQ_STATUS_LABELS,
   RFQ_STATUS_SLUGS,
   RFQ_STATUSES,
   countByStatus,
+  hasOverdueInsurer,
   lastSent,
   matchesSearch,
   parseRfqStatus,
@@ -37,7 +39,14 @@ import {
 } from '@/lib/rfq-status';
 import { useUrlSearchParams } from '@/lib/use-url-search-params';
 import { cn } from '@/lib/utils';
-import { formatDate, formatDateTime, wholeRupees, type ProposalRecord } from '@/shared';
+import {
+  INSURER_STATUS_LABELS,
+  formatDate,
+  formatDateTime,
+  hasRfq,
+  wholeRupees,
+  type ProposalRecord,
+} from '@/shared';
 
 const COLUMNS = 7;
 
@@ -60,6 +69,7 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
   const { params, replace } = useUrlSearchParams(serverSearch);
   const status = parseRfqStatus(params.get('status'));
   const q = params.get('q') ?? '';
+  const overdueOnly = params.get('filter') === OVERDUE_FILTER;
   const canCreate = usePermission('proposals.create');
 
   const rfqs = useQuery({
@@ -77,7 +87,12 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
   const all = rfqs.data ?? [];
   const searched = q.trim() ? all.filter((record) => matchesSearch(record, q)) : all;
   const counts = countByStatus(searched);
-  const rows = (status ? searched.filter((r) => rfqStatusOf(r) === status) : searched).toSorted(
+  const overdueCount = searched.filter(hasOverdueInsurer).length;
+  const filtered = searched.filter(
+    (record) =>
+      (!status || rfqStatusOf(record) === status) && (!overdueOnly || hasOverdueInsurer(record)),
+  );
+  const rows = filtered.toSorted(
     (a, b) =>
       STATUS_ORDER[rfqStatusOf(a)] - STATUS_ORDER[rfqStatusOf(b)] ||
       a.dueDate.localeCompare(b.dueDate) ||
@@ -104,7 +119,9 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
                 ? 'No RFQs yet'
                 : q.trim()
                   ? `No RFQs match “${q.trim()}”`
-                  : `No RFQs are ${RFQ_STATUS_LABELS[status ?? 'READY'].toLowerCase()}`
+                  : overdueOnly && !status
+                    ? 'No insurer is overdue'
+                    : `No RFQs are ${RFQ_STATUS_LABELS[status ?? 'READY'].toLowerCase()}`
             }
             description={
               all.length === 0
@@ -152,6 +169,12 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
             onClick={() => setParam('status', status === value ? null : RFQ_STATUS_SLUGS[value])}
           />
         ))}
+        <StatusChip
+          label="Overdue responses"
+          count={overdueCount}
+          pressed={overdueOnly}
+          onClick={() => setParam('filter', overdueOnly ? null : OVERDUE_FILTER)}
+        />
       </div>
 
       <Card className="gap-0 py-0">
@@ -233,7 +256,7 @@ function StatusChip({
 
 function RfqRow({ record }: { record: ProposalRecord }) {
   const status = rfqStatusOf(record);
-  const sent = record.insurers.filter((insurer) => insurer.status === 'SENT').length;
+  const sent = record.insurers.filter((insurer) => hasRfq(insurer.status)).length;
   const latest = lastSent(record);
   const daysLeft = daysBetween(todayIst(), record.dueDate);
   const waiting = status !== 'SENT';
@@ -278,8 +301,11 @@ function RfqRow({ record }: { record: ProposalRecord }) {
             <ul className="text-xs text-muted-foreground">
               {record.insurers.map((insurer) => (
                 <li key={insurer.insurerId}>
-                  {insurer.status === 'SENT' ? '✓ ' : '· '}
-                  {insurer.company}, {insurer.branch}
+                  {insurer.company}, {insurer.branch}:{' '}
+                  <span className={insurer.overdue ? 'font-medium text-destructive' : undefined}>
+                    {INSURER_STATUS_LABELS[insurer.status]}
+                    {insurer.overdue ? ', overdue' : ''}
+                  </span>
                 </li>
               ))}
             </ul>

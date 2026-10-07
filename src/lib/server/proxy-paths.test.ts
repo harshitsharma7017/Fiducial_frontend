@@ -13,6 +13,10 @@ describe('isAllowedProxyPath', () => {
     [['rating', 'fire']],
     [['health']],
     [['audit']],
+    [['email-templates']],
+    [['email-templates', 'RFQ']],
+    [['mail', 'status']],
+    [['proposals', '0123456789abcdef01234567', 'mails']],
     [['auth', 'me']],
   ])('allows %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(true);
@@ -23,6 +27,7 @@ describe('isAllowedProxyPath', () => {
     [['auth', 'login']],
     [['auth']],
     [['quotes']],
+    [['mailer']],
     [['clients', '..', 'auth', 'login']],
     [['clients', '']],
   ])('rejects %j', (segments) => {

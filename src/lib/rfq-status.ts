@@ -1,4 +1,4 @@
-import type { ProposalRecord } from '@/shared';
+import { hasRfq, type ProposalRecord } from '@/shared';
 
 // Where each new-business proposal stands with its RFQ, for the RFQ page.
 
@@ -27,12 +27,25 @@ export function parseRfqStatus(value: string | null): RfqStatus | null {
 
 /**
  * Not ready while the Data Sheet misses something; ready once it is complete and nothing has
- * gone out; partly sent while some chosen insurers still lack it; sent when all have it.
+ * gone out; partly sent while some chosen insurers still lack it; sent when all have it. An
+ * insurer has it once it is Sent, whatever it answered since (hasRfq).
  */
 export function rfqStatusOf(record: Pick<ProposalRecord, 'missing' | 'insurers'>): RfqStatus {
-  const sent = record.insurers.filter((insurer) => insurer.status === 'SENT').length;
+  const sent = record.insurers.filter((insurer) => hasRfq(insurer.status)).length;
   if (sent === 0) return record.missing.length > 0 ? 'NOT_READY' : 'READY';
   return sent < record.insurers.length ? 'PARTLY_SENT' : 'SENT';
+}
+
+/** URL value of the "Overdue responses" filter (?filter=overdue), linked from the dashboard. */
+export const OVERDUE_FILTER = 'overdue';
+
+/** An open case with an insurer still waiting after its quote due date (the API sets overdue). */
+export function hasOverdueInsurer(record: Pick<ProposalRecord, 'stage' | 'insurers'>): boolean {
+  return (
+    record.stage !== 'PLACED' &&
+    record.stage !== 'CLOSED' &&
+    record.insurers.some((insurer) => insurer.overdue)
+  );
 }
 
 /** The latest send, if any. */

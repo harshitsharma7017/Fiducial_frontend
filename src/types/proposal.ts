@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { PROPOSAL_STAGE_LABELS, PROPOSAL_STAGES, type ProposalStage } from '@/shared';
+import {
+  INSURER_STATUSES,
+  PROPOSAL_STAGE_LABELS,
+  PROPOSAL_STAGES,
+  type ProposalStage,
+} from '@/shared';
 
 /**
  * Proposal domain for the frontend shell: enums, labels and schemas, defined once and reused.
@@ -83,16 +88,6 @@ export const SUM_INSURED_OPTION_LABELS: Record<SumInsuredOption, string> = {
   PROPOSED_2: 'Proposed 2',
 };
 
-export const QUOTE_STATUSES = ['NOT_SENT', 'SENT', 'QUOTED', 'DECLINED', 'NO_RESPONSE'] as const;
-export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
-export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
-  NOT_SENT: 'Not sent',
-  SENT: 'Sent',
-  QUOTED: 'Quoted',
-  DECLINED: 'Declined',
-  NO_RESPONSE: 'No response',
-};
-
 export const DOC_STATUSES = ['NOT_STARTED', 'DRAFT', 'READY', 'SENT', 'APPROVED'] as const;
 export type DocStatus = (typeof DOC_STATUSES)[number];
 export const DOC_STATUS_LABELS: Record<DocStatus, string> = {
@@ -132,8 +127,13 @@ const ProposalBaseSchema = z.object({
     .array(
       z.object({
         insurer: z.string().min(1),
-        status: z.enum(QUOTE_STATUSES),
+        // One vocabulary with the API: INSURER_STATUSES and their labels come from @/shared.
+        status: z.enum(INSURER_STATUSES),
         updatedAt: IsoDateTime.nullable(),
+        /** The quote due date given to this insurer, once it has the RFQ. */
+        dueDate: IsoDate.nullable(),
+        /** Sent or Reminded after the due date (India time). */
+        overdue: z.boolean(),
       }),
     )
     .max(5),

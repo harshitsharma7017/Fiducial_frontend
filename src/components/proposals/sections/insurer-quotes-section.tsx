@@ -1,6 +1,6 @@
-import { formatDateTime } from '@/shared';
+import { formatDate, formatDateTime } from '@/shared';
 import type { Proposal } from '@/types/proposal';
-import { QuoteStatusBadge } from '../badges';
+import { InsurerStatusBadge, OverdueBadge } from '../badges';
 import { Section } from './section-heading';
 
 /** Up to five insurers with a status badge each; says so when none is selected. */
@@ -32,8 +32,16 @@ export function InsurerQuotesSection({ proposal }: { proposal: Proposal }) {
                     Updated {formatDateTime(insurer.updatedAt)}
                   </span>
                 ) : null}
+                {insurer.dueDate ? (
+                  <span className="text-xs text-muted-foreground tabular">
+                    Quote due {formatDate(insurer.dueDate)}
+                  </span>
+                ) : null}
               </div>
-              <QuoteStatusBadge status={insurer.status} />
+              <div className="flex shrink-0 items-center gap-1.5">
+                {insurer.overdue ? <OverdueBadge /> : null}
+                <InsurerStatusBadge status={insurer.status} />
+              </div>
             </li>
           ))}
         </ul>

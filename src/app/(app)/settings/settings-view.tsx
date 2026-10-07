@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/page-header';
+import { MailCard } from '@/components/settings/mail-card';
 import { MasterDataCard } from '@/components/settings/master-data-card';
 import { SystemStatusCard } from '@/components/settings/system-status-card';
 import { AccessDeniedState, DemoModeState, LoadingState } from '@/components/states';
@@ -27,12 +28,16 @@ export function SettingsView() {
       <div className="grid gap-4 lg:grid-cols-2">
         <SystemStatusCard />
         <MasterDataCard />
+        <MailCard />
       </div>
     );
 
   return (
     <>
-      <PageHeader title="Settings" description="System status and the active master data." />
+      <PageHeader
+        title="Settings"
+        description="System status, the active master data and how mail is sent."
+      />
       {content}
     </>
   );

@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { DemoModeGate } from '@/components/demo-mode-gate';
 import { StageBadge, TypeBadge } from '@/components/proposals/badges';
+import { InsurersRfqPanel } from '@/components/proposals/rfq/insurers-rfq-panel';
+import { MailLog } from '@/components/proposals/rfq/mail-log';
 import { StageStepper } from '@/components/proposals/sections';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,10 +18,9 @@ import { usePermission } from '@/hooks/use-permission';
 import { ApiError } from '@/lib/api-client';
 import { proposalRecordQuery } from '@/lib/api/new-business';
 import { formatInr } from '@/lib/money';
-import { formatDate, formatDateTime, wholeRupees, type ProposalRecord } from '@/shared';
+import { formatDate, formatDateTime, hasRfq, wholeRupees, type ProposalRecord } from '@/shared';
 import { ExistingPolicyCard, StageControls } from './case-controls';
 import { DataSheetForm } from './data-sheet-form';
-import { InsurersRfqPanel } from './insurers-rfq-panel';
 
 /**
  * A new-business proposal from the API, worked from creation to the RFQ: the Data Sheet, the
@@ -71,7 +72,7 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
       TABS.find((value) => value === initialTab) ??
       (record.missing.length === 0 ? 'rfq' : 'data-sheet'),
   );
-  const sent = record.insurers.filter((insurer) => insurer.status === 'SENT').length;
+  const sent = record.insurers.filter((insurer) => hasRfq(insurer.status)).length;
 
   return (
     <>
@@ -162,7 +163,8 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
         <TabsContent value="rfq" className="min-w-0">
           <InsurersRfqPanel record={record} />
         </TabsContent>
-        <TabsContent value="activity">
+        <TabsContent value="activity" className="grid gap-6">
+          <MailLog proposalId={record.id} />
           <Activity record={record} />
         </TabsContent>
       </Tabs>

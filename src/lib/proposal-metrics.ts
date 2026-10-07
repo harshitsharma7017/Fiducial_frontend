@@ -1,5 +1,6 @@
 import { daysBetween } from '@/lib/dates';
 import { sumRupees } from '@/lib/money';
+import { INSURER_STATUSES, type InsurerStatus } from '@/shared';
 import {
   STAGES,
   type Product,
@@ -93,6 +94,8 @@ export interface ProposalSummary {
   sectionsIncluded: number;
   insurersResponded: number;
   insurersListed: number;
+  /** The insurers per status, in the shared order, for the Insurers column's tooltip. */
+  insurerStatusCounts: { status: InsurerStatus; count: number }[];
   owner: string;
   /** Due date (new) or expiry date (renewal), the table's default sort. */
   date: string;
@@ -106,6 +109,13 @@ function respondedCount(proposal: Proposal): number {
   return proposal.insurers.filter(
     (insurer) => insurer.status === 'QUOTED' || insurer.status === 'DECLINED',
   ).length;
+}
+
+function statusCounts(proposal: Proposal): ProposalSummary['insurerStatusCounts'] {
+  return INSURER_STATUSES.flatMap((status) => {
+    const count = proposal.insurers.filter((insurer) => insurer.status === status).length;
+    return count > 0 ? [{ status, count }] : [];
+  });
 }
 
 export function toSummary(proposal: Proposal, today: string): ProposalSummary {
@@ -122,6 +132,7 @@ export function toSummary(proposal: Proposal, today: string): ProposalSummary {
     sectionsIncluded: proposal.sections.filter((section) => section.included).length,
     insurersResponded: respondedCount(proposal),
     insurersListed: proposal.insurers.length,
+    insurerStatusCounts: statusCounts(proposal),
     owner: proposal.owner,
     date,
     daysToExpiry:
@@ -182,7 +193,11 @@ export interface DashboardStats {
   sumInsuredByProduct: Record<Product, Rupees>;
   openCount: number;
   awaitingQuotes: number;
+  /** Insurers Sent or Reminded on open cases; awaitingQuotes is the cases they are on. */
   awaitingQuotesInsurers: number;
+  /** Insurers on open cases still waiting after their quote due date, and their cases. */
+  overdueInsurers: number;
+  overdueCases: number;
   pendingApproval: number;
   placedThisMonth: number;
   placedThisMonthSum: Rupees;
