@@ -28,6 +28,8 @@ export const CATALOG_PAGES: Record<CatalogMaster, string> = {
   'addon-rules': '/masters/addons?tab=rates',
   'tax-rates': '/masters/tax-rates',
   notes: '/masters/notes',
+  clauses: '/masters/clauses',
+  'occupancy-defaults': '/masters/occupancy-defaults',
 };
 
 /**

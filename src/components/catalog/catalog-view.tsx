@@ -173,6 +173,60 @@ const DISPLAY: { [M in CatalogMaster]: DisplayColumn<M>[] } = {
     },
     { header: 'Active', cell: (n) => yesNo(n.active) },
   ],
+  clauses: [
+    {
+      header: 'Clause',
+      className: 'min-w-72',
+      cell: (c) => (
+        <>
+          <span className="font-medium">{c.heading}</span>
+          <span className="block text-xs whitespace-pre-line text-muted-foreground">{c.text}</span>
+        </>
+      ),
+    },
+    {
+      header: 'Sections',
+      className: 'min-w-36',
+      cell: (c) =>
+        c.sections.length === 0 ? <span className="text-xs">Every case</span> : list(c.sections),
+    },
+    {
+      header: 'Printed on',
+      className: 'min-w-40',
+      cell: (c) => (
+        <div className="flex flex-wrap gap-1">
+          {c.onRfq ? <Badge variant="outline">RFQ</Badge> : null}
+          {c.onQcr ? <Badge variant="outline">QCR</Badge> : null}
+          {c.onPlacementSlip ? <Badge variant="outline">Placement Slip</Badge> : null}
+        </div>
+      ),
+    },
+    { header: 'Active', cell: (c) => yesNo(c.active) },
+  ],
+  'occupancy-defaults': [
+    {
+      header: 'Occupancy',
+      className: 'min-w-56',
+      cell: (o) => (
+        <>
+          <span className="font-medium tabular">{o.tacCode}</span>
+          {o.occupancy ? (
+            <span className="line-clamp-2 text-xs text-muted-foreground" title={o.occupancy}>
+              {o.occupancy}
+            </span>
+          ) : null}
+        </>
+      ),
+    },
+    { header: 'Sections to quote', className: 'min-w-44', cell: (o) => list(o.sections) },
+    { header: 'Fire add-ons required', className: 'min-w-44', cell: (o) => list(o.fireRequired) },
+    {
+      header: 'Fire add-ons not required',
+      className: 'min-w-44',
+      cell: (o) => list(o.fireNotRequired),
+    },
+    { header: 'Active', cell: (o) => yesNo(o.active) },
+  ],
 };
 
 /** Text of a row for the search box. */

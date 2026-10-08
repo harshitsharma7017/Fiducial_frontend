@@ -9,6 +9,7 @@ import {
   History,
   Landmark,
   LayoutDashboard,
+  ListChecks,
   MapPin,
   Layers,
   Mail,
@@ -66,8 +67,13 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     title: 'Workflow',
     items: [
       { label: 'RFQ', href: '/rfq', icon: Send, permission: 'proposals.view' },
-      { label: 'Quotes and QCR', icon: Scale, permission: 'proposals.view', planned: true },
-      { label: 'Placement Slips', icon: FileCheck2, permission: 'proposals.view', planned: true },
+      { label: 'Quotes and QCR', href: '/quotes', icon: Scale, permission: 'proposals.view' },
+      {
+        label: 'Placement Slips',
+        href: '/placement-slips',
+        icon: FileCheck2,
+        permission: 'proposals.view',
+      },
       { label: 'Fire rate check', href: '/rating/fire', icon: Flame, permission: 'rating.use' },
     ],
   },
@@ -114,6 +120,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'masters.view',
       },
       {
+        label: 'Occupancy cover defaults',
+        href: '/masters/occupancy-defaults',
+        icon: ListChecks,
+        permission: 'masters.view',
+      },
+      {
         label: 'Document templates',
         href: '/masters/templates',
         icon: FileSpreadsheet,
@@ -132,7 +144,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         // Clients and risk locations need clients.manage; the insurer import also masters.manage.
         permission: 'clients.manage',
       },
-      { label: 'Clauses', icon: ScrollText, permission: 'masters.view', planned: true },
+      { label: 'Clauses', href: '/masters/clauses', icon: ScrollText, permission: 'masters.view' },
     ],
   },
   {

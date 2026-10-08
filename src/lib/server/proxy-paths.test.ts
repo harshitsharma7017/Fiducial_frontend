@@ -17,6 +17,8 @@ describe('isAllowedProxyPath', () => {
     [['email-templates', 'RFQ']],
     [['mail', 'status']],
     [['proposals', '0123456789abcdef01234567', 'mails']],
+    [['qcrs']],
+    [['placement-slips']],
     [['auth', 'me']],
   ])('allows %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(true);

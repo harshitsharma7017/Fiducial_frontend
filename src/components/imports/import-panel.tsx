@@ -62,7 +62,8 @@ function CatalogHints() {
     <>
       <Hint icon={<FileSpreadsheet />}>
         One sheet per master: Products, Coverage sections, Add-on covers, BSUS BLUS add-on rates,
-        Tax rates and Standard notes. The Instructions sheet explains each column.
+        Tax rates, Standard notes, Clauses and Occupancy cover defaults. The Instructions sheet
+        explains each column.
       </Hint>
       <Hint icon={<History />}>
         <a href="/api/proxy/catalog/workbook" download className={linkClass}>

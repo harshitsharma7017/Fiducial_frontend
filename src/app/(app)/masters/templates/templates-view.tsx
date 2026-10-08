@@ -26,8 +26,9 @@ type Item = DocumentTemplateList['items'][number];
 
 const PURPOSE: Record<Item['kind'], string> = {
   RFQ: 'Filled for every RFQ download (Excel), and drawn as the PDF with the broker’s letterhead.',
-  QCR: 'Kept for the QCR, which the engine will fill when the QCR is built.',
-  PLACEMENT_SLIP: 'Kept for the Placement Slip, which the engine will fill when it is built.',
+  QCR: 'Filled for every QCR download and mail to the insured, with the PDF on the letterhead.',
+  PLACEMENT_SLIP:
+    'Filled for every placement slip download and mail to the insurer, with the PDF on the letterhead.',
 };
 
 function CheckSummary({ check }: { check: TemplateCheck }) {

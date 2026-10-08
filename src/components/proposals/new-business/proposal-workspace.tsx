@@ -13,6 +13,8 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ClientApprovalPanel } from '@/components/proposals/client-approval/client-approval-panel';
+import { PlacementSlipPanel } from '@/components/proposals/placement-slip/placement-slip-panel';
 import { QcrPanel } from '@/components/proposals/qcr/qcr-panel';
 import { QuotesPanel } from '@/components/proposals/quotes/quotes-panel';
 import { RfqReviewPanel } from '@/components/proposals/rfq-review/rfq-review-panel';
@@ -37,7 +39,16 @@ export function ProposalWorkspace({ id, initialTab }: { id: string; initialTab?:
   );
 }
 
-const TABS = ['data-sheet', 'review', 'rfq', 'quotes', 'qcr', 'activity'] as const;
+const TABS = [
+  'data-sheet',
+  'review',
+  'rfq',
+  'quotes',
+  'qcr',
+  'client-approval',
+  'placement-slip',
+  'activity',
+] as const;
 
 function Workspace({ id, initialTab }: { id: string; initialTab?: string }) {
   const proposal = useQuery(proposalRecordQuery(id));
@@ -149,6 +160,8 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
           <TabsTrigger value="rfq">Insurers and RFQ</TabsTrigger>
           <TabsTrigger value="quotes">Quotes</TabsTrigger>
           <TabsTrigger value="qcr">QCR</TabsTrigger>
+          <TabsTrigger value="client-approval">Client approval</TabsTrigger>
+          <TabsTrigger value="placement-slip">Placement slip</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
         {/* Mounted while hidden, so unsaved Data Sheet entries survive a look at another tab. */}
@@ -173,6 +186,12 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
         </TabsContent>
         <TabsContent value="qcr" className="min-w-0">
           <QcrPanel record={record} />
+        </TabsContent>
+        <TabsContent value="client-approval" className="min-w-0">
+          <ClientApprovalPanel record={record} />
+        </TabsContent>
+        <TabsContent value="placement-slip" className="min-w-0">
+          <PlacementSlipPanel record={record} />
         </TabsContent>
         <TabsContent value="activity" className="grid gap-6">
           <MailLog proposalId={record.id} />

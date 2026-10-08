@@ -20,7 +20,12 @@ function renderNav(roles: readonly Role[] | undefined, collapsed = false) {
   return screen.getByRole('navigation', { name: 'Main' });
 }
 
-const PLANNED = ['Quotes and QCR', 'Placement Slips', 'Clauses'];
+/** The items that were placeholders before their screens were built. */
+const ONCE_PLANNED = [
+  ['Quotes and QCR', '/quotes'],
+  ['Placement Slips', '/placement-slips'],
+  ['Clauses', '/masters/clauses'],
+] as const;
 
 describe('SidebarNav', () => {
   beforeEach(() => {
@@ -58,14 +63,14 @@ describe('SidebarNav', () => {
     ).toHaveAttribute('href', '/rating/fire');
   });
 
-  it('shows planned items as disabled links that go nowhere', () => {
+  it('links every item: nothing is left as planned', () => {
     const nav = renderNav(['ADMIN']);
-    for (const label of PLANNED) {
-      const item = within(nav).getByRole('link', { name: `${label} Planned` });
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(item).not.toHaveAttribute('href');
+    for (const [label, href] of ONCE_PLANNED) {
+      const item = within(nav).getByRole('link', { name: label });
+      expect(item).toHaveAttribute('href', href);
+      expect(item).not.toHaveAttribute('aria-disabled');
     }
-    expect(within(nav).getAllByText('Planned')).toHaveLength(PLANNED.length);
+    expect(within(nav).queryByText('Planned')).not.toBeInTheDocument();
   });
 
   it('marks the current page with aria-current', () => {

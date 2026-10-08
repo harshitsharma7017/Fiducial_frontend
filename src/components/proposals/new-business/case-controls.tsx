@@ -52,6 +52,14 @@ function useSaveRecord() {
   };
 }
 
+/** What moves the case to its next stage when that is recorded on a tab, not set by hand. */
+const NEXT_STEP: Partial<Record<ProposalStage, string>> = {
+  CLIENT_APPROVAL: 'Next: record the quote the client accepted on the Client approval tab.',
+  PLACEMENT_SLIP:
+    'Next: approve the placement slip and send it to the insurer (Placement slip tab).',
+  PLACED: 'Next: record the policy or cover note on the Placement slip tab.',
+};
+
 /**
  * Moves the case to its next stage (from RFQ Sent up to Placed), or closes it with the reason.
  * The stages before follow from the Data Sheet and the RFQ.
@@ -153,8 +161,13 @@ export function StageControls({ record }: { record: ProposalRecord }) {
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {record.nextStage ? dialog(record.nextStage) : null}
+    <div className="flex flex-wrap items-center gap-2">
+      {/* The last stages follow the work recorded on their tabs. */}
+      {record.nextStage && NEXT_STEP[record.nextStage] ? (
+        <p className="text-sm text-muted-foreground">{NEXT_STEP[record.nextStage]}</p>
+      ) : record.nextStage ? (
+        dialog(record.nextStage)
+      ) : null}
       {closable ? dialog('CLOSED') : null}
     </div>
   );

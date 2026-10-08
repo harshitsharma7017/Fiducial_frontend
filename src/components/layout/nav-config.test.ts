@@ -22,6 +22,7 @@ const MASTERS = [
   'Add-on Covers',
   'Tax rates',
   'Standard notes',
+  'Occupancy cover defaults',
   'Document templates',
   'Email templates',
   'Clauses',
@@ -29,7 +30,11 @@ const MASTERS = [
 const WORKING_ROLE = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS];
 const VIEW_ONLY = [...PROPOSALS_AND_MASTERS, ...MASTERS];
 // Import data needs clients.manage: Admins and Relationship Managers.
-const MASTERS_WITH_IMPORT = MASTERS.toSpliced(11, 0, 'Import data');
+const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
+  MASTERS.indexOf('Email templates') + 1,
+  0,
+  'Import data',
+);
 const CLIENT_OWNER = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS_WITH_IMPORT];
 
 describe('visibleGroups', () => {
