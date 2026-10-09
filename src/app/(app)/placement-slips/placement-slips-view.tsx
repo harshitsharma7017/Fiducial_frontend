@@ -2,6 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { DeleteCaseButton } from '@/components/proposals/delete-case';
+import { usePermission } from '@/hooks/use-permission';
 import { PageHeader } from '@/components/page-header';
 import { StageBadge } from '@/components/proposals/badges';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +48,7 @@ export function phaseOf(row: PlacementSlipSummary): Phase {
 const paise = (value: string) => `₹${formatIndianNumber(value, 2)}`;
 
 export function PlacementSlipsView({ serverSearch }: { serverSearch: string }) {
+  const canDelete = usePermission('proposals.delete');
   const { params, replace } = useUrlSearchParams(serverSearch);
   const phase =
     PHASES.find((value) => value.toLowerCase().replace(/_/g, '-') === params.get('status')) ?? null;
@@ -106,6 +109,7 @@ export function PlacementSlipsView({ serverSearch }: { serverSearch: string }) {
           { label: 'Total premium', className: 'text-right' },
           { label: 'Slip' },
           { label: 'Policy or cover note' },
+          ...(canDelete ? [{ label: 'Actions', srOnly: true, className: 'w-10' }] : []),
         ]}
         search={q}
         onSearch={(value) => setParam('q', value || null)}
@@ -135,6 +139,7 @@ export function PlacementSlipsView({ serverSearch }: { serverSearch: string }) {
 
 function SlipRow({ row }: { row: PlacementSlipSummary }) {
   const phase = phaseOf(row);
+  const canDelete = usePermission('proposals.delete');
   return (
     <TableRow>
       <TableCell className="font-medium whitespace-nowrap">
@@ -196,6 +201,15 @@ function SlipRow({ row }: { row: PlacementSlipSummary }) {
           <span className="text-muted-foreground">—</span>
         )}
       </TableCell>
+      {canDelete ? (
+        <TableCell className="w-10 text-right">
+          <DeleteCaseButton
+            id={row.proposalId}
+            reference={row.reference}
+            clientName={row.clientName}
+          />
+        </TableCell>
+      ) : null}
     </TableRow>
   );
 }

@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { FilePlus2, Search } from 'lucide-react';
 import Link from 'next/link';
+import { DeleteCaseButton } from '@/components/proposals/delete-case';
 import { useId } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState, ErrorState, TableLoadingRows } from '@/components/states';
@@ -48,8 +49,6 @@ import {
   type ProposalRecord,
 } from '@/shared';
 
-const COLUMNS = 7;
-
 const STATUS_VARIANT: Record<RfqStatus, 'muted' | 'warning' | 'info' | 'success'> = {
   NOT_READY: 'muted',
   READY: 'warning',
@@ -65,6 +64,8 @@ const STATUS_ORDER: Record<RfqStatus, number> = { READY: 0, PARTLY_SENT: 1, NOT_
  * what has gone to which insurers. Each row opens the proposal on its Insurers and RFQ tab.
  */
 export function RfqView({ serverSearch }: { serverSearch: string }) {
+  const canDelete = usePermission('proposals.delete');
+  const columns = canDelete ? 8 : 7;
   const searchId = useId();
   const { params, replace } = useUrlSearchParams(serverSearch);
   const status = parseRfqStatus(params.get('status'));
@@ -100,11 +101,11 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
   );
 
   let body;
-  if (rfqs.isPending) body = <TableLoadingRows columns={COLUMNS} />;
+  if (rfqs.isPending) body = <TableLoadingRows columns={columns} />;
   else if (rfqs.isError) {
     body = (
       <TableRow>
-        <TableCell colSpan={COLUMNS} className="p-4">
+        <TableCell colSpan={columns} className="p-4">
           <ErrorState error={rfqs.error} onRetry={() => void rfqs.refetch()} />
         </TableCell>
       </TableRow>
@@ -112,7 +113,7 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
   } else if (rows.length === 0) {
     body = (
       <TableRow>
-        <TableCell colSpan={COLUMNS}>
+        <TableCell colSpan={columns}>
           <EmptyState
             title={
               all.length === 0
@@ -207,6 +208,11 @@ export function RfqView({ serverSearch }: { serverSearch: string }) {
               <TableHead className="text-right">Fire SI (Option 1)</TableHead>
               <TableHead>Quotes needed by</TableHead>
               <TableHead>Last sent</TableHead>
+              {canDelete ? (
+                <TableHead className="w-10">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              ) : null}
             </TableRow>
           </TableHeader>
           <TableBody>{body}</TableBody>
@@ -260,6 +266,7 @@ function RfqRow({ record }: { record: ProposalRecord }) {
   const latest = lastSent(record);
   const daysLeft = daysBetween(todayIst(), record.dueDate);
   const waiting = status !== 'SENT';
+  const canDelete = usePermission('proposals.delete');
 
   return (
     <TableRow>
@@ -342,6 +349,15 @@ function RfqRow({ record }: { record: ProposalRecord }) {
           <span className="text-muted-foreground">—</span>
         )}
       </TableCell>
+      {canDelete ? (
+        <TableCell className="w-10 text-right">
+          <DeleteCaseButton
+            id={record.id}
+            reference={record.reference}
+            clientName={record.client.name}
+          />
+        </TableCell>
+      ) : null}
     </TableRow>
   );
 }

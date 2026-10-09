@@ -62,6 +62,9 @@ export function breadcrumbTrail(
       { label: renewal ? 'Start renewal' : 'New proposal' },
     ];
   }
+  if (pathname === '/proposals/deleted') {
+    return [{ label: 'Proposals', href: '/proposals?type=new' }, { label: 'Deleted bin' }];
+  }
   if (pathname.startsWith('/proposals/')) {
     return [
       { label: 'Proposals', href: '/proposals?type=new' },

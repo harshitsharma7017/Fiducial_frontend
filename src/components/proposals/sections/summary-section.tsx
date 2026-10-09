@@ -15,7 +15,7 @@ export function SummarySection({ proposal }: { proposal: Proposal }) {
           <StageBadge stage={proposal.stage} />
         </Field>
         <Field label="Owner">{proposal.owner}</Field>
-        <Field label="Product">
+        <Field label="Policy">
           {proposal.product ? (
             <abbr title={PRODUCT_NAMES[proposal.product]} className="no-underline">
               {proposal.product}

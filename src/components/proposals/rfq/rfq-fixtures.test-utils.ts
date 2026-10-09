@@ -57,6 +57,7 @@ export function caseRecord(overrides: Partial<ProposalRecord> = {}): ProposalRec
     stage: 'DATA_SHEET',
     nextStage: null,
     closedReason: null,
+    deleted: null,
     policyEnd: null,
     existingPolicy: null,
     existingPolicyLookup: null,

@@ -66,7 +66,7 @@ export function WorklistTable({
   noun,
 }: {
   caption: string;
-  headers: readonly { label: string; className?: string }[];
+  headers: readonly { label: string; className?: string; srOnly?: boolean }[];
   search: string;
   onSearch: (value: string) => void;
   placeholder: string;
@@ -123,7 +123,7 @@ export function WorklistTable({
           <TableRow>
             {headers.map((header) => (
               <TableHead key={header.label} className={header.className}>
-                {header.label}
+                {header.srOnly ? <span className="sr-only">{header.label}</span> : header.label}
               </TableHead>
             ))}
           </TableRow>

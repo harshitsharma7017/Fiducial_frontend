@@ -79,13 +79,13 @@ export function ProductAndAddons({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Product and add-on covers</CardTitle>
+        <CardTitle>Policy and add-on covers</CardTitle>
         <CardDescription>
-          The product follows the Fire sum insured
+          The policy follows the Fire sum insured
           {suggested.length > 0
             ? `: ${suggested.map((product) => product.code).join(' or ')} for this total`
             : ''}
-          . Choose another to override it, with the reason. Add-ons are picked from the product’s
+          . Choose another to override it, with the reason. Add-ons are picked from the policy’s
           lists.
         </CardDescription>
       </CardHeader>
@@ -96,7 +96,7 @@ export function ProductAndAddons({
             name="product.code"
             render={({ field }) => (
               <FormItem className="gap-1">
-                <FormLabel>Product</FormLabel>
+                <FormLabel>Policy</FormLabel>
                 <FormControl>
                   <NativeSelect
                     name={field.name}
@@ -125,9 +125,7 @@ export function ProductAndAddons({
                 </FormControl>
                 <FormMessage className="text-xs" />
                 {choice.failed ? (
-                  <p className="text-xs text-destructive">
-                    The product master could not be loaded.
-                  </p>
+                  <p className="text-xs text-destructive">The policy master could not be loaded.</p>
                 ) : null}
               </FormItem>
             )}
@@ -135,7 +133,7 @@ export function ProductAndAddons({
           {choice.override ? (
             <TextField
               name="product.reason"
-              label="Reason for this product"
+              label="Reason for this policy"
               description={`The Fire sum insured suggests ${suggested.map((product) => product.code).join(' or ')}.`}
               maxLength={300}
             />
@@ -281,17 +279,17 @@ function AddonPicker({
           role="status"
           className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm"
         >
-          Not on {productCode ?? 'the product'}’s list, so left out when you save:{' '}
+          Not on {productCode ?? 'the policy'}’s list, so left out when you save:{' '}
           {offList.map((addon) => addon.name).join(', ')}.
         </p>
       ) : null}
       {!productCode ? (
         <p className="text-sm text-muted-foreground">
-          Enter the Fire sums insured, or choose a product, to pick its add-ons.
+          Enter the Fire sums insured, or choose a policy, to pick its add-ons.
         </p>
       ) : lists.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          The product master gives {productCode} no add-on list.
+          The policy master gives {productCode} no add-on list.
         </p>
       ) : master.isError ? (
         <p className="text-sm text-destructive">The add-on master could not be loaded.</p>
@@ -354,7 +352,9 @@ function AddonPicker({
           </div>
           <ul
             aria-label={`${productCode} add-on covers`}
-            className="grid max-h-96 gap-1 overflow-y-auto rounded-md border p-2"
+            // relative: the checkboxes' hidden inputs are absolutely placed; without it they escape
+            // the scroll box and stretch the page below the form.
+            className="relative grid max-h-96 gap-1 overflow-y-auto rounded-md border p-2"
           >
             {shown.length === 0 ? (
               <li className="p-2 text-sm text-muted-foreground">

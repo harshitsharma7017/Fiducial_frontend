@@ -12,6 +12,7 @@ import {
   measuredPaise,
   annexureTotal,
   onBasis,
+  sectionOption2,
   sectionSumInsured,
   toDataSheetRequest,
   withCover,
@@ -243,7 +244,7 @@ describe('Burglary basis and covers (C-3, C-6)', () => {
 });
 
 describe('section sums insured (D-5)', () => {
-  it('takes an annexure’s total, FLOP’s gross profit, else Proposed 1', () => {
+  it('takes an annexure’s total, the sum insured lines, else Proposed 1', () => {
     expect(
       annexureTotal([{ sumInsured: '150000' }, { sumInsured: '50000' }, { sumInsured: 'x' }]),
     ).toBe('200000');
@@ -258,8 +259,46 @@ describe('section sums insured (D-5)', () => {
         lines: { annualGrossProfit: '800' },
       }),
     ).toBe('800');
+    // Money: cash in safe + single carrying limit; the annual limit is not part of it.
     expect(
-      sectionSumInsured({ code: 'MONEY', proposed1: '600000', lines: { cashInSafe: '1' } }),
+      sectionSumInsured({
+        code: 'MONEY',
+        proposed1: '1',
+        lines: { cashInSafe: '200000', cashInTransitSingle: '500000', cashInTransitAnnual: '9' },
+      }),
+    ).toBe('700000');
+    expect(
+      sectionSumInsured({
+        code: 'MONEY',
+        proposed1: '600000',
+        lines: { cashInTransitAnnual: '9' },
+      }),
     ).toBe('600000');
+    expect(
+      sectionSumInsured({
+        code: 'FIDELITY_GUARANTEE',
+        proposed1: null,
+        lines: { employees: '450', limitPerEmployee: '500000', limitPerPeriod: '5000000' },
+      }),
+    ).toBe('5000000');
+    expect(
+      sectionSumInsured({
+        code: 'PUBLIC_LIABILITY',
+        proposed1: null,
+        lines: { anyOneAccident: '10000000', aggregateLimit: '20000000' },
+      }),
+    ).toBe('20000000');
+    // Money's Option 2 adds up its Option 2 lines; a single line's Option 2 is typed.
+    expect(
+      sectionOption2({ code: 'MONEY', proposed2: '1', lines2: { cashInTransitSingle: '800000' } }),
+    ).toBe('800000');
+    expect(sectionOption2({ code: 'MONEY', proposed2: '1', lines2: {} })).toBe('1');
+    expect(
+      sectionOption2({
+        code: 'FIDELITY_GUARANTEE',
+        proposed2: '7',
+        lines2: { limitPerPeriod: '9' },
+      }),
+    ).toBe('7');
   });
 });

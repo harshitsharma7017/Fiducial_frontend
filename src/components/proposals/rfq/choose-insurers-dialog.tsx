@@ -124,7 +124,7 @@ export function ChooseInsurersDialog({ record }: { record: ProposalRecord }) {
             />
           </div>
         </div>
-        <div className="max-h-80 overflow-y-auto">
+        <div className="relative max-h-80 overflow-y-auto">
           {insurers.isPending ? (
             <LoadingState label="Loading insurers" />
           ) : insurers.isError ? (

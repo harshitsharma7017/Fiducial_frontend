@@ -48,9 +48,9 @@ export const RECORD_TYPES: Record<RecordType, RecordTypeInfo> = {
     maxBytes: MASTER_WORKBOOK_MAX_BYTES,
   },
   catalog: {
-    label: 'Product and cover masters',
+    label: 'Policy and cover masters',
     description:
-      'Products and their sum insured ranges, the 14 coverage sections, the add-on lists, the BSUS and BLUS add-on limits and rates, GST rates and the standard notes. One workbook, a sheet per master.',
+      'Policies and their sum insured ranges, the 14 coverage sections, the add-on lists, the BSUS and BLUS add-on limits and rates, GST rates and the standard notes. One workbook, a sheet per master.',
     permission: 'masters.manage',
     templateLabel: 'Download current masters',
     templateUrl: '/api/proxy/catalog/workbook',

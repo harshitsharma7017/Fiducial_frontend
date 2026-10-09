@@ -50,6 +50,7 @@ function proposal(
     type: 'NEW',
     nextStage: null,
     closedReason: null,
+    deleted: null,
     policyEnd: null,
     existingPolicy: null,
     existingPolicyLookup: null,

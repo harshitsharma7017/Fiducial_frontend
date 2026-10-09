@@ -9,7 +9,7 @@ export function AddonsSection({ proposal }: { proposal: Proposal }) {
   if (!proposal.addOns) {
     return (
       <Section title="Add-ons">
-        <p className="text-sm text-muted-foreground">Chosen with the product at the QCR stage.</p>
+        <p className="text-sm text-muted-foreground">Chosen with the policy at the QCR stage.</p>
       </Section>
     );
   }

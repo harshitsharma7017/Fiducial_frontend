@@ -108,18 +108,19 @@ client still has to confirm the table (Q12 in the backend's `docs/OPEN_ITEMS.md`
   the ticked rows and leaves the rest out. Import clients before their risk locations.
 - These pages read live data, so they show the demo-mode state in mock mode.
 
-## Product and cover masters
+## Policy and cover masters
 
-Masters → Products, Coverage sections, Add-on Covers, Tax rates and Standard notes (M-4 to M-9). Every role can view
-them; Admins (`masters.manage`) edit rows on screen, move products, sections and notes up or down, and replace the
+Masters → Policies, Coverage sections, Add-on Covers, Tax rates and Standard notes (M-4 to M-9). Every role can view
+them; Admins (`masters.manage`) edit rows on screen, move policies, sections and notes up or down, and replace the
 masters from Excel.
 
-- **Excel**: "Download as Excel" gives one workbook with a sheet per master. Upload it on Import data → "Product and
+- **Excel**: "Download as Excel" gives one workbook with a sheet per master. Upload it on Import data → "Policy and
   cover masters": the preview checks every sheet, and "Replace" saves each sheet in the file as the whole of its
   master once everything passes.
 - **Screens** are one generic table and form (`components/catalog/`) built from the column definitions in
   `src/shared/catalog.ts`; the form runs the same checks as the upload before saving.
-- **Products** has "Try a sum insured" to see which products a range suggests. A proposal shows its suggestion under
+- **Policies** has "Try a sum insured" to see which policies a range suggests. (Screens say "policy"; the
+  code, API paths and `/masters/products` URL keep the name product.) A proposal shows its suggestion under
   its header. **Coverage sections** sets the Data Sheet's and RFQ's section order and names; Fire stays first.
   **Add-on Covers** has the four lists (filter and search) and a "BSUS & BLUS limits and rates" tab. **Tax rates**
   marks the rate in force today; a proposal keeps the rate it was created with.
@@ -161,14 +162,21 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
   case to its next stage; "Close case" (with a reason) ends it.
 - **Renewals** show the Existing policy card (with Fetch again) and an Existing column in the Fire lines and other
   sections.
+- **Delete** (Admins, `proposals.delete`): a bin icon on each row of Proposals, RFQ, Quotes and QCR and Placement
+  Slips asks, then moves the case to the Deleted bin (`components/proposals/delete-case.tsx`). **Proposals → Deleted
+  bin** (`/proposals/deleted`) lists binned cases with who deleted them and when, and restores them as they were.
 - **Workspace** (`/proposals/{id}` for an id from the API; sample ids keep the read-only page):
   - **Data Sheet**: dates; per location the Fire & Burglary block laid out as the client's Data Sheet (7 numbered
     items with sub-items, sq ft × rate for buildings, heading subtotals and a running total), hypothecation and stock
     kept at open space, and the nine risk details; add or remove the client's locations; Fire Option 2
     per line; the 13 other sections (include or not required, Proposed 1 and 2, the Data Sheet's lines for FLOP, Money, Fidelity
-    and Public Liability, and add-row annexure grids for Plate Glass, Neon Sign, All Risk, EEI, MBD and Boiler whose
-    total is the section's sum insured); up to three years of claims; notes. Saved as a
-    whole. The checklist of what is still needed comes from the API. Totals update as you type
+    and Public Liability, which give the sum insured once entered: gross profit, safe + single carrying, limit per
+    policy period, aggregate limit; and add-row annexure grids for Plate Glass, Neon Sign, All Risk, EEI, MBD and
+    Boiler whose total is the section's sum insured); up to three years of claims; notes. Saved as a
+    whole. **Import from Excel** reads the client's Data Sheet workbook through the API and fills the form as unsaved
+    changes (a dialog asks which location each sheet fills when it is not clear), to be checked and saved
+    (`data-sheet-import.tsx`, `src/lib/data-sheet-import.ts`); a workbook chosen on the New proposal screen is read
+    the same way once the case opens. The checklist of what is still needed comes from the API. Totals update as you type
     (`src/lib/data-sheet.ts`: exact paise in BigInt, shown to the rupee, as Excel does), and the API's figures replace
     them on save. The Burglary row offers the contents total (all Fire items except buildings).
   - **Case options** (C-1 to C-6, `product-addons.tsx`, `section-details.tsx`): the Product card follows the Fire

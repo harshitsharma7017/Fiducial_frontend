@@ -30,6 +30,7 @@ import { toast } from '@/hooks/use-toast';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { apiFetch } from '@/lib/api-client';
 import { clientLocationsQuery } from '@/lib/api/new-business';
+import { setPendingDataSheet } from '@/lib/data-sheet-import';
 import { addDays, policyYearEnd, todayIst } from '@/lib/dates';
 import { applyServerFieldErrors } from '@/lib/form-errors';
 import { formatInr } from '@/lib/money';
@@ -99,6 +100,8 @@ export function NewProposalForm({ initialType = 'NEW' }: { initialType?: Proposa
     if (me.data && !form.getValues('ownerId')) form.setValue('ownerId', me.data.id);
   }, [me.data, form]);
 
+  const [dataSheet, setDataSheet] = useState<File | null>(null);
+  const dataSheetId = useId();
   const create = useMutation({
     mutationFn: (body: CreateProposalRequest) =>
       apiFetch('proposals', { method: 'POST', body, schema: ProposalRecordSchema }),
@@ -110,7 +113,9 @@ export function NewProposalForm({ initialType = 'NEW' }: { initialType?: Proposa
         description: record.reference,
         variant: 'success',
       });
-      router.push(`/proposals/${record.id}`);
+      // The workbook chosen here fills the Data Sheet as the case opens.
+      if (dataSheet) setPendingDataSheet(record.id, dataSheet);
+      router.push(`/proposals/${record.id}${dataSheet ? '?tab=data-sheet' : ''}`);
     },
     onError: (error) => {
       if (!applyServerFieldErrors(error, form.setError)) setGeneralError(error);
@@ -234,6 +239,29 @@ export function NewProposalForm({ initialType = 'NEW' }: { initialType?: Proposa
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Client’s Data Sheet (optional)</CardTitle>
+            <CardDescription>
+              The client’s Data Sheet workbook, in its own format, fills the new case’s Data Sheet:
+              Fire lines, other sections, risk details and annexure. You check and save it there.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-3">
+            <Input
+              id={dataSheetId}
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              aria-label="Client’s Data Sheet workbook"
+              className="max-w-sm"
+              onChange={(event) => setDataSheet(event.target.files?.[0] ?? null)}
+            />
+            {dataSheet ? (
+              <span className="text-sm text-muted-foreground">{dataSheet.name}</span>
+            ) : null}
           </CardContent>
         </Card>
 

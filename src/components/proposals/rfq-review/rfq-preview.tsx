@@ -224,7 +224,7 @@ export function RfqPreview({
           <dd>{client ? `${client.occupancy.tacCode} — ${client.occupancy.description}` : '…'}</dd>
           {record.product ? (
             <>
-              <dt className="font-medium">Product</dt>
+              <dt className="font-medium">Policy</dt>
               <dd>{record.product.name}</dd>
             </>
           ) : null}

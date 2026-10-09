@@ -17,7 +17,7 @@ const MASTERS = [
   'Insurers',
   'Occupancy',
   'Pincodes',
-  'Products',
+  'Policies',
   'Coverage sections',
   'Add-on Covers',
   'Tax rates',

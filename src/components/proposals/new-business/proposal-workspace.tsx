@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { XCircle } from 'lucide-react';
+import { CircleCheck, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { DemoModeGate } from '@/components/demo-mode-gate';
@@ -23,8 +23,23 @@ import { usePermission } from '@/hooks/use-permission';
 import { ApiError } from '@/lib/api-client';
 import { proposalRecordQuery } from '@/lib/api/new-business';
 import { formatInr } from '@/lib/money';
-import { formatDate, formatDateTime, hasRfq, wholeRupees, type ProposalRecord } from '@/shared';
+import {
+  PROPOSAL_STAGES,
+  formatDate,
+  formatDateTime,
+  hasRfq,
+  wholeRupees,
+  type ProposalRecord,
+} from '@/shared';
 import { ExistingPolicyCard, StageControls } from './case-controls';
+import {
+  CASE_TABS,
+  CASE_TAB_LABELS,
+  NEXT_WORK_TAB,
+  STAGE_TAB,
+  TAB_COMPLETES,
+  type CaseTab,
+} from './case-tabs';
 import { DataSheetForm } from './data-sheet-form';
 
 /**
@@ -38,17 +53,6 @@ export function ProposalWorkspace({ id, initialTab }: { id: string; initialTab?:
     </DemoModeGate>
   );
 }
-
-const TABS = [
-  'data-sheet',
-  'review',
-  'rfq',
-  'quotes',
-  'qcr',
-  'client-approval',
-  'placement-slip',
-  'activity',
-] as const;
 
 function Workspace({ id, initialTab }: { id: string; initialTab?: string }) {
   const proposal = useQuery(proposalRecordQuery(id));
@@ -79,13 +83,18 @@ function Workspace({ id, initialTab }: { id: string; initialTab?: string }) {
 
 function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: string }) {
   const canEdit = usePermission('proposals.edit');
-  // The tab asked for in the link (?tab=rfq from the RFQ page), else where the work is: the
-  // Data Sheet until it is complete, then the RFQ.
+  // The tab asked for in the link (?tab=rfq from the RFQ page), else where the case's work goes
+  // on next, by its stage.
   const [tab, setTab] = useState<string>(
-    () =>
-      TABS.find((value) => value === initialTab) ??
-      (record.missing.length === 0 ? 'rfq' : 'data-sheet'),
+    () => CASE_TABS.find((value) => value === initialTab) ?? NEXT_WORK_TAB[record.stage],
   );
+  const reached = PROPOSAL_STAGES.indexOf(record.stage);
+  const done = (value: CaseTab) => {
+    const stage = TAB_COMPLETES[value];
+    return (
+      record.stage !== 'CLOSED' && stage !== undefined && reached >= PROPOSAL_STAGES.indexOf(stage)
+    );
+  };
   const sent = record.insurers.filter((insurer) => hasRfq(insurer.status)).length;
 
   return (
@@ -104,7 +113,7 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
         </p>
         {record.product ? (
           <p className="text-sm">
-            <span className="text-muted-foreground">Product: </span>
+            <span className="text-muted-foreground">Policy: </span>
             <span className="font-medium">{record.product.name}</span>
             <span className="text-muted-foreground">
               {record.product.source === 'SUGGESTED'
@@ -127,8 +136,12 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
 
       <div className="mb-6 grid gap-4 *:min-w-0 lg:grid-cols-[1fr_auto]">
         <div className="grid gap-3">
-          <StageStepper stage={record.stage} />
-          {canEdit ? <StageControls record={record} /> : null}
+          <StageStepper
+            stage={record.stage}
+            onSelect={(stage) => setTab(STAGE_TAB[stage])}
+            selected={PROPOSAL_STAGES.findLast((stage) => STAGE_TAB[stage] === tab)}
+          />
+          {canEdit ? <StageControls record={record} onOpenTab={setTab} /> : null}
         </div>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4 lg:grid-cols-2">
           <Fact label="Policy period">
@@ -148,7 +161,11 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
       <Tabs value={tab} onValueChange={setTab} className="gap-6">
         <TabsList className="flex-wrap">
           <TabsTrigger value="data-sheet">
+            {done('data-sheet') ? (
+              <CircleCheck aria-hidden="true" className="size-3.5 text-success" />
+            ) : null}
             Data Sheet
+            {done('data-sheet') ? <span className="sr-only">, done</span> : null}
             {record.locked ? null : record.missing.length > 0 ? (
               <Badge variant="warning" className="ml-1 tabular">
                 {record.missing.length}
@@ -156,13 +173,22 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
               </Badge>
             ) : null}
           </TabsTrigger>
-          <TabsTrigger value="review">RFQ review</TabsTrigger>
-          <TabsTrigger value="rfq">Insurers and RFQ</TabsTrigger>
-          <TabsTrigger value="quotes">Quotes</TabsTrigger>
-          <TabsTrigger value="qcr">QCR</TabsTrigger>
-          <TabsTrigger value="client-approval">Client approval</TabsTrigger>
-          <TabsTrigger value="placement-slip">Placement slip</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+          {CASE_TABS.filter((value) => value !== 'data-sheet').map((value) => (
+            <TabsTrigger key={value} value={value}>
+              {done(value) ? (
+                <CircleCheck aria-hidden="true" className="size-3.5 text-success" />
+              ) : value === NEXT_WORK_TAB[record.stage] && record.stage !== 'CLOSED' ? (
+                <span aria-hidden="true" className="size-1.5 rounded-full bg-primary" />
+              ) : null}
+              {CASE_TAB_LABELS[value]}
+              {done(value) ? <span className="sr-only">, done</span> : null}
+              {!done(value) &&
+              value === NEXT_WORK_TAB[record.stage] &&
+              record.stage !== 'CLOSED' ? (
+                <span className="sr-only">, next step</span>
+              ) : null}
+            </TabsTrigger>
+          ))}
         </TabsList>
         {/* Mounted while hidden, so unsaved Data Sheet entries survive a look at another tab. */}
         <TabsContent

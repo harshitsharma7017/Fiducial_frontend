@@ -61,7 +61,7 @@ function CatalogHints() {
   return (
     <>
       <Hint icon={<FileSpreadsheet />}>
-        One sheet per master: Products, Coverage sections, Add-on covers, BSUS BLUS add-on rates,
+        One sheet per master: Policies, Coverage sections, Add-on covers, BSUS BLUS add-on rates,
         Tax rates, Standard notes, Clauses and Occupancy cover defaults. The Instructions sheet
         explains each column.
       </Hint>

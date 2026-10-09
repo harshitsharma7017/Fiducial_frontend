@@ -32,6 +32,7 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
     stage: 'DRAFT',
     nextStage: null,
     closedReason: null,
+    deleted: null,
     policyEnd: null,
     existingPolicy: null,
     existingPolicyLookup: null,
@@ -289,7 +290,7 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     });
     const user = renderWorkspace();
     await user.type(await screen.findByLabelText('Item 6 sum insured'), String(20 * CR));
-    const product = screen.getByLabelText('Product');
+    const product = screen.getByLabelText('Policy');
     expect(
       await within(product).findByRole('option', { name: 'Follow the suggestion (BLUS)' }),
     ).toBeInTheDocument();
@@ -316,10 +317,10 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     expect(screen.getByText(/so left out when you save: Debris removal/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
     expect(
-      await screen.findByText('Say why this product is chosen over BLUS or PAR'),
+      await screen.findByText('Say why this policy is chosen over BLUS or PAR'),
     ).toBeInTheDocument();
     expect(sent).toBeUndefined();
-    await user.type(screen.getByLabelText('Reason for this product'), 'Board decision');
+    await user.type(screen.getByLabelText('Reason for this policy'), 'Board decision');
     await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
     await waitFor(() =>
       expect(sent).toMatchObject({
@@ -436,34 +437,50 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     expect(within(otherSections).getByLabelText('Burglary Existing')).toHaveValue('1,50,00,000');
   });
 
-  it('moves a case to its next stage and closes one with a reason', async () => {
+  it('keeps the stepper, the tabs and the next step in step with the stage; closes a case', async () => {
     const posted: unknown[] = [];
-    serve(record({ stage: 'RFQ_SENT', nextStage: 'QUOTES_RECEIVED', missing: [] }), (url, body) => {
+    serve(record({ stage: 'QUOTES_RECEIVED', nextStage: 'QCR', missing: [] }), (url, body) => {
       posted.push(body);
       expect(url).toContain(`/proposals/${ID}/stage`);
-      const stage = (body as { stage: 'QUOTES_RECEIVED' | 'CLOSED' }).stage;
       return record({
-        stage,
-        nextStage: stage === 'CLOSED' ? null : 'QCR',
-        closedReason: stage === 'CLOSED' ? 'Lost to another broker' : null,
-        locked: stage === 'CLOSED',
+        stage: 'CLOSED',
+        nextStage: null,
+        closedReason: 'Lost to another broker',
+        locked: true,
         missing: [],
       });
     });
     const user = renderWorkspace();
-    await user.click(await screen.findByRole('button', { name: 'Move to Quotes Received' }));
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Move' }));
-    expect(await screen.findByRole('button', { name: 'Move to QCR' })).toBeInTheDocument();
+    // The case opens where its work goes on: the QCR, after the quotes.
+    expect(await screen.findByRole('tab', { name: 'QCR, next step' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByRole('tab', { name: 'Quotes, done' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Insurers and RFQ, done' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Client approval' })).toBeInTheDocument();
+    // No stage is set by hand: the next step says where it is done.
+    expect(screen.queryByRole('button', { name: /^Move to/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Next: prepare the QCR and get it approved.')).toBeInTheDocument();
+    // A step of the stepper opens its tab.
+    await user.click(screen.getByRole('button', { name: /Quotes Received/ }));
+    expect(screen.getByRole('tab', { name: 'Quotes, done' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await user.click(screen.getByRole('button', { name: 'Open QCR' }));
+    expect(screen.getByRole('tab', { name: 'QCR, next step' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
     await user.click(screen.getByRole('button', { name: 'Close case' }));
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByRole('button', { name: 'Close case' })).toBeDisabled();
     await user.type(within(dialog).getByLabelText('Reason'), 'Lost to another broker');
     await user.click(within(dialog).getByRole('button', { name: 'Close case' }));
     expect(await screen.findByText('This case is closed')).toBeInTheDocument();
-    expect(posted).toEqual([
-      { stage: 'QUOTES_RECEIVED', reason: '' },
-      { stage: 'CLOSED', reason: 'Lost to another broker' },
-    ]);
+    expect(posted).toEqual([{ stage: 'CLOSED', reason: 'Lost to another broker' }]);
   });
 
   it('D-5: annexure rows add up to the section sum insured, which is saved with them', async () => {
@@ -641,7 +658,7 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
       }),
     );
     const user = renderWorkspace();
-    await user.click(await screen.findByRole('tab', { name: 'Data Sheet' }));
+    await user.click(await screen.findByRole('tab', { name: 'Data Sheet, done' }));
     expect(screen.getByText('The Data Sheet is locked')).toBeInTheDocument();
     expect(screen.getByLabelText('Item 1a sq ft')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Save Data Sheet' })).not.toBeInTheDocument();

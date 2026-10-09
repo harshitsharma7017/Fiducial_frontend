@@ -2,6 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { DeleteCaseButton } from '@/components/proposals/delete-case';
+import { usePermission } from '@/hooks/use-permission';
 import { PageHeader } from '@/components/page-header';
 import { StageBadge } from '@/components/proposals/badges';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +49,7 @@ export function phaseOf(row: QcrSummary): Phase {
 const paise = (value: string) => `₹${formatIndianNumber(value, 2)}`;
 
 export function QuotesView({ serverSearch }: { serverSearch: string }) {
+  const canDelete = usePermission('proposals.delete');
   const { params, replace } = useUrlSearchParams(serverSearch);
   const phase = PHASES.find((value) => value.toLowerCase() === params.get('status')) ?? null;
   const q = params.get('q') ?? '';
@@ -108,6 +111,7 @@ export function QuotesView({ serverSearch }: { serverSearch: string }) {
           { label: 'Lowest quote' },
           { label: 'QCR' },
           { label: 'Quotes needed by' },
+          ...(canDelete ? [{ label: 'Actions', srOnly: true, className: 'w-10' }] : []),
         ]}
         search={q}
         onSearch={(value) => setParam('q', value || null)}
@@ -137,6 +141,7 @@ export function QuotesView({ serverSearch }: { serverSearch: string }) {
 
 function QuoteRow({ row }: { row: QcrSummary }) {
   const phase = phaseOf(row);
+  const canDelete = usePermission('proposals.delete');
   const daysLeft = daysBetween(todayIst(), row.dueDate);
   return (
     <TableRow>
@@ -219,6 +224,15 @@ function QuoteRow({ row }: { row: QcrSummary }) {
           </Badge>
         ) : null}
       </TableCell>
+      {canDelete ? (
+        <TableCell className="w-10 text-right">
+          <DeleteCaseButton
+            id={row.proposalId}
+            reference={row.reference}
+            clientName={row.clientName}
+          />
+        </TableCell>
+      ) : null}
     </TableRow>
   );
 }

@@ -23,14 +23,14 @@ export function ProductsView() {
   return (
     <>
       <PageHeader
-        title="Products"
-        description="The policies a proposal can be placed under. A proposal suggests the active products whose range holds its Fire sum insured; change a range here and the suggestion follows."
+        title="Policies"
+        description="The policies a proposal can be placed under. A proposal suggests the active policies whose range holds its Fire sum insured; change a range here and the suggestion follows."
         actions={<CatalogWorkbookActions />}
       />
       <Card className="mb-4">
         <CardHeader>
           <CardTitle className="text-base">Try a sum insured</CardTitle>
-          <CardDescription>See which products the current ranges suggest.</CardDescription>
+          <CardDescription>See which policies the current ranges suggest.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-[minmax(0,18rem)_1fr] sm:items-end">
           <div className="grid gap-2">
@@ -46,7 +46,7 @@ export function ProductsView() {
               <span className="text-muted-foreground">Enter an amount.</span>
             ) : suggested.length === 0 ? (
               <span className="text-warning">
-                No active product covers {formatRupeesShort(sumInsured)}.
+                No active policy covers {formatRupeesShort(sumInsured)}.
               </span>
             ) : (
               <>

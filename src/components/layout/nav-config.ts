@@ -99,7 +99,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'masters.view',
       },
       { label: 'Pincodes', href: '/masters/pincodes', icon: MapPin, permission: 'masters.view' },
-      { label: 'Products', href: '/masters/products', icon: Package, permission: 'masters.view' },
+      { label: 'Policies', href: '/masters/products', icon: Package, permission: 'masters.view' },
       {
         label: 'Coverage sections',
         href: '/masters/sections',

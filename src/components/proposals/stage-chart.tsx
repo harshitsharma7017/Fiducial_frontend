@@ -32,7 +32,7 @@ export function StageChart({ type }: { type: ProposalType }) {
   const stats = useDashboardStats(type);
   const [view, setView] = useState<View>('stage');
 
-  const title = view === 'stage' ? 'Proposals by stage' : 'Sum insured by product';
+  const title = view === 'stage' ? 'Proposals by stage' : 'Sum insured by policy';
 
   let body;
   if (stats.isPending) {
@@ -109,7 +109,7 @@ export function StageChart({ type }: { type: ProposalType }) {
           <caption>{title}</caption>
           <thead>
             <tr>
-              <th scope="col">{view === 'stage' ? 'Stage' : 'Product'}</th>
+              <th scope="col">{view === 'stage' ? 'Stage' : 'Policy'}</th>
               <th scope="col">{view === 'stage' ? 'Proposals' : 'Fire SI (Proposed 1)'}</th>
             </tr>
           </thead>
@@ -137,7 +137,7 @@ export function StageChart({ type }: { type: ProposalType }) {
         >
           <TabsList>
             <TabsTrigger value="stage">By stage</TabsTrigger>
-            <TabsTrigger value="product">By product</TabsTrigger>
+            <TabsTrigger value="product">By policy</TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>

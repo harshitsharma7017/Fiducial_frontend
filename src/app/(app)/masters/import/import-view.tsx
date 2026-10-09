@@ -67,7 +67,7 @@ export function ImportView({ serverSearch = '' }: { serverSearch?: string }) {
     <>
       <PageHeader
         title="Import data"
-        description="Load the IIB master, the product and cover masters, clients, risk locations and insurers from Excel. Upload the masters first, and clients before their risk locations."
+        description="Load the IIB master, the policy and cover masters, clients, risk locations and insurers from Excel. Upload the masters first, and clients before their risk locations."
       />
       <div className="grid gap-4">
         <ImportPanel

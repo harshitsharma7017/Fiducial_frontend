@@ -11,7 +11,7 @@ import { useDashboardStats } from '@/lib/api/proposals';
 import { parseProposalParams, proposalParamsToSearch, withType } from '@/lib/proposal-params';
 import { useUrlSearchParams } from '@/lib/use-url-search-params';
 import Link from 'next/link';
-import { FilePlus2, RefreshCcw } from 'lucide-react';
+import { FilePlus2, RefreshCcw, Trash2 } from 'lucide-react';
 
 /** The proposals list for a type: the type switch, the table and the drawer. */
 export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
@@ -19,6 +19,7 @@ export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
   const { type, stage } = parseProposalParams(params);
   const [drawer, setDrawer] = useState<DrawerTarget | null>(null);
   const canCreate = usePermission('proposals.create');
+  const canDelete = usePermission('proposals.delete');
 
   const newStats = useDashboardStats('NEW');
   const existingStats = useDashboardStats('EXISTING');
@@ -36,13 +37,25 @@ export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
           type === 'EXISTING' ? 'Renewals of existing policies.' : 'New business proposals.'
         }
         actions={
-          canCreate ? (
-            <Button asChild variant="accent">
-              <Link href={action.href}>
-                <action.Icon aria-hidden="true" />
-                {action.label}
-              </Link>
-            </Button>
+          canCreate || canDelete ? (
+            <>
+              {canDelete ? (
+                <Button asChild variant="outline">
+                  <Link href="/proposals/deleted">
+                    <Trash2 aria-hidden="true" />
+                    Deleted bin
+                  </Link>
+                </Button>
+              ) : null}
+              {canCreate ? (
+                <Button asChild variant="accent">
+                  <Link href={action.href}>
+                    <action.Icon aria-hidden="true" />
+                    {action.label}
+                  </Link>
+                </Button>
+              ) : null}
+            </>
           ) : undefined
         }
       />

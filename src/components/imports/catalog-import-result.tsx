@@ -65,7 +65,7 @@ export function CatalogImportResult({
     <Card className="gap-0 py-0">
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b py-4">
         <CardTitle className="text-base">
-          {report.imported ? 'Masters replaced' : 'Preview — product and cover masters'}
+          {report.imported ? 'Masters replaced' : 'Preview — policy and cover masters'}
         </CardTitle>
         {report.imported ? null : (
           <Button onClick={onSave} disabled={problems > 0 || saving}>

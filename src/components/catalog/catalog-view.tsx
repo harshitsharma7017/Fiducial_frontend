@@ -347,7 +347,7 @@ export function CatalogTable<M extends CatalogMaster>({
               all.length === 0 ? (
                 canManage ? (
                   <>
-                    Upload the product and cover masters workbook on the{' '}
+                    Upload the policy and cover masters workbook on the{' '}
                     <Link
                       href="/masters/import?type=catalog"
                       className="text-accent-strong hover:underline"
@@ -357,7 +357,7 @@ export function CatalogTable<M extends CatalogMaster>({
                     page.
                   </>
                 ) : (
-                  'An Admin uploads the product and cover masters.'
+                  'An Admin uploads the policy and cover masters.'
                 )
               ) : (
                 'Try other words.'

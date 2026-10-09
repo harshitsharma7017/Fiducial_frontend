@@ -25,6 +25,7 @@ import {
   MAX_ANNEXURE_ROWS,
   SECTION_LINES,
   SUM_INSURED_LINE,
+  SUM_INSURED_LINES,
   annexureColumnLabel,
   type AnnexureColumn,
   type AnnexureSection,
@@ -64,8 +65,10 @@ export function SectionLines({
       </TableHeader>
       <TableBody>
         {lines.map((line, number) => {
-          // FLOP's only line is its sum insured: Existing and Option 2 are in the section's row.
+          // A line that is the sum insured on its own (FLOP's gross profit, Fidelity's and PL's
+          // limits): its Existing and Option 2 are in the section's row. Money's lines add up.
           const isSumInsured = SUM_INSURED_LINE[code] === line.key;
+          const addsUp = !isSumInsured && SUM_INSURED_LINES[code]?.includes(line.key) === true;
           const label = `${number + 1}. ${line.label}`;
           const field = (path: FieldPath<DataSheetForm>, fieldLabel: string) =>
             line.kind === 'count' ? (
@@ -87,6 +90,10 @@ export function SectionLines({
                 {isSumInsured ? (
                   <span className="block text-xs text-muted-foreground">
                     The {name} sum insured; its Existing and Option 2 are in the section’s row.
+                  </span>
+                ) : addsUp ? (
+                  <span className="block text-xs text-muted-foreground">
+                    Adds up to the {name} sum insured.
                   </span>
                 ) : null}
               </TableCell>

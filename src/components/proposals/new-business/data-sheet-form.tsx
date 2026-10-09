@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CircleAlert, CircleCheck, LoaderCircle, Lock, Plus, Trash2 } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
+import { DataSheetImportControl } from './data-sheet-import';
 import { errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,9 @@ import {
   fireGroupTotals,
   fireTotal,
   onBasis,
+  sectionOption2,
   sectionSumInsured,
+  sumOfLines,
   sumRupeesOf,
   toDataSheetForm,
   toDataSheetRequest,
@@ -55,7 +58,8 @@ import {
   MAX_CLAIM_ROWS,
   OTHER_SECTION_LABELS,
   SECTION_LINES,
-  SUM_INSURED_LINE,
+  SUM_INSURED_FROM,
+  SUM_INSURED_LINES,
   hasBasis,
   isAnnexureSection,
   ProposalRecordSchema,
@@ -181,7 +185,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
       // C-1: a product the Fire sum insured does not suggest is saved with the reason.
       if (choice.override && !values.product.reason) {
         form.setError('product.reason', {
-          message: `Say why this product is chosen over ${choice.suggested.map((p) => p.code).join(' or ')}`,
+          message: `Say why this policy is chosen over ${choice.suggested.map((p) => p.code).join(' or ')}`,
         });
         setInvalidSubmit(true);
         return;
@@ -221,6 +225,15 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           </Alert>
         ) : (
           <Completeness missing={record.missing} updatedAt={record.updatedAt} />
+        )}
+
+        {readOnly ? null : (
+          <DataSheetImportControl
+            record={record}
+            getValues={() => form.getValues()}
+            // The workbook's values are unsaved changes: checked, then saved as usual.
+            onApply={(values) => form.reset(values, { keepDefaultValues: true })}
+          />
         )}
 
         <Card>
@@ -418,7 +431,7 @@ function AddLocationsDialog({
             Every location of this client is already on the proposal.
           </p>
         ) : (
-          <fieldset className="grid max-h-80 gap-2 overflow-y-auto">
+          <fieldset className="relative grid max-h-80 gap-2 overflow-y-auto">
             <legend className="sr-only">Locations</legend>
             {addable.map((location) => {
               const id = `add-location-${location.id}`;
@@ -666,14 +679,18 @@ function OtherSections({
               const basis = hasBasis(code) ? (section.basis ?? null) : null;
               // C-3: on a basis, Burglary's sum insured is the Fire contents.
               const contentsBased = code === 'BURGLARY' && basis !== null;
-              // D-5: the sum insured comes from the annexure (or FLOP's gross profit) when given.
-              const derived =
-                (annexureSection && (section.annexure?.length ?? 0) > 0) ||
-                Boolean(SUM_INSURED_LINE[code] && section.lines?.[SUM_INSURED_LINE[code]]?.trim());
+              // D-5: the sum insured comes from the annexure, or from its lines (FLOP's gross
+              // profit, Money's safe and single carrying, Fidelity's and PL's limits), when given.
+              const fromAnnexure = annexureSection && (section.annexure?.length ?? 0) > 0;
+              const derived = fromAnnexure || sumOfLines(code, section.lines) !== null;
+              // Money's Option 2 adds up its Option 2 lines, when given.
+              const derived2 =
+                (SUM_INSURED_LINES[code]?.length ?? 0) > 1 &&
+                sumOfLines(code, section.lines2) !== null;
               const option1 = contentsBased ? fromContents.proposed1 : sectionSumInsured(section);
               const option2Value = contentsBased
                 ? fromContents.proposed2
-                : section.proposed2?.trim() || null;
+                : sectionOption2(section)?.trim() || null;
               const details =
                 included && (annexureSection || hasLines || hasBasis(code) || covers.length > 0);
               const columnCount = renewal ? 4 : 3;
@@ -722,9 +739,9 @@ function OtherSections({
                               <span className="block text-xs font-normal text-muted-foreground">
                                 {contentsBased
                                   ? 'Fire contents'
-                                  : annexureSection
+                                  : fromAnnexure
                                     ? 'From the annexure'
-                                    : 'Annual Gross Profit'}
+                                    : (SUM_INSURED_FROM[code] ?? 'From the lines')}
                               </span>
                             </span>
                           ) : (
@@ -760,12 +777,17 @@ function OtherSections({
                       )}
                     </TableCell>
                     <TableCell className="align-top">
-                      {!included ? null : contentsBased ? (
+                      {!included ? null : contentsBased || derived2 ? (
                         <span
                           className="block py-2 text-right text-sm font-medium tabular"
                           aria-label={`${name} Proposed 2`}
                         >
                           {option2Value ? formatInr(option2Value) : '—'}
+                          {derived2 ? (
+                            <span className="block text-xs font-normal text-muted-foreground">
+                              {SUM_INSURED_FROM[code]}
+                            </span>
+                          ) : null}
                         </span>
                       ) : (
                         <RupeesField

@@ -40,6 +40,10 @@ describe('breadcrumbTrail', () => {
       'Proposals -> /proposals?type=existing',
       'Start renewal',
     ]);
+    expect(trail('/proposals/deleted')).toEqual([
+      'Proposals -> /proposals?type=new',
+      'Deleted bin',
+    ]);
   });
 
   it('uses the proposal client name as the last crumb on a detail route', () => {

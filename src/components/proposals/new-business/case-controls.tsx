@@ -34,15 +34,14 @@ import { formatInr } from '@/lib/money';
 import { queryKeys } from '@/lib/query-keys';
 import {
   OTHER_SECTION_LABELS,
-  PROPOSAL_STAGE_LABELS,
   ProposalRecordSchema,
   formatDate,
   formatDateTime,
   wholeRupees,
   type OtherSection,
   type ProposalRecord,
-  type ProposalStage,
 } from '@/shared';
+import { CASE_TAB_LABELS, NEXT_STEP, NEXT_WORK_TAB, type CaseTab } from './case-tabs';
 
 function useSaveRecord() {
   const queryClient = useQueryClient();
@@ -52,123 +51,108 @@ function useSaveRecord() {
   };
 }
 
-/** What moves the case to its next stage when that is recorded on a tab, not set by hand. */
-const NEXT_STEP: Partial<Record<ProposalStage, string>> = {
-  CLIENT_APPROVAL: 'Next: record the quote the client accepted on the Client approval tab.',
-  PLACEMENT_SLIP:
-    'Next: approve the placement slip and send it to the insurer (Placement slip tab).',
-  PLACED: 'Next: record the policy or cover note on the Placement slip tab.',
-};
-
 /**
- * Moves the case to its next stage (from RFQ Sent up to Placed), or closes it with the reason.
- * The stages before follow from the Data Sheet and the RFQ.
+ * The case's next step, with the tab where it is done, and closing the case with the reason. No
+ * stage is set by hand: each follows the work recorded on its tab.
  */
-export function StageControls({ record }: { record: ProposalRecord }) {
+export function StageControls({
+  record,
+  onOpenTab,
+}: {
+  record: ProposalRecord;
+  onOpenTab?: (tab: CaseTab) => void;
+}) {
   const saveRecord = useSaveRecord();
   const reasonId = useId();
-  const [open, setOpen] = useState<ProposalStage | null>(null);
+  const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
-  const move = useMutation({
-    mutationFn: (body: { stage: ProposalStage; reason: string }) =>
+  const close = useMutation({
+    mutationFn: () =>
       apiFetch(`proposals/${record.id}/stage`, {
         method: 'POST',
-        body,
+        body: { stage: 'CLOSED', reason },
         schema: ProposalRecordSchema,
       }),
     onSuccess: (saved) => {
       saveRecord(saved);
-      setOpen(null);
-      toast({
-        title:
-          saved.stage === 'CLOSED'
-            ? 'Case closed'
-            : `Moved to ${PROPOSAL_STAGE_LABELS[saved.stage]}`,
-        description: saved.reference,
-        variant: 'success',
-      });
+      setOpen(false);
+      toast({ title: 'Case closed', description: saved.reference, variant: 'success' });
     },
   });
   const closable = record.stage !== 'PLACED' && record.stage !== 'CLOSED';
-  if (!record.nextStage && !closable) return null;
+  const next = record.nextStage ? NEXT_STEP[record.nextStage] : undefined;
+  const tab = NEXT_WORK_TAB[record.stage];
+  if (!next && !closable) return null;
 
-  const dialog = (stage: ProposalStage) => {
-    const closing = stage === 'CLOSED';
-    return (
-      <Dialog
-        open={open === stage}
-        onOpenChange={(next) => {
-          setOpen(next ? stage : null);
-          setReason('');
-          move.reset();
-        }}
-      >
-        <DialogTrigger asChild>
-          {closing ? (
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {next ? (
+        <>
+          <p className="text-sm text-muted-foreground">{next}</p>
+          {onOpenTab ? (
+            <Button size="sm" variant="outline" onClick={() => onOpenTab(tab)}>
+              <ArrowRight aria-hidden="true" />
+              Open {CASE_TAB_LABELS[tab]}
+            </Button>
+          ) : null}
+        </>
+      ) : null}
+      {closable ? (
+        <Dialog
+          open={open}
+          onOpenChange={(value) => {
+            setOpen(value);
+            setReason('');
+            close.reset();
+          }}
+        >
+          <DialogTrigger asChild>
             <Button variant="outline" size="sm">
               <XCircle aria-hidden="true" />
               Close case
             </Button>
-          ) : (
-            <Button size="sm">
-              <ArrowRight aria-hidden="true" />
-              Move to {PROPOSAL_STAGE_LABELS[stage]}
-            </Button>
-          )}
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {closing ? 'Close this case?' : `Move to ${PROPOSAL_STAGE_LABELS[stage]}?`}
-            </DialogTitle>
-            <DialogDescription>
-              {closing
-                ? 'For a case that is lost or will not be renewed. The Data Sheet locks, and the case leaves the open pipeline.'
-                : `The case moves from ${PROPOSAL_STAGE_LABELS[record.stage]} to ${PROPOSAL_STAGE_LABELS[stage]}. This is recorded with your name.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2">
-            <Label htmlFor={reasonId}>{closing ? 'Reason' : 'Note (optional)'}</Label>
-            <Textarea
-              id={reasonId}
-              value={reason}
-              maxLength={300}
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </div>
-          {move.isError ? (
-            <Alert variant="destructive" role="alert">
-              <AlertDescription>{errorMessage(move.error)}</AlertDescription>
-            </Alert>
-          ) : null}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(null)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant={closing ? 'destructive' : 'default'}
-              disabled={move.isPending || (closing && !reason.trim())}
-              onClick={() => move.mutate({ stage, reason })}
-            >
-              {move.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : null}
-              {closing ? 'Close case' : 'Move'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {/* The last stages follow the work recorded on their tabs. */}
-      {record.nextStage && NEXT_STEP[record.nextStage] ? (
-        <p className="text-sm text-muted-foreground">{NEXT_STEP[record.nextStage]}</p>
-      ) : record.nextStage ? (
-        dialog(record.nextStage)
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Close this case?</DialogTitle>
+              <DialogDescription>
+                For a case that is lost or will not be renewed. The Data Sheet locks, and the case
+                leaves the open pipeline.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-2">
+              <Label htmlFor={reasonId}>Reason</Label>
+              <Textarea
+                id={reasonId}
+                value={reason}
+                maxLength={300}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </div>
+            {close.isError ? (
+              <Alert variant="destructive" role="alert">
+                <AlertDescription>{errorMessage(close.error)}</AlertDescription>
+              </Alert>
+            ) : null}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={close.isPending || !reason.trim()}
+                onClick={() => close.mutate()}
+              >
+                {close.isPending ? (
+                  <LoaderCircle className="animate-spin" aria-hidden="true" />
+                ) : null}
+                Close case
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       ) : null}
-      {closable ? dialog('CLOSED') : null}
     </div>
   );
 }

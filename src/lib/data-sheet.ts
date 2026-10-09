@@ -1,7 +1,7 @@
 import {
   BURGLARY_BASIS_PERCENT,
   SECTION_LINES,
-  SUM_INSURED_LINE,
+  SUM_INSURED_LINES,
   hasBasis,
   hasExistingFigures,
   isAnnexureSection,
@@ -306,8 +306,25 @@ export function annexureTotal(rows: readonly { sumInsured: string | null }[]): R
 }
 
 /**
- * A section's sum insured as it will be saved (D-5): an annexure's total when it has rows, FLOP's
- * annual gross profit when entered, else Proposed 1 as typed. The API applies the same rule.
+ * The total of the lines a section's sum insured is made of (SUM_INSURED_LINES: FLOP's gross
+ * profit, Money's safe and single carrying, Fidelity's and PL's limits); null when none is entered.
+ */
+export function sumOfLines(
+  code: OtherSection,
+  lines: Partial<Record<string, string | null>> | undefined,
+): string | null {
+  const values = (SUM_INSURED_LINES[code] ?? [])
+    .map((key) => text(lines?.[key]))
+    .filter((value) => value !== '');
+  if (values.length === 0) return null;
+  // A line still being typed (not yet whole rupees) is shown as typed, as a single line always was.
+  if (values.length === 1) return values[0] ?? null;
+  return add(values.map((value) => (WHOLE_RUPEES.test(value) ? value : '0')));
+}
+
+/**
+ * A section's sum insured as it will be saved (D-5): an annexure's total when it has rows, the
+ * total of its sum insured lines when entered, else Proposed 1 as typed. The API does the same.
  */
 export function sectionSumInsured(section: {
   code: OtherSection;
@@ -318,9 +335,18 @@ export function sectionSumInsured(section: {
   if (isAnnexureSection(section.code) && (section.annexure?.length ?? 0) > 0) {
     return annexureTotal(section.annexure ?? []);
   }
-  const line = SUM_INSURED_LINE[section.code];
-  const fromLine = line ? text(section.lines?.[line]) : '';
-  return fromLine || section.proposed1;
+  return sumOfLines(section.code, section.lines) ?? section.proposed1;
+}
+
+/** Option 2 as it will be saved: with several sum insured lines (Money), their Option 2 total. */
+export function sectionOption2(section: {
+  code: OtherSection;
+  proposed2: string | null;
+  lines2?: Partial<Record<string, string | null>>;
+}): string | null {
+  return (SUM_INSURED_LINES[section.code]?.length ?? 0) > 1
+    ? (sumOfLines(section.code, section.lines2) ?? section.proposed2)
+    : section.proposed2;
 }
 
 /**
@@ -346,7 +372,7 @@ export function toDataSheetRequest(values: DataSheetInput): DataSheetInput {
       return {
         ...section,
         proposed1: fromContents ? contents.proposed1 : sectionSumInsured(section),
-        proposed2: fromContents ? contents.proposed2 : section.proposed2,
+        proposed2: fromContents ? contents.proposed2 : sectionOption2(section),
         basis: hasBasis(section.code) ? section.basis : null,
         annexure: isAnnexureSection(section.code) ? section.annexure : [],
       };

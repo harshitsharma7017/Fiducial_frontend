@@ -12,12 +12,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { usePermission } from '@/hooks/use-permission';
 import { useProposals } from '@/lib/api/proposals';
 import { formatInrCompact } from '@/lib/money';
 import type { SortBy } from '@/lib/proposal-metrics';
 import { formatDate } from '@/shared';
 import { PRODUCT_NAMES, type ProposalType, type Stage } from '@/types/proposal';
 import { ExpiryChip, StageBadge, TypeBadge } from '../badges';
+import { DeleteCaseButton } from '../delete-case';
 import { SortableHead, type SortState } from './header-cell';
 import { InsurersCell } from './insurers-cell';
 import { TablePagination } from './pagination';
@@ -40,6 +42,7 @@ export function ProposalsTable({
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState>({ by: 'date', dir: 'asc' });
   const debouncedQuery = useDebouncedValue(query, 250);
+  const canDelete = usePermission('proposals.delete');
 
   // The query the data layer should run. The debounced value changing resets the page below via
   // the key, so paging and filtering stay in step without a page-resetting effect.
@@ -97,7 +100,7 @@ export function ProposalsTable({
               <SortableHead column="reference" label="Reference" sort={sort} onSort={toggleSort} />
               <SortableHead column="client" label="Client" sort={sort} onSort={toggleSort} />
               <TableHead scope="col">Type</TableHead>
-              <SortableHead column="product" label="Product" sort={sort} onSort={toggleSort} />
+              <SortableHead column="product" label="Policy" sort={sort} onSort={toggleSort} />
               <SortableHead
                 column="fireSumInsured"
                 label="Fire SI (Proposed 1)"
@@ -126,11 +129,16 @@ export function ProposalsTable({
                 onSort={toggleSort}
               />
               <SortableHead column="owner" label="Owner" sort={sort} onSort={toggleSort} />
+              {canDelete ? (
+                <TableHead scope="col">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              ) : null}
             </TableRow>
           </TableHeader>
           <TableBody>
             {proposals.isPending ? (
-              <TableLoadingRows columns={10} rows={PAGE_SIZE} />
+              <TableLoadingRows columns={canDelete ? 11 : 10} rows={PAGE_SIZE} />
             ) : (
               items.map((item) => (
                 <TableRow
@@ -195,6 +203,15 @@ export function ProposalsTable({
                     ) : null}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{item.owner}</TableCell>
+                  {canDelete ? (
+                    <TableCell className="w-10 text-right">
+                      <DeleteCaseButton
+                        id={item.id}
+                        reference={item.reference}
+                        clientName={item.client.name}
+                      />
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))
             )}
