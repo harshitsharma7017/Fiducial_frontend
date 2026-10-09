@@ -123,8 +123,8 @@ export function MasterImportResultView({
             <AlertTitle>This version is active</AlertTitle>
             <AlertDescription>
               <p>
-                Occupancy and pincode lookups, client and location forms and the Fire rate check now
-                use it. The previous version is kept as superseded.
+                Occupancy and pincode lookups and client and location forms now use it. The previous
+                version is kept as superseded.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button asChild size="sm">
@@ -138,8 +138,8 @@ export function MasterImportResultView({
           </Alert>
         ) : drafts.length > 0 ? (
           <p className="text-sm text-muted-foreground">
-            Saved as a draft. Nothing changes until you activate it: then lookups, client and
-            location forms and the Fire rate check switch to this version.
+            Saved as a draft. Nothing changes until you activate it: then lookups and client and
+            location forms switch to this version.
           </p>
         ) : null}
 

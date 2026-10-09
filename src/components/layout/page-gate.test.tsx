@@ -25,12 +25,12 @@ describe('PageGate', () => {
   });
 
   it('shows a page to roles that hold its permission', () => {
-    renderGate('/rating/fire', ['PLACEMENT_EXEC']);
+    renderGate('/masters/import', ['ACCOUNT_MANAGER']);
     expect(pageShown()).toBeInTheDocument();
   });
 
   it('shows "You do not have access" instead of the page to other roles', () => {
-    renderGate('/rating/fire', ['READ_ONLY']);
+    renderGate('/masters/import', ['READ_ONLY']);
     expect(pageShown()).not.toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('You do not have access');
   });

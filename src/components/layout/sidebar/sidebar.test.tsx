@@ -53,14 +53,14 @@ describe('SidebarNav', () => {
     );
   });
 
-  it('hides the Fire rate check from Read-only users only', () => {
+  it('hides Import data from those who do not manage clients', () => {
     expect(
-      within(renderNav(['READ_ONLY'])).queryByRole('link', { name: 'Fire rate check' }),
+      within(renderNav(['READ_ONLY'])).queryByRole('link', { name: 'Import data' }),
     ).not.toBeInTheDocument();
     cleanup();
     expect(
-      within(renderNav(['PLACEMENT_EXEC'])).getByRole('link', { name: 'Fire rate check' }),
-    ).toHaveAttribute('href', '/rating/fire');
+      within(renderNav(['ACCOUNT_MANAGER'])).getByRole('link', { name: 'Import data' }),
+    ).toHaveAttribute('href', '/masters/import');
   });
 
   it('links every item: nothing is left as planned', () => {
@@ -105,7 +105,7 @@ describe('SidebarNav', () => {
   it('shows only what every role may see while the user loads', () => {
     const nav = renderNav(undefined);
     expect(within(nav).queryByRole('heading', { name: 'Admin' })).not.toBeInTheDocument();
-    expect(within(nav).queryByRole('link', { name: 'Fire rate check' })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'Import data' })).not.toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
   });
 

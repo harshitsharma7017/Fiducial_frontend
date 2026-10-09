@@ -198,8 +198,8 @@ export function OccupancyFormSheet({
             {occupancy ? `Edit occupancy ${occupancy.tacCode}` : 'Add occupancy'}
           </SheetTitle>
           <SheetDescription>
-            Changes apply at once to the active master: lookups, client forms and the Fire rate
-            check. Each change is recorded in the audit log with the old and new values.
+            Changes apply at once to the active master: lookups and client forms. Each change is
+            recorded in the audit log with the old and new values.
           </SheetDescription>
         </SheetHeader>
         <OccupancyForm

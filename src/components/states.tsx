@@ -116,7 +116,7 @@ export function MasterNotActiveState() {
           <div className="grid justify-items-center gap-3">
             <span>
               Upload the IIB workbook (occupancy codes and pincodes) and activate it. Lookups,
-              client forms and the Fire rate check use the active version.
+              client and location forms use the active version.
             </span>
             <Button asChild size="sm">
               <Link href="/masters/import?type=masters">Upload the IIB master</Link>

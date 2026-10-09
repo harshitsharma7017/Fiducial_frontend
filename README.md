@@ -5,7 +5,7 @@ Fiducial Insurance Brokers. It will replace the Excel chain of Data Sheet → RF
 Slip.
 
 This repository holds the **foundation** screens: sign-in, a proposals dashboard with the detail drawer and full
-page, occupancy and pincode masters, the Fire rate check, user admin and the audit log. Each role sees only the
+page, occupancy and pincode masters, user admin and the audit log. Each role sees only the
 screens and actions it is allowed ([Roles and permissions](#roles-and-permissions)). Light and dark themes follow the
 system setting and can be switched by hand. The API lives in the separate **Fiducial_backend** repository. The browser
 never calls it directly: this app's own server routes (a backend-for-frontend) hold the session and forward each
@@ -50,7 +50,7 @@ accepts five built-in demo users, one per role, and never calls the API; a "Demo
 | `demo.placement@example.com` | Underwriting / Placement | `PLACEMENT_EXEC`  |
 | `demo.readonly@example.com`  | Read-only                | `READ_ONLY`       |
 
-In demo mode the pages that read live data (Occupancy, Pincodes, Fire rate check, Users, Audit log and Settings) show
+In demo mode the pages that read live data (Occupancy, Pincodes, Users, Audit log and Settings) show
 a short "Not available in demo mode" notice instead of calling the API, as do Email templates, creating a proposal
 and a real proposal's page (so no RFQ is emailed, reminded or logged in demo mode).
 The sample cases show the insurer statuses, including Reminded and Overdue. The dashboard and proposal lists work fully on sample data, new business included. Turn demo mode off (`USE_MOCK_API=false` or unset) and the app signs in against
@@ -69,7 +69,6 @@ The web app reads the same table:
 | Import data: clients and risk locations                         | yes   |          | yes                  |                          |           |
 | Import data: insurers                                           | yes   |          |                      |                          |           |
 | Add, edit and deactivate insurers                               | yes   |          |                      |                          |           |
-| Fire rate check                                                 | yes   | yes      | yes                  | yes                      |           |
 | Document downloads (coming soon)                                | yes   | yes      | yes                  | yes                      |           |
 | New proposal and Start renewal                                  | yes   |          | yes                  |                          |           |
 | Users, Audit log, Settings                                      | yes   |          |                      |                          |           |
@@ -268,7 +267,7 @@ that every text and focus pair meets its contrast minimum in both themes.
   `__Host-erp_session` in production), SameSite=Lax, that expires with the token. The browser receives only the user.
 - `POST /api/auth/logout` tells the API (for the audit log) and clears the cookie, even if the API is unreachable.
 - `/api/proxy/<path>` forwards to `/api/v1/<path>` with the token as a bearer header. Only `users`, `masters`,
-  `rating`, `audit`, `health` and `auth/me` are allowed (`src/lib/server/proxy-paths.ts`). No cookie gives 401, a
+  `audit`, `health` and `auth/me` are allowed (`src/lib/server/proxy-paths.ts`). No cookie gives 401, a
   path outside the list gives 404, a cross-origin write gives 403, and a 401 from the API clears the cookie. The API
   then checks the user's permission for the route.
 - `src/proxy.ts` (Next.js 16's replacement for middleware) sends signed-out visitors to `/login`.
@@ -293,7 +292,7 @@ becomes private, give that job's backend checkout a read-only token.
 
 ```
 src/
-  app/                  (auth)/ sign-in pages, (app)/ signed-in pages (dashboard, proposals, masters, rating,
+  app/                  (auth)/ sign-in pages, (app)/ signed-in pages (dashboard, proposals, masters,
                         users, audit, settings, profile), api/ (BFF route handlers)
   components/           layout/ (shell, navigation and page permissions), proposals/, audit/ and other feature
                         components; ui/ holds the shadcn-style primitives on Radix

@@ -42,7 +42,7 @@ function MasterVersionSummary({ version }: { version: MasterVersion }) {
   );
 }
 
-/** The active master versions every lookup and rating uses. */
+/** The active master versions every lookup uses. */
 export function MasterDataCard() {
   const versions = useQuery({
     queryKey: queryKeys.activeVersions,
@@ -60,7 +60,7 @@ export function MasterDataCard() {
           <Database className="size-4 text-accent" aria-hidden="true" />
           Master data
         </CardTitle>
-        <CardDescription>The versions every lookup and rating uses</CardDescription>
+        <CardDescription>The versions every lookup uses</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
         {versions.isPending ? (

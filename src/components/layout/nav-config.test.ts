@@ -27,7 +27,7 @@ const MASTERS = [
   'Email templates',
   'Clauses',
 ];
-const WORKING_ROLE = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS];
+const WORKING_ROLE = [...PROPOSALS_AND_MASTERS, ...MASTERS];
 const VIEW_ONLY = [...PROPOSALS_AND_MASTERS, ...MASTERS];
 // Import data needs clients.manage: Admins and Relationship Managers.
 const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
@@ -35,7 +35,7 @@ const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
   0,
   'Import data',
 );
-const CLIENT_OWNER = [...PROPOSALS_AND_MASTERS, 'Fire rate check', ...MASTERS_WITH_IMPORT];
+const CLIENT_OWNER = [...PROPOSALS_AND_MASTERS, ...MASTERS_WITH_IMPORT];
 
 describe('visibleGroups', () => {
   it.each<[Role, string[]]>([
@@ -80,7 +80,6 @@ describe('pagePermission', () => {
     ['/masters/products', 'masters.view'],
     ['/masters/addons', 'masters.view'],
     ['/masters/tax-rates', 'masters.view'],
-    ['/rating/fire', 'rating.use'],
     ['/users', 'users.manage'],
     ['/audit', 'audit.view'],
     ['/settings', 'settings.view'],
@@ -106,7 +105,7 @@ describe('isOpenToEveryRole', () => {
   it('is true only when every role holds the permission', () => {
     expect(isOpenToEveryRole('proposals.view')).toBe(true);
     expect(isOpenToEveryRole('masters.view')).toBe(true);
-    expect(isOpenToEveryRole('rating.use')).toBe(false);
-    expect(can(['READ_ONLY'], 'rating.use')).toBe(false);
+    expect(isOpenToEveryRole('clients.manage')).toBe(false);
+    expect(can(['READ_ONLY'], 'clients.manage')).toBe(false);
   });
 });

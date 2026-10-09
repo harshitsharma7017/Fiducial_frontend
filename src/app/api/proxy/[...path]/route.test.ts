@@ -73,13 +73,13 @@ describe('/api/proxy/[...path]', () => {
 
   it('rejects state-changing requests from another origin', async () => {
     const response = await POST(
-      request('http://localhost:3000/api/proxy/rating/fire', {
+      request('http://localhost:3000/api/proxy/proposals', {
         method: 'POST',
         cookie: 'erp_session=token-123',
         origin: 'https://evil.example',
         body: '{}',
       }),
-      context(['rating', 'fire']),
+      context(['proposals']),
     );
     expect(response.status).toBe(403);
   });

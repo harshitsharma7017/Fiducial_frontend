@@ -41,7 +41,7 @@ export const RECORD_TYPES: Record<RecordType, RecordTypeInfo> = {
   masters: {
     label: 'IIB master (occupancies and pincodes)',
     description:
-      'The occupancy codes with their rates, and the pincodes with their earthquake zones and rates. The Fire rate check, client occupancies and risk locations read the active version.',
+      'The occupancy codes with their rates, and the pincodes with their earthquake zones and rates. Client occupancies and risk locations read the active version.',
     permission: 'masters.manage',
     templateLabel: 'IIB master template',
     templateUrl: '/api/proxy/masters/workbook?template=true',

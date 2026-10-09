@@ -5,7 +5,6 @@ import {
   FileSpreadsheet,
   FileText,
   FileUp,
-  Flame,
   History,
   Landmark,
   LayoutDashboard,
@@ -74,7 +73,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         icon: FileCheck2,
         permission: 'proposals.view',
       },
-      { label: 'Fire rate check', href: '/rating/fire', icon: Flame, permission: 'rating.use' },
     ],
   },
   {

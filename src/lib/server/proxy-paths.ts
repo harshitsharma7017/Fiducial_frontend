@@ -15,7 +15,6 @@ const ALLOWED_AREAS = new Set([
   // The lists across cases for the Quotes and QCR and Placement Slips pages.
   'qcrs',
   'placement-slips',
-  'rating',
   'health',
   'audit',
 ]);
