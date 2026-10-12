@@ -4,9 +4,11 @@
  */
 
 const isProduction = process.env.NODE_ENV === 'production';
+const isSecure =
+  process.env.COOKIE_SECURE !== undefined ? process.env.COOKIE_SECURE === 'true' : isProduction;
 
-/** In production the __Host- prefix pins the cookie to this host, over HTTPS, at path /. */
-export const SESSION_COOKIE = isProduction ? '__Host-erp_session' : 'erp_session';
+/** In production (over HTTPS) the __Host- prefix pins the cookie to this host, at path /. */
+export const SESSION_COOKIE = isSecure ? '__Host-erp_session' : 'erp_session';
 
 export interface SessionCookieOptions {
   httpOnly: true;
@@ -21,7 +23,7 @@ export function sessionCookieOptions(maxAgeSeconds: number): SessionCookieOption
   return {
     httpOnly: true,
     sameSite: 'lax',
-    secure: isProduction,
+    secure: isSecure,
     path: '/',
     maxAge: maxAgeSeconds,
   };
