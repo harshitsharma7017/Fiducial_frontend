@@ -8,6 +8,7 @@ const labels = (roles: readonly Role[] | undefined) =>
 const PROPOSALS_AND_MASTERS = [
   'Dashboard',
   'Proposals',
+  'Group Health',
   'RFQ',
   'Quotes and QCR',
   'Placement Slips',
@@ -71,6 +72,9 @@ describe('pagePermission', () => {
     ['/proposals', 'proposals.view'],
     ['/proposals/prp-0101', 'proposals.view'],
     ['/proposals/new', 'proposals.create'],
+    ['/ghi', 'proposals.view'],
+    ['/ghi/0123456789abcdef01234567', 'proposals.view'],
+    ['/ghi/new', 'proposals.create'],
     ['/rfq', 'proposals.view'],
     ['/masters/occupancy', 'masters.view'],
     ['/masters/clients', 'clients.view'],

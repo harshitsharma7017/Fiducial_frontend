@@ -100,7 +100,12 @@ recording answers, Overdue, the mail log on the Activity tab, the dashboard's Aw
 figures, the RFQ page's `?filter=overdue`, and the Settings mail card (`components/proposals/rfq/`,
 `components/email-templates/`).
 
-Not built yet: quotes, QCR and placement slip screens.
+Built (GHI, G1 to G7): Group Health in the navigation (`/ghi`, `/ghi/new`, `/ghi/{id}`; `components/ghi/`): the
+case with its stages, the Data Sheet, the census (import with row errors and corrections, members, summary), RFQ
+versions and mails, quotes, QCR with approval and the client's decision, final QCR, payments, placement slip and
+policy. New proposal offers Property or Group Health.
+
+Not built yet: GHI endorsements.
 
 ## Rules
 

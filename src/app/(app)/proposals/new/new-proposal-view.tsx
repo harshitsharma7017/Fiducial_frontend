@@ -1,6 +1,7 @@
 'use client';
 
 import { DemoModeGate } from '@/components/demo-mode-gate';
+import { LineOfBusinessSwitch } from '@/components/ghi/line-of-business';
 import { PageHeader } from '@/components/page-header';
 import { NewProposalForm } from '@/components/proposals/new-business/new-proposal-form';
 import { AccessDeniedState } from '@/components/states';
@@ -27,6 +28,8 @@ export function NewProposalView({ serverSearch }: { serverSearch: string }) {
             : 'New business: choose the insured and its risk locations, the policy period and who works on it. Then fill the Data Sheet and send the RFQ.'
         }
       />
+      {/* Group Health has its own form; renewals start from Property's Start renewal. */}
+      {renewal ? null : <LineOfBusinessSwitch current="PROPERTY" />}
       <DemoModeGate>
         {canCreate ? (
           <NewProposalForm

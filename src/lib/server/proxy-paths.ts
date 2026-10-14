@@ -15,6 +15,8 @@ const ALLOWED_AREAS = new Set([
   // The lists across cases for the Quotes and QCR and Placement Slips pages.
   'qcrs',
   'placement-slips',
+  // Group health (GHI) cases and their census, RFQ, quotes, QCR, payments and placement.
+  'ghi',
   'health',
   'audit',
 ]);

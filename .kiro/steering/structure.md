@@ -7,7 +7,7 @@ src/
     (auth)/                     login and forgot-password with a shared two-column layout
     (app)/                      signed-in pages inside the app shell: dashboard, proposals (list, new, [id]), rfq,
                                 masters/occupancy, masters/pincodes, masters/clients (list, [id]),
-                                masters/insurers, masters/import, masters/templates, rating/fire, users, audit,
+                                masters/insurers, masters/import, masters/templates, rating/fire, users, audit, ghi,
                                 settings, profile
     api/auth/login, logout      BFF: sets and clears the httpOnly session cookie
     api/proxy/[...path]         BFF: forwards allowlisted calls to the API with the bearer token
@@ -21,6 +21,8 @@ src/
                                 (create form and the workspace: Data Sheet, activity), rfq/ (the Insurers and RFQ
                                 tab: insurers card and rows, choose insurers, download, Email the RFQ with
                                 previews and results, Sent outside the app, reminder and answer dialogs, mail log)
+    ghi/                        group health: workspace and tabs (Data Sheet, census and import, RFQ, quotes, QCR,
+                                final QCR, payments, placement), line-of-business switch, new case form
     audit/                      audit log toolbar and entry row
     clients/                    client form sheet, address fieldset, details card, locations card and dialog
     insurers/                   insurer form sheet, RFQ emails field, activate / deactivate dialog

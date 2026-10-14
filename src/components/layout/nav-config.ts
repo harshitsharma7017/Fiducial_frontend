@@ -5,6 +5,7 @@ import {
   FileSpreadsheet,
   FileText,
   FileUp,
+  HeartPulse,
   History,
   Landmark,
   LayoutDashboard,
@@ -60,6 +61,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       },
       // One entry for every proposal; the page switches between new and existing (renewals).
       { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'proposals.view' },
+      // Group health insurance: its own cases, beside Property's proposals.
+      { label: 'Group Health', href: '/ghi', icon: HeartPulse, permission: 'proposals.view' },
     ],
   },
   {
@@ -181,6 +184,7 @@ function pathOf(href: string): string {
 /** Pages outside the navigation, with the permission each needs. */
 const OTHER_PAGES: readonly { path: string; permission: Permission }[] = [
   { path: '/proposals/new', permission: 'proposals.create' },
+  { path: '/ghi/new', permission: 'proposals.create' },
 ];
 
 const PAGE_PERMISSIONS: readonly { path: string; permission: Permission }[] = [
