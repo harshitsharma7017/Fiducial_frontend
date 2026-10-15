@@ -105,7 +105,11 @@ case with its stages, the Data Sheet, the census (import with row errors and cor
 versions and mails, quotes, QCR with approval and the client's decision, final QCR, payments, placement slip and
 policy. New proposal offers Property or Group Health.
 
-Not built yet: GHI endorsements.
+Built (claims, C1 to C4): Claims in the navigation (`/claims` board and table, `/claims/new`, `/claims/{id}`,
+`/claims/links`, `/claims/settings`; `components/claims/`) and the employee's public page `/claim#t=<token>` (BFF
+`/api/public/claim-link`). Drag-and-drop is native HTML5 with a keyboard "Move to" button on each card.
+
+Not built yet: GHI endorsements; further claim statuses.
 
 ## Rules
 

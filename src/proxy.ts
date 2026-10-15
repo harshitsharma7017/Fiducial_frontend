@@ -7,7 +7,8 @@ import { SESSION_COOKIE } from '@/lib/session';
  * on every call, and an expired or revoked token clears the cookie (see api/proxy).
  */
 /** Pages a signed-out visitor may open. */
-const PUBLIC_PATHS = new Set(['/login', '/forgot-password']);
+// /claim is the employee's claim submission page: its link token is the credential (C2).
+const PUBLIC_PATHS = new Set(['/login', '/forgot-password', '/claim']);
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;

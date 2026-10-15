@@ -6,6 +6,7 @@ import {
   FileText,
   FileUp,
   HeartPulse,
+  Stethoscope,
   History,
   Landmark,
   LayoutDashboard,
@@ -63,6 +64,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'proposals.view' },
       // Group health insurance: its own cases, beside Property's proposals.
       { label: 'Group Health', href: '/ghi', icon: HeartPulse, permission: 'proposals.view' },
+      // Group health claims; hidden from Read-only users (medical information).
+      { label: 'Claims', href: '/claims', icon: Stethoscope, permission: 'claims.view' },
     ],
   },
   {
@@ -185,6 +188,9 @@ function pathOf(href: string): string {
 const OTHER_PAGES: readonly { path: string; permission: Permission }[] = [
   { path: '/proposals/new', permission: 'proposals.create' },
   { path: '/ghi/new', permission: 'proposals.create' },
+  { path: '/claims/new', permission: 'claims.process' },
+  { path: '/claims/links', permission: 'claims.process' },
+  { path: '/claims/settings', permission: 'claims.admin' },
 ];
 
 const PAGE_PERMISSIONS: readonly { path: string; permission: Permission }[] = [

@@ -15,6 +15,9 @@ describe('proxy (route protection)', () => {
   it('lets signed-out visitors reach the public pages', () => {
     expect(visit('/login').headers.get('location')).toBeNull();
     expect(visit('/forgot-password').headers.get('location')).toBeNull();
+    // The employee claim link: no sign-in, the token in the URL fragment is its credential.
+    expect(visit('/claim').headers.get('location')).toBeNull();
+    expect(visit('/claims').headers.get('location')).not.toBeNull();
   });
 
   it('sends signed-out visitors to sign-in with the requested path in next', () => {

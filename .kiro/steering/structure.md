@@ -21,6 +21,8 @@ src/
                                 (create form and the workspace: Data Sheet, activity), rfq/ (the Insurers and RFQ
                                 tab: insurers card and rows, choose insurers, download, Email the RFQ with
                                 previews and results, Sent outside the app, reminder and answer dialogs, mail log)
+    claims/                     claims board (native drag-and-drop), table, detail sections, remark dialog,
+                                new claim form, submission links, template editor and HR contacts, public page
     ghi/                        group health: workspace and tabs (Data Sheet, census and import, RFQ, quotes, QCR,
                                 final QCR, payments, placement), line-of-business switch, new case form
     audit/                      audit log toolbar and entry row

@@ -28,7 +28,13 @@ const MASTERS = [
   'Email templates',
   'Clauses',
 ];
-const WORKING_ROLE = [...PROPOSALS_AND_MASTERS, ...MASTERS];
+// Claims follow Group Health for every role but Read-only (claims hold medical information).
+const WITH_CLAIMS = PROPOSALS_AND_MASTERS.toSpliced(
+  PROPOSALS_AND_MASTERS.indexOf('Group Health') + 1,
+  0,
+  'Claims',
+);
+const WORKING_ROLE = [...WITH_CLAIMS, ...MASTERS];
 const VIEW_ONLY = [...PROPOSALS_AND_MASTERS, ...MASTERS];
 // Import data needs clients.manage: Admins and Relationship Managers.
 const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
@@ -36,7 +42,7 @@ const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
   0,
   'Import data',
 );
-const CLIENT_OWNER = [...PROPOSALS_AND_MASTERS, ...MASTERS_WITH_IMPORT];
+const CLIENT_OWNER = [...WITH_CLAIMS, ...MASTERS_WITH_IMPORT];
 
 describe('visibleGroups', () => {
   it.each<[Role, string[]]>([
@@ -75,6 +81,11 @@ describe('pagePermission', () => {
     ['/ghi', 'proposals.view'],
     ['/ghi/0123456789abcdef01234567', 'proposals.view'],
     ['/ghi/new', 'proposals.create'],
+    ['/claims', 'claims.view'],
+    ['/claims/0123456789abcdef01234567', 'claims.view'],
+    ['/claims/new', 'claims.process'],
+    ['/claims/links', 'claims.process'],
+    ['/claims/settings', 'claims.admin'],
     ['/rfq', 'proposals.view'],
     ['/masters/occupancy', 'masters.view'],
     ['/masters/clients', 'clients.view'],

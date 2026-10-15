@@ -17,6 +17,8 @@ const ALLOWED_AREAS = new Set([
   'placement-slips',
   // Group health (GHI) cases and their census, RFQ, quotes, QCR, payments and placement.
   'ghi',
+  // Group health claims (staff). The employee's link uses /api/public/claim-link instead.
+  'claims',
   'health',
   'audit',
 ]);
