@@ -11,7 +11,7 @@ import {
   json,
   urlOf,
 } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
-import type { ProposalQuotes, QuoteVersion } from '@/shared';
+import type { OcrField, ProposalQuotes, QuoteExtraction, QuoteVersion } from '@/shared';
 import { QuotesPanel } from './quotes-panel';
 
 const ATTACHMENT = {
@@ -207,5 +207,159 @@ describe('QuotesPanel', { timeout: 20_000 }, () => {
     expect(within(sheet).getByLabelText('Money premium')).toHaveValue('2,500');
     await user.click(within(sheet).getByRole('button', { name: 'Save version 3' }));
     expect(await within(sheet).findByText('Say why the quote was revised')).toBeInTheDocument();
+  });
+
+  it('Q1: fills the form from a PDF, shows where each value came from, and needs it checked before saving', async () => {
+    const found = (raw: string, value: string, state: OcrField['state'] = 'HIGH'): OcrField => ({
+      raw,
+      value,
+      state,
+    });
+    const none: OcrField = { raw: null, value: null, state: 'MISSING' };
+    const extraction: QuoteExtraction = {
+      source: 'PDF_TEXT',
+      attachmentId: ATTACHMENT.id,
+      insurerName: none,
+      insuredName: none,
+      quoteReference: none,
+      option: { value: null, state: 'MISSING' },
+      sections: [
+        {
+          code: 'FIRE',
+          premium: found('Fire and Special Perils 6,00,00,000 1,00,000.50', '100000.50', 'LOW'),
+          premiumWithoutTerrorism: found('Fire (without terrorism) 90,000.00', '90000.00'),
+        },
+      ],
+      netPremium: found('Net Premium 1,02,500.50', '102500.50'),
+      gstRatePercent: found('GST @ 18%', '18'),
+      gstAmount: none,
+      totalPremium: found('Total Premium 1,20,950.59', '120950.59'),
+      validUntil: found('valid till 31/12/2026', '2026-12-31'),
+      discrepancies: ['Net (₹102500.50) + GST (₹0) does not match the stated total (₹120950.59).'],
+      manualEntryRequired: false,
+    };
+    let sent: Record<string, unknown> | undefined;
+    fetchMock.mockImplementation((input, init) => {
+      const url = urlOf(input);
+      if (url.endsWith(`/quote-attachments/${ATTACHMENT.id}/read`)) {
+        return Promise.resolve(json(extraction));
+      }
+      if (url.includes('/quote-attachments')) return Promise.resolve(json(ATTACHMENT, 201));
+      if (init?.method === 'POST' && url.endsWith(`/insurers/${INSURER_A}/quotes`)) {
+        sent = JSON.parse(init.body as string) as Record<string, unknown>;
+        return Promise.resolve(json(quotes([version()]), 201));
+      }
+      if (url.endsWith(`/proposals/${CASE_ID}/quotes`)) return Promise.resolve(json(quotes()));
+      return Promise.resolve(json({ code: 'NOT_FOUND', message: 'Not found' }, 404));
+    });
+    const user = renderPanel();
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Enter quote for Kavach General, Pune, Proposed – Option 1',
+      }),
+    );
+    const sheet = await screen.findByRole('dialog');
+    await user.upload(
+      within(sheet).getByLabelText('Insurer’s mail or PDF'),
+      new File(['%PDF-1.4'], 'Kavach quote.pdf', { type: 'application/pdf' }),
+    );
+    await user.click(
+      await within(sheet).findByRole('button', { name: 'Fill the form from this PDF' }),
+    );
+    // Filled where the PDF gave a value, with its source line and how sure the reader was.
+    expect(await within(sheet).findByText(/Filled from Kavach quote.pdf/)).toBeInTheDocument();
+    expect(
+      within(sheet).getByText(/from “Fire and Special Perils 6,00,00,000 1,00,000.50”/),
+    ).toBeInTheDocument();
+    expect(within(sheet).getByText('Low confidence — please check')).toBeInTheDocument();
+    expect(within(sheet).getByLabelText(/^Fire premium with terrorism$/i)).toHaveValue(
+      '1,00,000.50',
+    );
+    expect(within(sheet).getByLabelText(/^Fire premium without terrorism$/i)).toHaveValue(
+      '90,000.00',
+    );
+    // Money was not in the PDF: left for the person.
+    expect(
+      within(sheet).getByText(/Not found in the PDF, enter by hand: Money/),
+    ).toBeInTheDocument();
+    expect(within(sheet).getByLabelText('Money premium')).toHaveValue('');
+    expect(within(sheet).getByText(/does not match the stated total/)).toBeInTheDocument();
+
+    // Not saved until the values are checked.
+    await user.click(within(sheet).getByRole('button', { name: 'Save quote' }));
+    expect(await within(sheet).findByText(/Tick this once you have checked/)).toBeInTheDocument();
+    expect(sent).toBeUndefined();
+    await user.click(
+      within(sheet).getByRole('checkbox', {
+        name: /I have checked the values filled from the PDF/,
+      }),
+    );
+    await user.click(within(sheet).getByRole('button', { name: 'Save quote' }));
+    await waitFor(() =>
+      expect(sent).toMatchObject({
+        attachmentIds: [ATTACHMENT.id],
+        validUntil: '2026-12-31',
+        sections: expect.arrayContaining([
+          expect.objectContaining({
+            code: 'FIRE',
+            premium: '100000.50',
+            premiumWithoutTerrorism: '90000.00',
+          }),
+        ]),
+      }),
+    );
+  });
+
+  it('Q1: says when nothing can be read and does not hold the save back', async () => {
+    fetchMock.mockImplementation((input) => {
+      const url = urlOf(input);
+      if (url.endsWith(`/quote-attachments/${ATTACHMENT.id}/read`)) {
+        const none = { raw: null, value: null, state: 'MISSING' };
+        return Promise.resolve(
+          json({
+            source: 'NONE',
+            attachmentId: ATTACHMENT.id,
+            insurerName: none,
+            insuredName: none,
+            quoteReference: none,
+            option: { value: null, state: 'MISSING' },
+            sections: [],
+            netPremium: none,
+            gstRatePercent: none,
+            gstAmount: none,
+            totalPremium: none,
+            validUntil: none,
+            discrepancies: [
+              'This PDF has no text to read (it looks scanned). Enter the figures by hand.',
+            ],
+            manualEntryRequired: true,
+          }),
+        );
+      }
+      if (url.includes('/quote-attachments')) return Promise.resolve(json(ATTACHMENT, 201));
+      if (url.endsWith(`/proposals/${CASE_ID}/quotes`)) return Promise.resolve(json(quotes()));
+      return Promise.resolve(json({ code: 'NOT_FOUND', message: 'Not found' }, 404));
+    });
+    const user = renderPanel();
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Enter quote for Kavach General, Pune, Proposed – Option 1',
+      }),
+    );
+    const sheet = await screen.findByRole('dialog');
+    await user.upload(
+      within(sheet).getByLabelText('Insurer’s mail or PDF'),
+      new File(['%PDF-1.4'], 'Kavach quote.pdf', { type: 'application/pdf' }),
+    );
+    await user.click(
+      await within(sheet).findByRole('button', { name: 'Fill the form from this PDF' }),
+    );
+    expect(
+      await within(sheet).findByText('Nothing could be read from Kavach quote.pdf'),
+    ).toBeInTheDocument();
+    expect(within(sheet).getByText(/looks scanned/)).toBeInTheDocument();
+    expect(
+      within(sheet).queryByRole('checkbox', { name: /I have checked/ }),
+    ).not.toBeInTheDocument();
   });
 });

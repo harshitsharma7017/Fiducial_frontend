@@ -2,8 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CircleAlert, LoaderCircle, Paperclip, Upload } from 'lucide-react';
-import { useId, useRef } from 'react';
+import { CircleAlert, FileText, LoaderCircle, Paperclip, Upload } from 'lucide-react';
+import { useId, useRef, useState } from 'react';
 import { useForm, useWatch, type Control } from 'react-hook-form';
 import { SumInsuredInput } from '@/components/rating/sum-insured-input';
 import { errorMessage } from '@/components/states';
@@ -37,6 +37,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { FillReview, applyExtraction, type FillSummary } from './quote-autofill';
 import { toast } from '@/hooks/use-toast';
 import { ApiError, apiFetch } from '@/lib/api-client';
 import { formatInr } from '@/lib/money';
@@ -46,6 +47,7 @@ import {
   QUOTE_ATTACHMENT_TYPES,
   QUOTE_OPTION_LABELS,
   QuoteAttachmentSchema,
+  QuoteExtractionSchema,
   RecordQuoteRequestSchema,
   formatIndianNumber,
   quoteDeviations,
@@ -54,6 +56,7 @@ import {
   type ProposalQuotes,
   type ProposalRecord,
   type QuoteAttachment,
+  type QuoteExtraction,
   type QuoteExpectation,
   type QuoteOption,
   type QuoteVersion,
@@ -183,6 +186,38 @@ function QuoteForm({
     },
   });
 
+  // Q1: values filled from the insurer's PDF must be checked before the quote is saved.
+  const [fill, setFill] = useState<FillSummary | null>(null);
+  const [fillChecked, setFillChecked] = useState(false);
+  const [fillError, setFillError] = useState(false);
+  const fillUnchecked = () => {
+    if (!fill || fill.manualEntryRequired || fillChecked) return false;
+    setFillError(true);
+    return true;
+  };
+  const onFill = (fileName: string, extraction: QuoteExtraction) => {
+    setFill(
+      applyExtraction(extraction, fileName, expectation, (path, value, options) =>
+        form.setValue(path as 'validUntil', value, options),
+      ),
+    );
+    setFillChecked(false);
+    setFillError(false);
+    if (
+      !extraction.manualEntryRequired &&
+      !form.getValues('attachmentIds')?.includes(extraction.attachmentId)
+    ) {
+      form.setValue(
+        'attachmentIds',
+        [...(form.getValues('attachmentIds') ?? []), extraction.attachmentId],
+        {
+          shouldDirty: true,
+          shouldValidate: true,
+        },
+      );
+    }
+  };
+
   // A revision needs its reason (Q-4); it is asked for with the other missing entries.
   const reasonMissing = () => {
     if (!revising || form.getValues('reason')?.trim()) return false;
@@ -191,9 +226,14 @@ function QuoteForm({
   };
   const onSubmit = form.handleSubmit(
     (values) => {
-      if (!reasonMissing()) save.mutate(values);
+      const reason = reasonMissing();
+      const unchecked = fillUnchecked();
+      if (!reason && !unchecked) save.mutate(values);
     },
-    () => void reasonMissing(),
+    () => {
+      reasonMissing();
+      fillUnchecked();
+    },
   );
 
   return (
@@ -324,6 +364,7 @@ function QuoteForm({
           </section>
 
           <Proof
+            onFill={onFill}
             record={record}
             insurerId={insurerId}
             attachments={quotes.attachments.filter((item) => item.insurerId === insurerId)}
@@ -331,6 +372,15 @@ function QuoteForm({
             setValue={form.setValue}
             error={form.formState.errors.attachmentIds?.message}
           />
+
+          {fill ? (
+            <FillReview
+              summary={fill}
+              checked={fillChecked}
+              onChecked={setFillChecked}
+              showError={fillError}
+            />
+          ) : null}
 
           {revising ? (
             <FormField
@@ -577,6 +627,7 @@ function Terms({
 
 /** The insurer's mail or PDF (Q-3): upload one, or pick one already kept for this insurer. */
 function Proof({
+  onFill,
   record,
   insurerId,
   attachments,
@@ -584,6 +635,7 @@ function Proof({
   setValue,
   error,
 }: {
+  onFill: (fileName: string, extraction: QuoteExtraction) => void;
   record: ProposalRecord;
   insurerId: string;
   attachments: readonly QuoteAttachment[];
@@ -611,6 +663,15 @@ function Proof({
       );
       setValue('attachmentIds', [...chosen, saved.id], { shouldDirty: true, shouldValidate: true });
     },
+  });
+  // Q1: reads a kept PDF into candidate values for the form (nothing is saved).
+  const read = useMutation({
+    mutationFn: (attachment: QuoteAttachment) =>
+      apiFetch(`proposals/${record.id}/quote-attachments/${attachment.id}/read`, {
+        method: 'POST',
+        schema: QuoteExtractionSchema,
+      }).then((extraction) => ({ extraction, fileName: attachment.fileName })),
+    onSuccess: ({ extraction, fileName }) => onFill(fileName, extraction),
   });
   const toggle = (id: string, on: boolean) =>
     setValue('attachmentIds', on ? [...chosen, id] : chosen.filter((item) => item !== id), {
@@ -643,6 +704,22 @@ function Proof({
                 >
                   Download
                 </a>
+                {attachment.contentType === 'application/pdf' ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={read.isPending}
+                    onClick={() => read.mutate(attachment)}
+                  >
+                    {read.isPending && read.variables?.id === attachment.id ? (
+                      <LoaderCircle className="animate-spin" aria-hidden="true" />
+                    ) : (
+                      <FileText aria-hidden="true" />
+                    )}
+                    Fill the form from this PDF
+                  </Button>
+                ) : null}
               </li>
             );
           })}
@@ -681,6 +758,11 @@ function Proof({
           .eml, .msg, .pdf, .png or .jpg, up to 10 MB
         </span>
       </div>
+      {read.isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {errorMessage(read.error)}
+        </p>
+      ) : null}
       {upload.isError ? (
         <p role="alert" className="text-sm text-destructive">
           {upload.error instanceof ApiError && Array.isArray(upload.error.details)
