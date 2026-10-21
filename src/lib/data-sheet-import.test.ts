@@ -19,10 +19,8 @@ function imported(overrides: Partial<DataSheetImport> = {}): DataSheetImport {
         sheetName: 'data sheet',
         riskLocation: 'Plant 1',
         suggestedLocationId: LOCATION,
-        fire: [
-          { key: 'BUILDING_1', sqFt: '40000', ratePerSqFt: '2500', amount: null },
-          { key: 'STOCKS', sqFt: null, ratePerSqFt: null, amount: '60000000' },
-        ],
+        buildings: [{ name: 'Building 1', sqFt: '40000', ratePerSqFt: '2500', amount: null }],
+        fire: [{ key: 'STOCKS', sqFt: null, ratePerSqFt: null, amount: '60000000' }],
         hypothecation: 'State Bank of India',
         openStock: null,
         risk: { fireFighting: 'Hydrants' },
@@ -57,6 +55,8 @@ const record = caseRecord({
     {
       locationId: LOCATION,
       location: null,
+      buildings: [],
+      buildingsTotal: '0',
       fire: [{ key: 'OTHER_MACHINERY', sqFt: null, ratePerSqFt: null, amount: '1000' }],
       fireTotal: '1000',
       hypothecation: null,
@@ -75,13 +75,11 @@ describe('applyDataSheetImport', () => {
       suggestedMapping(imported()),
     );
     const [location] = values.locations;
+    // D1: the sheet's building replaces the location's buildings.
+    expect(location?.buildings).toEqual([
+      { name: 'Building 1', sqFt: '40000', ratePerSqFt: '2500', amount: '' },
+    ]);
     // The sheet's Fire lines replace the location's: the old machinery line is cleared.
-    expect(location?.fire.find((item) => item.key === 'BUILDING_1')).toEqual({
-      key: 'BUILDING_1',
-      sqFt: '40000',
-      ratePerSqFt: '2500',
-      amount: '',
-    });
     expect(location?.fire.find((item) => item.key === 'STOCKS')?.amount).toBe('60000000');
     expect(location?.fire.find((item) => item.key === 'OTHER_MACHINERY')?.amount).toBe('');
     expect(location?.hypothecation).toBe('State Bank of India');

@@ -66,6 +66,8 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
           eqZone: 3,
           occupancy: { tacCode: '1001', description: 'Textile mills' },
         },
+        buildings: [],
+        buildingsTotal: '0',
         fire: [],
         fireTotal: '0',
         hypothecation: null,

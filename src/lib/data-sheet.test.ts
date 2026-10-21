@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { FIRE_GROUPS, FIRE_ITEMS, OTHER_SECTIONS, type DataSheetInput } from '@/shared';
 import {
   blankLocation,
+  buildingSumInsured,
+  buildingsTotal,
   contentsOptions,
   contentsTotal,
   fireGroupTotals,
@@ -34,22 +36,20 @@ describe('measuredPaise', () => {
 });
 
 describe('matching the client’s Excel', () => {
-  it('shows each item to the rupee but totals the exact amounts', () => {
+  it('shows each building to the rupee but totals the exact amounts', () => {
     const blank = blankLocation('c'.repeat(24));
     const location = {
       ...blank,
-      fire: blank.fire.map((item) =>
-        item.key === 'BUILDING_1' || item.key === 'BUILDING_2'
-          ? { ...item, sqFt: '10.5', ratePerSqFt: '3' }
-          : item.key === 'GENSET'
-            ? { ...item, amount: '1000' }
-            : item,
-      ),
+      // D1: two buildings of 10.5 sq ft at ₹3 (₹31.50 each), and a genset of ₹1000.
+      buildings: [
+        { name: 'Building 1', sqFt: '10.5', ratePerSqFt: '3', amount: '' },
+        { name: 'Building 2', sqFt: '10.5', ratePerSqFt: '3', amount: '' },
+      ],
+      fire: blank.fire.map((item) => (item.key === 'GENSET' ? { ...item, amount: '1000' } : item)),
     };
     // Excel: 31.5 shows as 32 in each row, and SUM shows 63, not 64.
-    expect(itemSumInsured({ key: 'BUILDING_1', sqFt: '10.5', ratePerSqFt: '3', amount: '' })).toBe(
-      '32',
-    );
+    expect(buildingSumInsured({ sqFt: '10.5', ratePerSqFt: '3', amount: '' })).toBe('32');
+    expect(buildingsTotal(location)).toBe('63');
     expect(groupTotal(location, 'BUILDING')).toBe('63');
     expect(locationTotal(location)).toBe('1063');
     expect(fireTotal([location])).toBe('1063');
@@ -60,14 +60,14 @@ describe('matching the client’s Excel', () => {
 describe('itemSumInsured', () => {
   it('prefers the typed amount', () => {
     expect(
-      itemSumInsured({ key: 'BUILDING_1', sqFt: '1000', ratePerSqFt: '2000', amount: '500' }),
+      itemSumInsured({ key: 'INTERIOR', sqFt: '1000', ratePerSqFt: '2000', amount: '500' }),
     ).toBe('500');
   });
 
   it('prices a measured item as area × rate when no amount is typed', () => {
-    expect(
-      itemSumInsured({ key: 'BUILDING_1', sqFt: '1000', ratePerSqFt: '2000', amount: '' }),
-    ).toBe('2000000');
+    expect(itemSumInsured({ key: 'INTERIOR', sqFt: '1000', ratePerSqFt: '2000', amount: '' })).toBe(
+      '2000000',
+    );
   });
 
   it('ignores area and rate on an item that is not measured', () => {
@@ -83,18 +83,36 @@ describe('itemSumInsured', () => {
   });
 });
 
+describe('buildingSumInsured (D1)', () => {
+  it('prefers the typed amount, else area × rate, else 0', () => {
+    expect(buildingSumInsured({ sqFt: '1000', ratePerSqFt: '2000', amount: '500' })).toBe('500');
+    expect(buildingSumInsured({ sqFt: '1000', ratePerSqFt: '2000', amount: '' })).toBe('2000000');
+    expect(buildingSumInsured({ sqFt: '', ratePerSqFt: '', amount: '' })).toBe('0');
+  });
+});
+
 describe('totals', () => {
-  const location = (amounts: Partial<Record<string, string>>) => {
+  const location = (
+    amounts: Partial<Record<string, string>>,
+    buildings: { sqFt?: string; ratePerSqFt?: string; amount?: string }[] = [],
+  ) => {
     const blank = blankLocation('a'.repeat(24));
     return {
       ...blank,
+      buildings: buildings.map((b, i) => ({
+        name: `Building ${i + 1}`,
+        sqFt: b.sqFt ?? '',
+        ratePerSqFt: b.ratePerSqFt ?? '',
+        amount: b.amount ?? '',
+      })),
       fire: blank.fire.map((item) => ({ ...item, amount: amounts[item.key] ?? '' })),
     };
   };
 
-  it('adds a location’s items and each Fire line across locations', () => {
-    const first = location({ BUILDING_1: '100', COMPOUND_WALL: '50', STOCKS: '7' });
-    const second = location({ BUILDING_2: '1000', STOCKS_THIRD_PARTY: '3' });
+  it('adds a location’s items and buildings, and each Fire line across locations', () => {
+    // D1: the building sits in the BUILDING line with the compound wall.
+    const first = location({ COMPOUND_WALL: '50', STOCKS: '7' }, [{ amount: '100' }]);
+    const second = location({ STOCKS_THIRD_PARTY: '3' }, [{ amount: '1000' }]);
     expect(locationTotal(first)).toBe('157');
     const totals = fireGroupTotals([first, second]);
     expect(totals.BUILDING).toBe('1150');
@@ -150,9 +168,14 @@ describe('toDataSheetRequest', () => {
       locations: [
         {
           ...blank,
+          // D1: a blank building and a filled one; the blank one is dropped on save.
+          buildings: [
+            { name: '', sqFt: '', ratePerSqFt: '', amount: '' },
+            { name: 'Main block', sqFt: '100', ratePerSqFt: '', amount: '' },
+          ],
           fire: blank.fire.map((item) => ({
             key: item.key,
-            sqFt: item.key === 'BUILDING_1' ? '100' : null,
+            sqFt: item.key === 'COMPOUND_WALL' ? '100' : null,
             ratePerSqFt: null,
             amount: item.key === 'STOCKS' ? '5' : null,
           })),
@@ -162,7 +185,9 @@ describe('toDataSheetRequest', () => {
         },
       ],
     });
-    expect(request.locations[0]?.fire.map((item) => item.key)).toEqual(['BUILDING_1', 'STOCKS']);
+    expect(request.locations[0]?.fire.map((item) => item.key)).toEqual(['COMPOUND_WALL', 'STOCKS']);
+    // D1: the entirely blank building is dropped; the one with an area is kept.
+    expect(request.locations[0]?.buildings?.map((b) => b.name)).toEqual(['Main block']);
     expect(blank.fire).toHaveLength(FIRE_ITEMS.length);
   });
 
@@ -184,10 +209,9 @@ describe('toDataSheetRequest', () => {
       locations: [
         {
           ...blank,
-          fire: [
-            { key: 'BUILDING_1', sqFt: null, ratePerSqFt: null, amount: '100000000' },
-            { key: 'STOCKS', sqFt: null, ratePerSqFt: null, amount: '50000000' },
-          ],
+          // D1: the building is in the buildings list; the contents exclude it.
+          buildings: [{ name: 'Building 1', sqFt: null, ratePerSqFt: null, amount: '100000000' }],
+          fire: [{ key: 'STOCKS', sqFt: null, ratePerSqFt: null, amount: '50000000' }],
           hypothecation: null,
           openStock: null,
           risk: Object.fromEntries(Object.keys(blank.risk).map((key) => [key, null])) as never,
@@ -209,10 +233,13 @@ describe('toDataSheetRequest', () => {
 });
 
 describe('Burglary basis and covers (C-3, C-6)', () => {
-  const location = (amounts: Partial<Record<string, string>>) => {
+  const location = (amounts: Partial<Record<string, string>>, buildingAmount?: string) => {
     const blank = blankLocation('a'.repeat(24));
     return {
       ...blank,
+      buildings: buildingAmount
+        ? [{ name: 'Building 1', sqFt: '', ratePerSqFt: '', amount: buildingAmount }]
+        : [],
       fire: blank.fire.map((item) => ({ ...item, amount: amounts[item.key] ?? '' })),
     };
   };
@@ -225,7 +252,8 @@ describe('Burglary basis and covers (C-3, C-6)', () => {
   });
 
   it('adds Option 2 from the contents lines given a second figure only', () => {
-    const at = location({ FFF: '10', STOCKS: '40', BUILDING_1: '1000' });
+    // D1: the building (1000) is not part of the contents; FFF + STOCKS = 50.
+    const at = location({ FFF: '10', STOCKS: '40' }, '1000');
     expect(contentsOptions([at], [])).toEqual({ proposed1: '50', proposed2: null });
     expect(contentsOptions([at], [{ group: 'STOCKS', amount: '70' }])).toEqual({
       proposed1: '50',

@@ -51,6 +51,13 @@ export function applyDataSheetImport(
         amount: blank(value?.amount),
       };
     });
+    // D1: the sheet's buildings replace the location's buildings.
+    target.buildings = (sheet.buildings ?? []).map((building) => ({
+      name: blank(building.name),
+      sqFt: blank(building.sqFt),
+      ratePerSqFt: blank(building.ratePerSqFt),
+      amount: blank(building.amount),
+    }));
     if (sheet.hypothecation) target.hypothecation = sheet.hypothecation;
     if (sheet.openStock) target.openStock = sheet.openStock;
     target.risk = {

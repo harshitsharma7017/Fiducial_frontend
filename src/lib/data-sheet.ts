@@ -29,6 +29,8 @@ import type { Rupees } from '@/types/proposal';
 export type DataSheetForm = DataSheetFormValues;
 export type LocationForm = DataSheetForm['locations'][number];
 type FireItemForm = LocationForm['fire'][number];
+export type BuildingForm = NonNullable<LocationForm['buildings']>[number];
+type BuildingValues = Pick<BuildingForm, 'sqFt' | 'ratePerSqFt' | 'amount'>;
 export type AnnexureRowForm = DataSheetForm['sections'][number]['annexure'] extends
   (infer R)[] | undefined
   ? R
@@ -71,36 +73,65 @@ export function itemSumInsured(item: FireItemValues): Rupees {
   return paiseToRupees(itemPaise(item));
 }
 
+/** D1: a building's exact sum insured in paise: the typed amount, else area × rate, else 0. */
+export function buildingPaise(building: BuildingValues): bigint {
+  const amount = text(building.amount);
+  if (amount) return WHOLE_RUPEES.test(amount) ? BigInt(amount) * 100n : 0n;
+  return measuredPaise(text(building.sqFt), text(building.ratePerSqFt)) ?? 0n;
+}
+
+/** D1: a building's sum insured as shown, to the rupee. */
+export function buildingSumInsured(building: BuildingValues): Rupees {
+  return paiseToRupees(buildingPaise(building));
+}
+
+const buildingsPaise = (buildings: readonly BuildingValues[] | undefined) =>
+  (buildings ?? []).reduce((total, building) => total + buildingPaise(building), 0n);
+
+/** D1: the total sum insured of a location's buildings, to the rupee. */
+export function buildingsTotal(location: Pick<LocationForm, 'buildings'>): Rupees {
+  return paiseToRupees(buildingsPaise(location.buildings));
+}
+
 const totalPaise = (items: readonly FireItemValues[]) =>
   items.reduce((total, item) => total + itemPaise(item), 0n);
 
-/** A location's total sum insured: the exact items added, then rounded. */
-export function locationTotal(location: Pick<LocationForm, 'fire'>): Rupees {
-  return paiseToRupees(totalPaise(location.fire));
+type LocationFigures = Pick<LocationForm, 'fire' | 'buildings'>;
+
+/** The exact paise of a location: its Fire items plus its buildings (D1). */
+const locationPaise = (location: LocationFigures) =>
+  totalPaise(location.fire) + buildingsPaise(location.buildings);
+
+/** A location's total sum insured: the exact items and buildings added, then rounded. */
+export function locationTotal(location: LocationFigures): Rupees {
+  return paiseToRupees(locationPaise(location));
 }
 
-/** The items of one Fire line at a location (the subtotal of headings 1 and 5). */
-export function groupTotal(location: Pick<LocationForm, 'fire'>, group: FireGroup): Rupees {
-  return paiseToRupees(
-    totalPaise(location.fire.filter((item) => ITEM_BY_KEY.get(item.key)?.group === group)),
+/** The items of one Fire line at a location (the subtotal of headings 1 and 5); D1: buildings
+ * add to the Building line. */
+export function groupTotal(location: LocationFigures, group: FireGroup): Rupees {
+  const items = totalPaise(
+    location.fire.filter((item) => ITEM_BY_KEY.get(item.key)?.group === group),
   );
+  const buildings = group === 'BUILDING' ? buildingsPaise(location.buildings) : 0n;
+  return paiseToRupees(items + buildings);
 }
 
-/** Option 1 of each Fire line: every location's items in the line. */
-export function fireGroupTotals(
-  locations: readonly Pick<LocationForm, 'fire'>[],
-): Record<FireGroup, Rupees> {
+/** Option 1 of each Fire line: every location's items (and D1 buildings) in the line. */
+export function fireGroupTotals(locations: readonly LocationFigures[]): Record<FireGroup, Rupees> {
   return Object.fromEntries(
-    FIRE_GROUPS.map((group) => [
-      group,
-      paiseToRupees(
-        totalPaise(
-          locations.flatMap((location) =>
-            location.fire.filter((item) => ITEM_BY_KEY.get(item.key)?.group === group),
-          ),
+    FIRE_GROUPS.map((group) => {
+      const items = totalPaise(
+        locations.flatMap((location) =>
+          location.fire.filter((item) => ITEM_BY_KEY.get(item.key)?.group === group),
         ),
-      ),
-    ]),
+      );
+      const buildings =
+        group === 'BUILDING'
+          ? locations.reduce((total, location) => total + buildingsPaise(location.buildings), 0n)
+          : 0n;
+      return [group, paiseToRupees(items + buildings)];
+    }),
   ) as Record<FireGroup, Rupees>;
 }
 
@@ -150,9 +181,9 @@ export function withCover(
   return required === null ? others : [...others, { name, required }];
 }
 
-/** The exact Fire total of all locations, rounded (Option 1). */
-export function fireTotal(locations: readonly Pick<LocationForm, 'fire'>[]): Rupees {
-  return paiseToRupees(totalPaise(locations.flatMap((location) => location.fire)));
+/** The exact Fire total of all locations, rounded (Option 1); D1: buildings are included. */
+export function fireTotal(locations: readonly LocationFigures[]): Rupees {
+  return paiseToRupees(locations.reduce((total, location) => total + locationPaise(location), 0n));
 }
 
 const add = (values: readonly Rupees[]) =>
@@ -165,10 +196,16 @@ export function sumRupeesOf(values: readonly Rupees[]): Rupees {
 const blankRisk = () =>
   Object.fromEntries(RISK_DETAIL_FIELDS.map((field) => [field.key, ''])) as LocationForm['risk'];
 
-/** A location as just added: every Fire item, all blank. */
+/** A new, empty building (D1). */
+export function blankBuilding(): BuildingForm {
+  return { name: '', sqFt: '', ratePerSqFt: '', amount: '' };
+}
+
+/** A location as just added: no buildings yet, and every Fire item blank. */
 export function blankLocation(locationId: string): LocationForm {
   return {
     locationId,
+    buildings: [],
     fire: FIRE_ITEMS.map((item) => ({ key: item.key, sqFt: '', ratePerSqFt: '', amount: '' })),
     hypothecation: '',
     openStock: '',
@@ -217,6 +254,13 @@ export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
       const saved = new Map(location.fire.map((item) => [item.key, item]));
       return {
         locationId: location.locationId,
+        // D1: the location's buildings (the API already folds legacy Building 1/2 into this list).
+        buildings: location.buildings.map((building) => ({
+          name: building.name ?? '',
+          sqFt: building.sqFt ?? '',
+          ratePerSqFt: building.ratePerSqFt ?? '',
+          amount: building.amount ?? '',
+        })),
         fire: FIRE_ITEMS.map((item) => {
           const value = saved.get(item.key);
           return {
@@ -283,6 +327,13 @@ export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
 
 const isBlankItem = (item: FireItemForm) =>
   !text(item.sqFt) && !text(item.ratePerSqFt) && !text(item.amount);
+
+/** D1: a building with nothing filled in (no name, area, rate or amount) is dropped on save. */
+const isBlankBuilding = (building: BuildingForm) =>
+  !text(building.name) &&
+  !text(building.sqFt) &&
+  !text(building.ratePerSqFt) &&
+  !text(building.amount);
 
 /** The request body: Fire items left fully blank are not sent. */
 /** A new, empty annexure row. */
@@ -364,6 +415,8 @@ export function toDataSheetRequest(values: DataSheetInput): DataSheetInput {
     existing,
     locations: values.locations.map((location) => ({
       ...location,
+      // D1: drop buildings left entirely blank, as the API does.
+      buildings: (location.buildings ?? []).filter((building) => !isBlankBuilding(building)),
       fire: location.fire.filter((item) => !isBlankItem(item)),
     })),
     sections: values.sections.map((section) => {

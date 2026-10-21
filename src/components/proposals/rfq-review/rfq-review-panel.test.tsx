@@ -41,6 +41,8 @@ const record = caseRecord({
         eqZone: 3,
         occupancy: { tacCode: '1001', description: 'Textile mills' },
       },
+      buildings: [],
+      buildingsTotal: '0',
       fire: [],
       fireTotal: '5000000',
       hypothecation: 'Bank of Baroda',

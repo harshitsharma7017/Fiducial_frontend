@@ -1,8 +1,8 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Fragment, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatAmountForInput } from '@/lib/amount-input';
-import { groupTotal, itemSumInsured, locationTotal, type DataSheetForm } from '@/lib/data-sheet';
+import {
+  blankBuilding,
+  buildingSumInsured,
+  buildingsTotal,
+  groupTotal,
+  itemSumInsured,
+  locationTotal,
+  type DataSheetForm,
+} from '@/lib/data-sheet';
 import { formatInr } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import {
@@ -57,7 +65,12 @@ export function LocationCard({
 }) {
   const form = useFormContext<DataSheetForm>();
   const fire = useWatch({ control: form.control, name: `locations.${index}.fire` });
+  const buildings = useWatch({ control: form.control, name: `locations.${index}.buildings` });
   const risk = useWatch({ control: form.control, name: `locations.${index}.risk` });
+  const buildingRows = useFieldArray({
+    control: form.control,
+    name: `locations.${index}.buildings`,
+  });
   const name = info?.name ?? 'Location no longer in the client master';
   const filled = Object.values(risk ?? {}).filter((value) => value?.trim()).length;
   // Open at first when something is already filled; after that the user decides.
@@ -83,7 +96,7 @@ export function LocationCard({
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="muted" className="tabular">
-            {formatInr(locationTotal({ fire }))}
+            {formatInr(locationTotal({ fire, buildings }))}
           </Badge>
           {readOnly ? null : (
             <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
@@ -96,6 +109,122 @@ export function LocationCard({
       <CardContent className="grid gap-6">
         <section aria-label={`Fire & Burglary for ${name}`} className="grid gap-3">
           <h3 className="text-sm font-semibold">Fire &amp; Burglary</h3>
+
+          {/* D1: buildings as a dynamic list. Any number can be added; each has a name or number,
+              area, rate and sum insured (sq ft × rate, or a typed amount). They form the Building
+              line of the Fire schedule. */}
+          <section aria-label={`Buildings at ${name}`} className="grid gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="text-sm font-medium">Buildings</h4>
+              <Badge variant="muted" className="tabular">
+                {formatInr(buildingsTotal({ buildings }))}
+              </Badge>
+            </div>
+            {buildingRows.fields.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No buildings added. Use “Add building” for each insured building at this location.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Building</TableHead>
+                    <TableHead className="text-right">
+                      Sq. Feet
+                      <span className="block font-normal normal-case">(total builtup area)</span>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      Rate / sq ft
+                      <span className="block font-normal normal-case">
+                        (construction cost per sq ft)
+                      </span>
+                    </TableHead>
+                    <TableHead className="text-right">Sum Insured</TableHead>
+                    {readOnly ? null : <TableHead className="w-12 sr-only">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {buildingRows.fields.map((field, buildingIndex) => {
+                    const values = buildings?.[buildingIndex];
+                    const path = `locations.${index}.buildings.${buildingIndex}` as const;
+                    const computed =
+                      values && !values.amount?.trim() ? buildingSumInsured(values) : null;
+                    return (
+                      <TableRow key={field.id}>
+                        <TableCell className="align-top">
+                          <TextField
+                            name={`${path}.name`}
+                            label={`Building ${buildingIndex + 1} name or number`}
+                            hideLabel
+                            autoComplete="off"
+                            placeholder={`Building ${buildingIndex + 1}`}
+                            className="min-w-40"
+                          />
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <TextField
+                            name={`${path}.sqFt`}
+                            label={`Building ${buildingIndex + 1} sq ft`}
+                            hideLabel
+                            inputMode="decimal"
+                            autoComplete="off"
+                            className="min-w-24"
+                          />
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <RupeesField
+                            name={`${path}.ratePerSqFt`}
+                            label={`Building ${buildingIndex + 1} rate per sq ft`}
+                            hideLabel
+                          />
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <RupeesField
+                            name={`${path}.amount`}
+                            label={`Building ${buildingIndex + 1} sum insured`}
+                            hideLabel
+                            placeholder={
+                              computed && computed !== '0'
+                                ? formatAmountForInput(computed)
+                                : undefined
+                            }
+                            description={computed && computed !== '0' ? 'Sq ft × rate' : undefined}
+                          />
+                        </TableCell>
+                        {readOnly ? null : (
+                          <TableCell className="align-top">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => buildingRows.remove(buildingIndex)}
+                            >
+                              <Trash2 aria-hidden="true" />
+                              <span className="sr-only">Remove building {buildingIndex + 1}</span>
+                            </Button>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+            {readOnly ? null : (
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => buildingRows.append(blankBuilding())}
+                >
+                  <Plus aria-hidden="true" />
+                  Add building
+                </Button>
+              </div>
+            )}
+          </section>
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -135,7 +264,7 @@ export function LocationCard({
                           {heading.label}
                         </TableCell>
                         <TableCell className="text-right font-medium tabular whitespace-nowrap">
-                          {formatInr(groupTotal({ fire }, item.group))}
+                          {formatInr(groupTotal({ fire, buildings }, item.group))}
                         </TableCell>
                       </TableRow>
                     ) : null}
@@ -197,7 +326,7 @@ export function LocationCard({
                   className="text-right font-medium tabular whitespace-nowrap"
                   aria-live="polite"
                 >
-                  {formatInr(locationTotal({ fire }))}
+                  {formatInr(locationTotal({ fire, buildings }))}
                 </TableCell>
               </TableRow>
             </TableFooter>
