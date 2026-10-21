@@ -57,8 +57,9 @@ function OptionCard({ qcr, option, renewal }: { qcr: Qcr; option: QcrOption; ren
       <CardHeader>
         <CardTitle>{QUOTE_OPTION_LABELS[option.option]}</CardTitle>
         <CardDescription>
-          Premiums with Fire without terrorism, as the QCR compares them. The lowest total is
-          marked.
+          Premiums compare Fire without terrorism; the lowest total is marked. The terrorism cover’s
+          extra net premium and the total including terrorism are shown below where an insurer
+          quoted both.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -80,12 +81,18 @@ function OptionCard({ qcr, option, renewal }: { qcr: Qcr; option: QcrOption; ren
                 {columns.map(({ insurer, quote }) => (
                   <TableHead
                     key={insurer.insurerId}
-                    className={cn('text-right', quote?.lowest && 'bg-success-soft')}
+                    // B3: a minimum width and top alignment give long insurer names room to wrap
+                    // onto their own lines, with the badges on a separate row below, so the name is
+                    // never clipped by or overlapped with the Lowest / Recommended / version badges.
+                    className={cn(
+                      'min-w-44 align-top whitespace-normal',
+                      quote?.lowest && 'bg-success-soft',
+                    )}
                   >
-                    <span className="block">
+                    <span className="block font-medium break-words">
                       {insurer.company}, {insurer.branch}
                     </span>
-                    <span className="flex flex-wrap justify-end gap-1">
+                    <span className="mt-1 flex flex-wrap items-center gap-1">
                       {quote?.lowest ? (
                         <Badge variant="success">
                           <Trophy aria-hidden="true" />
@@ -178,22 +185,44 @@ function OptionCard({ qcr, option, renewal }: { qcr: Qcr; option: QcrOption; ren
                   ))}
                 </TableRow>
               ))}
-              {columns.some(({ quote }) => quote?.terrorismExtra) ? (
-                <TableRow>
-                  <TableCell className="text-xs font-normal">
-                    Terrorism, extra net premium
-                  </TableCell>
-                  {renewal ? <TableCell colSpan={2} /> : null}
-                  <TableCell />
-                  {columns.map(({ insurer, quote }) => (
-                    <TableCell
-                      key={insurer.insurerId}
-                      className="text-right text-xs font-normal tabular"
-                    >
-                      {quote?.terrorismExtra ? paise(quote.terrorismExtra) : '—'}
+              {/* B2: the terrorism cover's own extra net premium, then the total premium including
+                  terrorism — shown whenever an insurer quoted Fire both with and without terrorism,
+                  so the comparison total (without terrorism) and the figure with terrorism are both
+                  clear. A genuine ₹0.00 extra is shown as such; "—" means the insurer gave a single
+                  Fire figure, never a fabricated zero. */}
+              {columns.some(({ quote }) => quote?.terrorismExtra !== null) ? (
+                <>
+                  <TableRow>
+                    <TableCell className="text-xs font-normal">
+                      Terrorism, extra net premium
                     </TableCell>
-                  ))}
-                </TableRow>
+                    {renewal ? <TableCell colSpan={2} /> : null}
+                    <TableCell />
+                    {columns.map(({ insurer, quote }) => (
+                      <TableCell
+                        key={insurer.insurerId}
+                        className="text-right text-xs font-normal tabular"
+                      >
+                        {quote && quote.terrorismExtra !== null ? paise(quote.terrorismExtra) : '—'}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="text-xs font-normal italic">
+                      Total premium (including terrorism)
+                    </TableCell>
+                    {renewal ? <TableCell colSpan={2} /> : null}
+                    <TableCell />
+                    {columns.map(({ insurer, quote }) => (
+                      <TableCell
+                        key={insurer.insurerId}
+                        className="text-right text-xs font-normal italic tabular"
+                      >
+                        {quote?.totalsWithTerrorism ? paise(quote.totalsWithTerrorism.total) : '—'}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </>
               ) : null}
             </TableFooter>
           </Table>

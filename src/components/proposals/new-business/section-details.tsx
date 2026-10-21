@@ -59,8 +59,8 @@ export function SectionLines({
         <TableRow>
           <TableHead>Line</TableHead>
           {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
-          <TableHead className="text-right">Option 1</TableHead>
-          <TableHead className="text-right">Option 2</TableHead>
+          <TableHead className="text-right">Proposed – Option 1</TableHead>
+          <TableHead className="text-right">Proposed – Option 2</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -89,7 +89,8 @@ export function SectionLines({
                 {label}
                 {isSumInsured ? (
                   <span className="block text-xs text-muted-foreground">
-                    The {name} sum insured; its Existing and Option 2 are in the section’s row.
+                    The {name} sum insured; its Existing and Proposed – Option 2 are in the
+                    section’s row.
                   </span>
                 ) : addsUp ? (
                   <span className="block text-xs text-muted-foreground">
@@ -110,7 +111,7 @@ export function SectionLines({
               <TableCell className="align-top">
                 {isSumInsured
                   ? null
-                  : field(`sections.${index}.lines2.${line.key}`, `${label} Option 2`)}
+                  : field(`sections.${index}.lines2.${line.key}`, `${label} Proposed – Option 2`)}
               </TableCell>
             </TableRow>
           );
@@ -206,8 +207,11 @@ export function BasisField({
       <FormBasis id={id} index={index} allowTyped={allowTyped} disabled={form.formState.disabled} />
       {amounts ? (
         <p className="text-xs text-muted-foreground tabular" aria-live="polite">
-          On this basis: Option 1 {amounts.proposed1 ? formatInr(amounts.proposed1) : '—'}
-          {amounts.proposed2 ? `, Option 2 ${formatInr(amounts.proposed2)}` : ''}
+          On this basis: Proposed – Option 1{' '}
+          {amounts.proposed1 !== null ? formatInr(amounts.proposed1) : '—'}
+          {amounts.proposed2 !== null
+            ? `, Proposed – Option 2 ${formatInr(amounts.proposed2)}`
+            : ''}
         </p>
       ) : null}
     </div>

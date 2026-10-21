@@ -160,20 +160,19 @@ export function RfqPreview({
                 </TableCell>
               ))}
             </TableRow>
-            {record.sections.map((section) => (
+            {/* B5: only sections marked required (included) appear; Not-required ones are omitted. */}
+            {included.map((section) => (
               <TableRow key={section.code}>
                 <TableCell>{section.name}</TableCell>
                 {options.map((option) => (
                   <TableCell key={option} className="text-right tabular">
-                    {!section.included
-                      ? 'Not required'
-                      : rupees(
-                          option === 'EXISTING'
-                            ? section.existing
-                            : option === 'P1'
-                              ? section.proposed1
-                              : section.proposed2,
-                        )}
+                    {rupees(
+                      option === 'EXISTING'
+                        ? section.existing
+                        : option === 'P1'
+                          ? section.proposed1
+                          : section.proposed2,
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -235,7 +234,10 @@ export function RfqPreview({
           renewal={renewal}
           rows={[
             ...record.fire.groups
-              .filter((line) => line.proposed1 !== '0' || line.proposed2 || line.existing)
+              .filter(
+                (line) =>
+                  line.proposed1 !== '0' || line.proposed2 !== null || line.existing !== null,
+              )
               .map((line) => ({
                 label: FIRE_GROUP_LABELS[line.group],
                 existing: line.existing,
@@ -292,15 +294,7 @@ export function RfqPreview({
             />
           );
         })}
-        {record.sections.some((section) => !section.included) ? (
-          <p className="text-sm">
-            <span className="font-medium">Not required: </span>
-            {record.sections
-              .filter((section) => !section.included)
-              .map((section) => section.name)
-              .join(', ')}
-          </p>
-        ) : null}
+        {/* B5: the "Not required: …" line is removed; Not-required sections are simply omitted. */}
 
         <div className="grid gap-1 text-sm">
           <p className="font-medium">NOTE:</p>
@@ -599,8 +593,8 @@ function FiguresTable({
         <TableRow>
           <TableHead>Description</TableHead>
           {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
-          <TableHead className="text-right">Option 1</TableHead>
-          <TableHead className="text-right">Option 2</TableHead>
+          <TableHead className="text-right">Proposed – Option 1</TableHead>
+          <TableHead className="text-right">Proposed – Option 2</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

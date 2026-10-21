@@ -84,8 +84,8 @@ export const SUM_INSURED_OPTIONS = ['EXISTING', 'PROPOSED_1', 'PROPOSED_2'] as c
 export type SumInsuredOption = (typeof SUM_INSURED_OPTIONS)[number];
 export const SUM_INSURED_OPTION_LABELS: Record<SumInsuredOption, string> = {
   EXISTING: 'Existing',
-  PROPOSED_1: 'Proposed 1',
-  PROPOSED_2: 'Proposed 2',
+  PROPOSED_1: 'Proposed – Option 1',
+  PROPOSED_2: 'Proposed – Option 2',
 };
 
 export const DOC_STATUSES = ['NOT_STARTED', 'DRAFT', 'READY', 'SENT', 'APPROVED'] as const;

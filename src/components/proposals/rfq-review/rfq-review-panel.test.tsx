@@ -11,7 +11,15 @@ import {
   json,
   urlOf,
 } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
-import { NO_RFQ_EDITS, RISK_DETAIL_FIELDS, type RfqState, type Role } from '@/shared';
+import {
+  FIRE_GROUPS,
+  NO_RFQ_EDITS,
+  OTHER_SECTIONS,
+  OTHER_SECTION_LABELS,
+  RISK_DETAIL_FIELDS,
+  type RfqState,
+  type Role,
+} from '@/shared';
 import { RfqReviewPanel } from './rfq-review-panel';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
@@ -182,6 +190,63 @@ describe('RfqReviewPanel', { timeout: 20_000 }, () => {
     await user.click(confirm);
     await waitFor(() => expect(returned).toEqual({ comment: 'Add hydrant details' }));
     expect(await screen.findByText('“Add hydrant details”')).toBeInTheDocument();
+  });
+
+  it('B1, B5: the RFQ preview shows Option 2 and omits Not-required sections with no aggregate line', async () => {
+    roles.current = ['ACCOUNT_MANAGER'];
+    const withSections = caseRecord({
+      ...record,
+      fire: {
+        ...caseRecord().fire,
+        proposed1: '5000000',
+        // B1: a Fire Option 2 total is shown in the preview.
+        proposed2: '6000000',
+        groups: FIRE_GROUPS.map((group) => ({
+          group,
+          existing: null,
+          proposed1: group === 'STOCKS' ? '5000000' : '0',
+          proposed2: group === 'STOCKS' ? '6000000' : null,
+        })),
+      },
+      sections: OTHER_SECTIONS.map((code) => ({
+        code,
+        name: OTHER_SECTION_LABELS[code],
+        // B5: Money is required and appears; every other section is not required and is omitted.
+        included: code === 'MONEY',
+        existing: null,
+        proposed1: code === 'MONEY' ? '500000' : null,
+        proposed2: code === 'MONEY' ? '800000' : null,
+        lines: {},
+        lines2: {},
+        existingLines: {},
+        basis: null,
+        basisAmounts: null,
+        covers: [],
+        annexure: [],
+      })),
+    });
+    fetchMock.mockImplementation((input) => {
+      if (urlOf(input).endsWith(`/proposals/${CASE_ID}/rfq/versions`))
+        return Promise.resolve(json(draftState()));
+      return Promise.resolve(json({}, 404));
+    });
+    renderPanel(<RfqReviewPanel record={withSections} />);
+    await screen.findByLabelText('RFQ heading');
+    // B4: the premium-details table uses the standard option labels.
+    expect(
+      screen.getAllByRole('columnheader', { name: 'Proposed – Option 1' }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole('columnheader', { name: 'Proposed – Option 2' }).length,
+    ).toBeGreaterThan(0);
+    // B5: the required Money section appears; a Not-required section (Burglary) does not.
+    expect(screen.getAllByText('Money').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Burglary')).not.toBeInTheDocument();
+    // B5: no "Not required:" aggregate line anywhere in the preview.
+    expect(screen.queryByText(/Not required:/)).not.toBeInTheDocument();
+    // B1: Money's Option 2 (₹8,00,000) and the Fire Option 2 total (₹60,00,000) are shown.
+    expect(screen.getAllByText(/₹8,00,000(\.00)?$/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/₹60,00,000(\.00)?$/).length).toBeGreaterThan(0);
   });
 
   it('R-5: the insurers tab does not send an unapproved RFQ', async () => {

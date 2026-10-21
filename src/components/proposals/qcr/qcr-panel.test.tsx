@@ -47,6 +47,7 @@ function qcr(overrides: Partial<Qcr> = {}): Qcr {
             premiums: [{ code: 'FIRE', premium: '100000' }],
             fireWithTerrorism: false,
             totals: { net: '100000.00', gst: '18000.00', total: '118000.00' },
+            totalsWithTerrorism: { net: '120000.00', gst: '21600.00', total: '141600.00' },
             terrorismExtra: '20000.00',
             deviations: [],
             lowest: true,
@@ -58,6 +59,7 @@ function qcr(overrides: Partial<Qcr> = {}): Qcr {
             premiums: [{ code: 'FIRE', premium: '110000' }],
             fireWithTerrorism: false,
             totals: { net: '110000.00', gst: '19800.00', total: '129800.00' },
+            totalsWithTerrorism: null,
             terrorismExtra: null,
             deviations: ['Capacity 80%: not the whole risk'],
             lowest: false,
@@ -143,7 +145,7 @@ describe('QcrPanel', { timeout: 20_000 }, () => {
 
     await user.selectOptions(
       screen.getByLabelText('Recommended insurer and option'),
-      'Kavach General, Pune — Proposed Option 1 (lowest)',
+      'Kavach General, Pune — Proposed – Option 1 (lowest)',
     );
     await user.click(screen.getByRole('button', { name: 'Use Kavach General' }));
     await user.type(screen.getByLabelText('Recommendation'), 'Lowest premium, full capacity');
@@ -208,6 +210,43 @@ describe('QcrPanel', { timeout: 20_000 }, () => {
     expect(
       await screen.findByText('Sent to the insured', { selector: 'span' }),
     ).toBeInTheDocument();
+  });
+
+  it('B3, B2: long insurer names and badges do not clip; terrorism rows are shown', async () => {
+    roles.current = ['ACCOUNT_MANAGER'];
+    // A long insurer name on the lowest, recommended column, with both badges.
+    const longName = 'The New India Assurance Company Limited';
+    const custom = qcr({
+      insurers: [
+        { insurerId: INSURER_A, company: longName, branch: 'Nariman Point', status: 'QUOTED' },
+        { insurerId: INSURER_B, company: 'Suraksha General', branch: 'Fort', status: 'QUOTED' },
+      ],
+      recommendedInsurerId: INSURER_A,
+      recommendedOption: 'P1',
+    });
+    fetchMock.mockImplementation((input) => {
+      if (urlOf(input).endsWith(`/proposals/${CASE_ID}/qcr`)) return Promise.resolve(json(custom));
+      return Promise.resolve(json({}, 404));
+    });
+    renderPanel();
+    // B3: the full insurer name is present (not truncated) in its own column header, and both the
+    // Lowest and Recommended badges render in the header's badge row.
+    const [header] = await screen.findAllByRole('columnheader', {
+      name: new RegExp(longName),
+    });
+    const headerEl = header as HTMLElement;
+    expect(within(headerEl).getByText(`${longName}, Nariman Point`)).toBeInTheDocument();
+    expect(within(headerEl).getByText('Lowest')).toBeInTheDocument();
+    expect(within(headerEl).getByText('Recommended')).toBeInTheDocument();
+    // The name cell allows wrapping and is not clipped (no truncation classes applied).
+    const nameSpan = within(headerEl).getByText(`${longName}, Nariman Point`);
+    expect(nameSpan.className).toContain('break-words');
+    // B2: the terrorism extra and the total including terrorism rows are shown.
+    expect(screen.getByText('Terrorism, extra net premium')).toBeInTheDocument();
+    expect(screen.getByText('Total premium (including terrorism)')).toBeInTheDocument();
+    // Insurer A's terrorism extra and total-with-terrorism from the fixture.
+    expect(screen.getByText('₹20,000.00')).toBeInTheDocument();
+    expect(screen.getByText('₹1,41,600.00')).toBeInTheDocument();
   });
 
   it('Q3: auto-fills every client contact email, keeps "Other addresses", and de-duplicates', async () => {

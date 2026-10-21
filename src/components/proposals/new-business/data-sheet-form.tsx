@@ -553,8 +553,8 @@ function FireOptions({
             <TableRow>
               <TableHead>Line</TableHead>
               {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
-              <TableHead className="text-right">Option 1</TableHead>
-              <TableHead className="text-right">Option 2</TableHead>
+              <TableHead className="text-right">Proposed – Option 1</TableHead>
+              <TableHead className="text-right">Proposed – Option 2</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -578,7 +578,7 @@ function FireOptions({
                 <TableCell className="align-top">
                   <RupeesField
                     name={`fireOption2.${index}.amount`}
-                    label={`Option 2 for ${FIRE_GROUP_LABELS[group]}`}
+                    label={`Proposed – Option 2 for ${FIRE_GROUP_LABELS[group]}`}
                     hideLabel
                   />
                 </TableCell>
@@ -664,8 +664,8 @@ function OtherSections({
             <TableRow>
               <TableHead>Section</TableHead>
               {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
-              <TableHead className="text-right">Proposed 1</TableHead>
-              <TableHead className="text-right">Proposed 2</TableHead>
+              <TableHead className="text-right">Proposed – Option 1</TableHead>
+              <TableHead className="text-right">Proposed – Option 2</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -733,7 +733,7 @@ function OtherSections({
                           {derived || contentsBased ? (
                             <span
                               className="py-2 text-right text-sm font-medium tabular"
-                              aria-label={`${name} Proposed 1`}
+                              aria-label={`${name} Proposed – Option 1`}
                             >
                               {formatInr(option1 ?? '0')}
                               <span className="block text-xs font-normal text-muted-foreground">
@@ -747,7 +747,7 @@ function OtherSections({
                           ) : (
                             <RupeesField
                               name={`sections.${index}.proposed1`}
-                              label={`${name} Proposed 1`}
+                              label={`${name} Proposed – Option 1`}
                               hideLabel
                             />
                           )}
@@ -780,7 +780,7 @@ function OtherSections({
                       {!included ? null : contentsBased || derived2 ? (
                         <span
                           className="block py-2 text-right text-sm font-medium tabular"
-                          aria-label={`${name} Proposed 2`}
+                          aria-label={`${name} Proposed – Option 2`}
                         >
                           {option2Value ? formatInr(option2Value) : '—'}
                           {derived2 ? (
@@ -792,7 +792,7 @@ function OtherSections({
                       ) : (
                         <RupeesField
                           name={`sections.${index}.proposed2`}
-                          label={`${name} Proposed 2`}
+                          label={`${name} Proposed – Option 2`}
                           hideLabel
                         />
                       )}

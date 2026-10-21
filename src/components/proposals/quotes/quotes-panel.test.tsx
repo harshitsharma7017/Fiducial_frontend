@@ -139,7 +139,7 @@ describe('QuotesPanel', { timeout: 20_000 }, () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: 'Enter quote for Kavach General, Pune, Proposed Option 1',
+        name: 'Enter quote for Kavach General, Pune, Proposed – Option 1',
       }),
     );
     const sheet = await screen.findByRole('dialog');
@@ -176,7 +176,7 @@ describe('QuotesPanel', { timeout: 20_000 }, () => {
     );
     expect(await screen.findByText('₹1,20,950.59')).toBeInTheDocument();
     expect(
-      screen.getByText(/Kavach General, Pune — Proposed Option 1, version 1/),
+      screen.getByText(/Kavach General, Pune — Proposed – Option 1, version 1/),
     ).toBeInTheDocument();
   });
 
@@ -199,7 +199,7 @@ describe('QuotesPanel', { timeout: 20_000 }, () => {
     expect(screen.getByText('Earlier versions (1)')).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', {
-        name: 'Revise quote for Kavach General, Pune, Proposed Option 1',
+        name: 'Revise quote for Kavach General, Pune, Proposed – Option 1',
       }),
     );
     const sheet = await screen.findByRole('dialog');

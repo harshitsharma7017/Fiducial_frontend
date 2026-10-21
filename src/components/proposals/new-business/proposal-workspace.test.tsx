@@ -280,15 +280,21 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     await user.type(screen.getByLabelText('Item 6 sum insured'), '300000');
     await user.click(screen.getByRole('checkbox', { name: 'Burglary' }));
     // A new Burglary starts on 100%: its sum insured is the contents, kept up to date.
-    expect(screen.getByLabelText('Burglary Proposed 1')).toHaveTextContent('₹5,00,000.00');
+    expect(screen.getByLabelText('Burglary Proposed – Option 1')).toHaveTextContent('₹5,00,000.00');
     await user.selectOptions(
       screen.getByLabelText('Burglary basis'),
       '1st loss basis 25% of sum insured',
     );
-    expect(screen.getByText(/On this basis: Option 1 ₹1,25,000\.00/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/On this basis: Proposed – Option 1 ₹1,25,000\.00/),
+    ).toBeInTheDocument();
     await user.type(screen.getByLabelText('Item 6 sum insured'), '0');
-    expect(screen.getByLabelText('Burglary Proposed 1')).toHaveTextContent('₹32,00,000.00');
-    expect(screen.getByText(/On this basis: Option 1 ₹8,00,000\.00/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Burglary Proposed – Option 1')).toHaveTextContent(
+      '₹32,00,000.00',
+    );
+    expect(
+      screen.getByText(/On this basis: Proposed – Option 1 ₹8,00,000\.00/),
+    ).toBeInTheDocument();
   });
 
   it('C-1, C-4: follows the suggested product, asks why on an override, and picks its add-ons', async () => {
@@ -515,18 +521,22 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     const total = within(details).getByRole('row', { name: /Total — Plate Glass sum insured/ });
     expect(within(total).getByText('₹2,00,000.00')).toBeInTheDocument();
     // The total flows into the section's Proposed 1.
-    expect(screen.getByLabelText('Plate Glass Proposed 1')).toHaveTextContent('₹2,00,000.00');
+    expect(screen.getByLabelText('Plate Glass Proposed – Option 1')).toHaveTextContent(
+      '₹2,00,000.00',
+    );
 
     // FLOP: the annual gross profit is its sum insured.
     await user.click(screen.getByRole('checkbox', { name: 'Fire Loss of Profit' }));
     await user.type(screen.getByLabelText('1. Annual Gross Profit'), '8000000');
-    expect(screen.getByLabelText('Fire Loss of Profit Proposed 1')).toHaveTextContent(
+    expect(screen.getByLabelText('Fire Loss of Profit Proposed – Option 1')).toHaveTextContent(
       '₹80,00,000.00',
     );
 
     // Removing a row updates the total.
     await user.click(within(details).getByRole('button', { name: 'Remove Plate Glass item 2' }));
-    expect(screen.getByLabelText('Plate Glass Proposed 1')).toHaveTextContent('₹1,50,000.00');
+    expect(screen.getByLabelText('Plate Glass Proposed – Option 1')).toHaveTextContent(
+      '₹1,50,000.00',
+    );
 
     await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
     await waitFor(() => expect(sent).toBeDefined());
@@ -565,7 +575,7 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
       expect(within(money).getByLabelText(label)).toBeInTheDocument();
     }
     // Money's sum insured stays as typed.
-    expect(screen.getByLabelText('Money Proposed 1')).toHaveValue('');
+    expect(screen.getByLabelText('Money Proposed – Option 1')).toHaveValue('');
     await user.click(screen.getByRole('checkbox', { name: 'Money' }));
     expect(screen.queryByRole('region', { name: 'Money details' })).not.toBeInTheDocument();
     expect(

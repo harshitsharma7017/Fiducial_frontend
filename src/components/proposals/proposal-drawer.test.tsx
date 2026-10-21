@@ -45,7 +45,7 @@ function proposalById(id: string) {
 }
 
 describe('ProposalDrawer', () => {
-  it('shows Proposed 1 and Proposed 2 and no Existing column for a new proposal', async () => {
+  it('shows Proposed – Option 1 and Proposed – Option 2 and no Existing column for a new proposal', async () => {
     const user = renderHarness(NEW_ID);
     await user.click(screen.getByRole('button', { name: `Open ${NEW_ID}` }));
 
@@ -53,12 +53,12 @@ describe('ProposalDrawer', () => {
     const headers = within(dialog)
       .getAllByRole('columnheader')
       .map((cell) => cell.textContent);
-    expect(headers).toContain('Proposed 1');
-    expect(headers).toContain('Proposed 2');
+    expect(headers).toContain('Proposed – Option 1');
+    expect(headers).toContain('Proposed – Option 2');
     expect(headers).not.toContain('Existing');
   });
 
-  it('shows Existing, Proposed 1 and Proposed 2 for a renewal', async () => {
+  it('shows Existing, Proposed – Option 1 and Proposed – Option 2 for a renewal', async () => {
     const user = renderHarness(RENEWAL_ID);
     await user.click(screen.getByRole('button', { name: `Open ${RENEWAL_ID}` }));
 
@@ -67,8 +67,8 @@ describe('ProposalDrawer', () => {
       .getAllByRole('columnheader')
       .map((cell) => cell.textContent);
     expect(headers).toContain('Existing');
-    expect(headers).toContain('Proposed 1');
-    expect(headers).toContain('Proposed 2');
+    expect(headers).toContain('Proposed – Option 1');
+    expect(headers).toContain('Proposed – Option 2');
   });
 
   it('totals row adds up the included sections per option', async () => {
