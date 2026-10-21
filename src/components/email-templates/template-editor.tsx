@@ -33,6 +33,8 @@ const PURPOSE: Record<EmailTemplate['kind'], string> = {
   QCR: 'Sent to the insured with the approved QCR attached. {{insurerName}} is the recommended insurer.',
   PLACEMENT_SLIP:
     'Sent to the insurer the client accepted, with the approved placement slip attached. {{contactName}} is the insurer’s contact chosen, if any.',
+  COVERAGE_CONFIRMATION:
+    'Sent to the insured once the insurer confirms cover, optionally with the coverage confirmation letter attached. {{insurerName}} is the insurer the cover was placed with.',
 };
 
 /** Field problems: the API's on save, else the same checks as the API's, while typing. */

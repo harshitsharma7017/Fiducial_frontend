@@ -209,4 +209,47 @@ describe('QcrPanel', { timeout: 20_000 }, () => {
       await screen.findByText('Sent to the insured', { selector: 'span' }),
     ).toBeInTheDocument();
   });
+
+  it('Q3: auto-fills every client contact email, keeps "Other addresses", and de-duplicates', async () => {
+    roles.current = ['ADMIN'];
+    const approved = qcr({
+      recommendedInsurerId: INSURER_A,
+      recommendedOption: 'P1',
+      paymentInFavourOf: 'Kavach General',
+      missing: [],
+      status: 'APPROVED',
+      approval: { at: '2026-10-08T05:00:00.000Z', by: 'Asha Rao', current: true },
+      recipients: [
+        { name: 'Ravi Mehta', email: 'ravi@mills.example' },
+        { name: 'Priya Shah', email: 'priya@mills.example' },
+      ],
+    });
+    let sent: { to: string[]; format: string } | undefined;
+    fetchMock.mockImplementation((input, init) => {
+      const url = urlOf(input);
+      if (url.endsWith('/qcr/email')) {
+        sent = JSON.parse(init?.body as string) as { to: string[]; format: string };
+        return Promise.resolve(
+          json({ outcome: 'SENT', reason: null, qcr: { ...approved, status: 'SENT' } }),
+        );
+      }
+      if (url.endsWith(`/proposals/${CASE_ID}/qcr`)) return Promise.resolve(json(approved));
+      return Promise.resolve(json({}, 404));
+    });
+    const user = renderPanel();
+    await user.click(await screen.findByRole('button', { name: 'Send to the insured' }));
+    const dialog = await screen.findByRole('dialog');
+    // Both contacts of the insured are selected automatically.
+    expect(within(dialog).getByLabelText('Ravi Mehta <ravi@mills.example>')).toBeChecked();
+    expect(within(dialog).getByLabelText('Priya Shah <priya@mills.example>')).toBeChecked();
+    // An "Other address" that repeats an auto-filled one is not mailed twice.
+    await user.type(within(dialog).getByLabelText('Other addresses'), 'RAVI@mills.example');
+    await user.click(within(dialog).getByRole('button', { name: 'Send' }));
+    await waitFor(() =>
+      expect(sent).toMatchObject({
+        to: ['ravi@mills.example', 'priya@mills.example'],
+        format: 'pdf',
+      }),
+    );
+  });
 });

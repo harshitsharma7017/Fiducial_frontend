@@ -470,8 +470,9 @@ function SendDialog({ record, qcr }: { record: ProposalRecord; qcr: Qcr }) {
   const approved = qcr.status !== 'DRAFT';
   const extra = other
     .split(/[,;\s]+/)
-    .map((value) => value.trim())
+    .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
+  // chosen is already lower-cased; dedup so an address typed again is never mailed twice.
   const to = [...new Set([...chosen, ...extra])];
   const send = useMutation({
     mutationFn: () =>
@@ -500,7 +501,10 @@ function SendDialog({ record, qcr }: { record: ProposalRecord; qcr: Qcr }) {
       open={open}
       onOpenChange={(next) => {
         if (next) {
-          setChosen(qcr.recipients.slice(0, 1).map((recipient) => recipient.email));
+          // Q3: auto-fill every contact email of the selected insured from the client master.
+          // Opening afresh each time means a different case never keeps the previous one's
+          // addresses. "Other addresses" below stays free for extra recipients.
+          setChosen([...new Set(qcr.recipients.map((recipient) => recipient.email.toLowerCase()))]);
           setOther('');
           setSendId(crypto.randomUUID());
           send.reset();
@@ -530,16 +534,17 @@ function SendDialog({ record, qcr }: { record: ProposalRecord; qcr: Qcr }) {
           ) : (
             qcr.recipients.map((recipient) => {
               const id = `qcr-to-${recipient.email}`;
+              const email = recipient.email.toLowerCase();
               return (
                 <div key={recipient.email} className="flex items-center gap-2">
                   <Checkbox
                     id={id}
-                    checked={chosen.includes(recipient.email)}
+                    checked={chosen.includes(email)}
                     onCheckedChange={(value) =>
                       setChosen((current) =>
                         value === true
-                          ? [...current, recipient.email]
-                          : current.filter((item) => item !== recipient.email),
+                          ? [...new Set([...current, email])]
+                          : current.filter((item) => item !== email),
                       )
                     }
                   />

@@ -41,6 +41,8 @@ export const queryKeys = {
     clientApproval: (id: string) => ['proposals', 'client-approval', id] as const,
     /** The placement slip of a case and the policy or cover note issued. */
     placementSlip: (id: string) => ['proposals', 'placement-slip', id] as const,
+    /** The coverage confirmation of a case (Q4). */
+    coverageConfirmation: (id: string) => ['proposals', 'coverage-confirmation', id] as const,
     /** The RFQ's edits, versions and approval (R-2, R-5). */
     rfq: (id: string) => ['proposals', 'rfq', id] as const,
     stats: (type: string) => ['proposals', 'stats', type] as const,

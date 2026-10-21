@@ -12,6 +12,7 @@ export const CASE_TABS = [
   'qcr',
   'client-approval',
   'placement-slip',
+  'coverage-confirmation',
   'activity',
 ] as const;
 export type CaseTab = (typeof CASE_TABS)[number];
@@ -24,6 +25,7 @@ export const CASE_TAB_LABELS: Record<CaseTab, string> = {
   qcr: 'QCR',
   'client-approval': 'Client approval',
   'placement-slip': 'Placement slip',
+  'coverage-confirmation': 'Coverage confirmation',
   activity: 'Activity',
 };
 
