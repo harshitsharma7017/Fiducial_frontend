@@ -20,6 +20,7 @@ const KIND_VARIANT: Record<AuditKind, React.ComponentProps<typeof Badge>['varian
   APPROVE: 'accent',
   SEND: 'default',
   EXPORT: 'default',
+  VIEW: 'outline',
 };
 
 const FILTER_BUTTON =

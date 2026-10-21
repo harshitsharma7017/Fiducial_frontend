@@ -27,6 +27,11 @@ describe('isAllowedProxyPath', () => {
     [['family-plans']],
     [['family-plans', '0123456789abcdef01234567', 'versions']],
     [['age-bands', '0123456789abcdef01234567', 'cases']],
+    // N8 to N11: TPA claims, the claims analysis and the renewal analysis.
+    [['tpa', 'imports', '0123456789abcdef01234567', 'rows']],
+    [['claims-analysis']],
+    [['claims-analysis', 'premium', '0123456789abcdef01234567']],
+    [['renewal', 'analysis', 'document']],
     [['auth', 'me']],
   ])('allows %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(true);
@@ -46,6 +51,8 @@ describe('isAllowedProxyPath', () => {
     [['ebx']],
     [['family']],
     [['eb', '..', 'auth', 'login']],
+    [['tpa', '..', 'auth', 'login']],
+    [['renewals']],
   ])('rejects %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(false);
   });

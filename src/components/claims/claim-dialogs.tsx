@@ -29,7 +29,8 @@ export function EditClaimDialog({ claim, onClose }: { claim: ClaimDetail; onClos
     dischargeDate: claim.dischargeDate,
     claimType: claim.claimType,
     amountClaimed: claim.amountClaimed,
-    contactEmail: claim.contactEmail,
+    // A claim added by a TPA import has no claimant email until staff enter one.
+    contactEmail: claim.contactEmail ?? '',
     contactPhone: claim.contactPhone ?? '',
   });
   const save = useClaimMutation(

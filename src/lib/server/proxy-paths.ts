@@ -25,6 +25,11 @@ const ALLOWED_AREAS = new Set([
   'age-bands',
   // Group health claims (staff). The employee's link uses /api/public/claim-link instead.
   'claims',
+  // TPA claims files, formats and imported claims (N9, N11).
+  'tpa',
+  // Claims analysis with premium endorsements (N10), and the renewal analysis (N8).
+  'claims-analysis',
+  'renewal',
   'health',
   'audit',
 ]);

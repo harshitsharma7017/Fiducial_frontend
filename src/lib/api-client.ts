@@ -123,12 +123,24 @@ function fileNameOf(response: Response, fallback: string): string {
  * Downloads a file through the proxy. Unlike a plain link, an API refusal (such as an incomplete
  * Data Sheet) becomes an ApiError the screen can show, instead of a saved error page.
  */
-export async function apiDownload(path: string, fallbackName: string): Promise<DownloadedFile> {
+export async function apiDownload(
+  path: string,
+  fallbackName: string,
+  /** A file made from a request body (a report from chosen years, for example). */
+  post?: { body: unknown },
+): Promise<DownloadedFile> {
   let response: Response;
   try {
     response = await fetch(`/api/proxy/${path.replace(/^\/+/, '')}`, {
       credentials: 'same-origin',
       cache: 'no-store',
+      ...(post
+        ? {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(post.body),
+          }
+        : {}),
     });
   } catch {
     throw new ApiError(
