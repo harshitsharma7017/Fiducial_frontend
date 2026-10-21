@@ -19,6 +19,9 @@ import {
   type GhiCaseRecord,
   type GhiStage,
 } from '@/shared';
+import { AgeBandsCard } from '@/components/eb/age-bands-card';
+import { PlanCard } from '@/components/eb/plan-card';
+import { TemplateDownloadDialog } from '@/components/eb/template-download-dialog';
 import { CaseActions } from './case-actions';
 import { CensusPanel } from './census-panel';
 import { FinalQcrPanel } from './final-qcr-panel';
@@ -185,7 +188,28 @@ function Loaded({ record, initialTab }: { record: GhiCaseRecord; initialTab?: st
         <TabsContent value="data-sheet" forceMount className="min-w-0 data-[state=inactive]:hidden">
           <RequirementsForm record={record} />
         </TabsContent>
-        <TabsContent value="census" className="min-w-0">
+        <TabsContent value="census" className="grid min-w-0 gap-6">
+          <PlanCard
+            caseId={record.id}
+            product="GMC"
+            plan={record.plan}
+            editable={record.stage !== 'CLOSED' && !record.locked && !record.placed}
+          />
+          <AgeBandsCard
+            caseId={record.id}
+            product="GMC"
+            selection={record.ageBands ?? null}
+            editable={
+              record.stage !== 'CLOSED' && !record.locked && !record.placed && !record.policy
+            }
+          />
+          <div>
+            <TemplateDownloadDialog
+              product="GMC"
+              caseId={record.id}
+              casePlanId={record.plan?.planId ?? null}
+            />
+          </div>
           <CensusPanel record={record} />
         </TabsContent>
         <TabsContent value="rfq" className="min-w-0">

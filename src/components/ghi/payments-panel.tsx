@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { CircleAlert, LoaderCircle, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { z } from 'zod';
 import { ErrorState, LoadingState, errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -29,15 +30,16 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { usePermission } from '@/hooks/use-permission';
 import { apiFetch } from '@/lib/api-client';
-import { ghiFileHref, ghiPaymentsQuery, issuesText, useGhiMutation } from '@/lib/api/ghi';
+import { caseApi, ghiFileHref, ghiPaymentsQuery, issuesText, useGhiMutation } from '@/lib/api/ghi';
+import { ebPaymentsQuery } from '@/lib/eb/api';
 import { todayIst } from '@/lib/dates';
 import {
   GHI_PAYMENT_MODES,
   GHI_PAYMENT_MODE_LABELS,
   GHI_PAYMENT_STATUSES,
   GHI_PAYMENT_STATUS_LABELS,
-  GhiPaymentsResponseSchema,
   formatDate,
+  type EbProduct,
   type GhiCaseRecord,
   type GhiPayment,
   type SaveGhiPaymentRequest,
@@ -47,11 +49,50 @@ import { Fact, FilePicker, inr } from './ghi-ui';
 
 const STATUS_VARIANT = { PENDING: 'warning', RECEIVED: 'success', FAILED: 'destructive' } as const;
 
-/** Premium payments against the final agreed premium (G7). */
-export function PaymentsPanel({ record }: { record: GhiCaseRecord }) {
+/** GMC answers with "settled", GPA and GTLI with "covered". */
+const PaymentsResultSchema = z
+  .object({
+    outstanding: z.string().nullable(),
+    settled: z.boolean().optional(),
+    covered: z.boolean().optional(),
+  })
+  .passthrough();
+
+/** What the payments panel needs of a case, whatever its product. */
+type PaymentCase = Pick<GhiCaseRecord, 'id' | 'stage' | 'placed'> & { product: EbProduct };
+
+/** GMC's and GPA/GTLI's payment lists, read the same way. */
+function usePayments(record: PaymentCase) {
+  const gmc = useQuery({ ...ghiPaymentsQuery(record.id), enabled: record.product === 'GMC' });
+  const eb = useQuery({
+    ...ebPaymentsQuery(record.product, record.id),
+    enabled: record.product !== 'GMC',
+  });
+  if (record.product === 'GMC') return gmc;
+  return {
+    ...eb,
+    data: eb.data
+      ? {
+          expected: eb.data.agreedPremium,
+          received: eb.data.received,
+          pending: eb.data.pending,
+          outstanding: eb.data.outstanding,
+          settled: eb.data.covered,
+          items: eb.data.items,
+        }
+      : undefined,
+  } as typeof gmc;
+}
+
+/**
+ * Premium payments against the final agreed premium (G7), or for GPA and GTLI against the agreed
+ * premium of the client's decision (Requirement 10).
+ */
+export function PaymentsPanel({ record }: { record: PaymentCase }) {
   const canEdit = usePermission('proposals.edit');
-  const payments = useQuery(ghiPaymentsQuery(record.id));
+  const payments = usePayments(record);
   const [editing, setEditing] = useState<GhiPayment | 'new' | null>(null);
+  const gmc = record.product === 'GMC';
   if (payments.isPending) return <LoadingState label="Loading payments" />;
   if (payments.isError)
     return <ErrorState error={payments.error} onRetry={() => void payments.refetch()} />;
@@ -60,9 +101,11 @@ export function PaymentsPanel({ record }: { record: GhiCaseRecord }) {
     return (
       <Alert variant="info">
         <CircleAlert aria-hidden="true" />
-        <AlertTitle>No final premium yet</AlertTitle>
+        <AlertTitle>{gmc ? 'No final premium yet' : 'No agreed premium yet'}</AlertTitle>
         <AlertDescription>
-          Record the final QCR first: payments are made against its total premium.
+          {gmc
+            ? 'Record the final QCR first: payments are made against its total premium.'
+            : 'Record the client’s acceptance of the approved QCR first: payments are made against the agreed premium.'}
         </AlertDescription>
       </Alert>
     );
@@ -93,7 +136,7 @@ export function PaymentsPanel({ record }: { record: GhiCaseRecord }) {
       </CardHeader>
       <CardContent className="grid gap-4">
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-          <Fact label="Final premium">{inr(data.expected)}</Fact>
+          <Fact label={gmc ? 'Final premium' : 'Agreed premium'}>{inr(data.expected)}</Fact>
           <Fact label="Received">{inr(data.received)}</Fact>
           <Fact label="Pending">{inr(data.pending)}</Fact>
           <Fact label="Outstanding">{inr(data.outstanding)}</Fact>
@@ -145,7 +188,7 @@ export function PaymentsPanel({ record }: { record: GhiCaseRecord }) {
                         <a
                           key={file.id}
                           className="mr-2 text-accent-strong hover:underline"
-                          href={ghiFileHref(record.id, file.id)}
+                          href={ghiFileHref(record.id, file.id, record.product)}
                         >
                           {file.fileName}
                         </a>
@@ -189,7 +232,7 @@ function PaymentDialog({
   outstanding,
   onClose,
 }: {
-  record: GhiCaseRecord;
+  record: PaymentCase;
   payment: GhiPayment | null;
   outstanding: string | null;
   onClose: () => void;
@@ -224,19 +267,20 @@ function PaymentDialog({
     () =>
       apiFetch(
         payment
-          ? `ghi/cases/${record.id}/payments/${payment.id}`
-          : `ghi/cases/${record.id}/payments`,
+          ? `${caseApi(record.product, record.id)}/payments/${payment.id}`
+          : `${caseApi(record.product, record.id)}/payments`,
         {
           method: payment ? 'PUT' : 'POST',
           body: values,
-          schema: GhiPaymentsResponseSchema,
+          schema: PaymentsResultSchema,
         },
       ),
     (result) => ({
       title: payment ? 'Payment saved' : 'Payment recorded',
-      description: result.settled
-        ? 'The premium is covered: issue the placement slip.'
-        : `Outstanding ${inr(result.outstanding)}.`,
+      description:
+        (result.settled ?? result.covered)
+          ? 'The premium is covered: issue the placement slip.'
+          : `Outstanding ${inr(result.outstanding)}.`,
     }),
   );
   return (
@@ -323,6 +367,7 @@ function PaymentDialog({
           </Field>
           <FilePicker
             caseId={record.id}
+            product={record.product}
             purpose="PAYMENT"
             label="Payment proof (optional)"
             value={values.fileIds}

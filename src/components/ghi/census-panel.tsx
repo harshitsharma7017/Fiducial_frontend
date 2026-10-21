@@ -135,9 +135,20 @@ function SummaryCard({ summary }: { summary: GhiCensusSummary }) {
             ])}
           />
           <SmallTable
-            caption="Lives by age band"
+            caption={
+              summary.ageBands
+                ? `Lives by age band (${summary.ageBands.name})`
+                : 'Lives by age band'
+            }
             head={['Age band', 'Lives']}
-            rows={summary.byAgeBand.map((band) => [band.label, String(band.lives)])}
+            rows={[
+              ...summary.byAgeBand.map((band) => [band.label, String(band.lives)]),
+              // N4: members a chosen set does not cover are counted, never put in a band.
+              ...(summary.outsideAgeBands
+                ? [['Outside the age bands', String(summary.outsideAgeBands)]]
+                : []),
+              ...(summary.ageUnknown ? [['Age unknown', String(summary.ageUnknown)]] : []),
+            ]}
           />
           <SmallTable
             caption="Sum insured"

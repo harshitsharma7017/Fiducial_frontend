@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { CircleAlert, LoaderCircle, Mail, Send, Users } from 'lucide-react';
 import { useState } from 'react';
+import { z } from 'zod';
 import { ErrorState, LoadingState, errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -31,18 +32,22 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { usePermission } from '@/hooks/use-permission';
 import { apiFetch } from '@/lib/api-client';
-import { issuesText, useGhiMutation } from '@/lib/api/ghi';
 import {
-  DispatchGhiRfqResponseSchema,
+  AnyRecordSchema,
+  caseApi,
+  issuesText,
+  useGhiMutation,
+  type WorkflowCase,
+} from '@/lib/api/ghi';
+import {
+  GhiSendOutcomeSchema,
   GHI_INSURER_STATUS_LABELS,
-  GhiCaseRecordSchema,
   InsurerListResponseSchema,
   MAX_GHI_INSURERS,
   formatDate,
   formatDateTime,
   type DispatchGhiRfqResponse,
   type GhiCaseInsurer,
-  type GhiCaseRecord,
   type GhiDispatch,
   type GhiRfqState,
 } from '@/shared';
@@ -56,7 +61,7 @@ const STATUS_VARIANT = {
 } as const;
 
 /** The insurers on the case (up to five), where each stands, and sending the approved RFQ. */
-export function RfqInsurers({ record, state }: { record: GhiCaseRecord; state: GhiRfqState }) {
+export function RfqInsurers({ record, state }: { record: WorkflowCase; state: GhiRfqState }) {
   const canEdit = usePermission('proposals.edit');
   const canSend = usePermission('proposals.send');
   const [dialog, setDialog] = useState<'choose' | 'send' | 'outside' | null>(null);
@@ -258,7 +263,7 @@ function SendResults({ results }: { results: DispatchGhiRfqResponse['results'] }
   );
 }
 
-function ChooseInsurers({ record, onClose }: { record: GhiCaseRecord; onClose: () => void }) {
+function ChooseInsurers({ record, onClose }: { record: WorkflowCase; onClose: () => void }) {
   const [chosen, setChosen] = useState<string[]>(
     record.insurers.map((insurer) => insurer.insurerId),
   );
@@ -270,10 +275,10 @@ function ChooseInsurers({ record, onClose }: { record: GhiCaseRecord; onClose: (
   const save = useGhiMutation(
     record.id,
     () =>
-      apiFetch(`ghi/cases/${record.id}/insurers`, {
+      apiFetch(`${caseApi(record.product, record.id)}/insurers`, {
         method: 'PUT',
         body: { insurerIds: chosen },
-        schema: GhiCaseRecordSchema,
+        schema: AnyRecordSchema,
       }),
     () => ({ title: 'Insurers saved' }),
   );
@@ -353,7 +358,7 @@ function SendRfq({
   mode,
   onClose,
 }: {
-  record: GhiCaseRecord;
+  record: WorkflowCase;
   mode: 'email' | 'outside';
   onClose: (results: DispatchGhiRfqResponse['results'] | null) => void;
 }) {
@@ -370,15 +375,15 @@ function SendRfq({
     record.id,
     () =>
       mode === 'email'
-        ? apiFetch(`ghi/cases/${record.id}/rfq/email`, {
+        ? apiFetch(`${caseApi(record.product, record.id)}/rfq/email`, {
             method: 'POST',
             body: { sendId, insurerIds: chosen, dueDate, format },
-            schema: DispatchGhiRfqResponseSchema,
+            schema: z.object({ results: z.array(GhiSendOutcomeSchema) }).passthrough(),
           }).then((response) => response.results)
-        : apiFetch(`ghi/cases/${record.id}/rfq/sent`, {
+        : apiFetch(`${caseApi(record.product, record.id)}/rfq/sent`, {
             method: 'POST',
             body: { insurerIds: chosen, dueDate },
-            schema: GhiCaseRecordSchema,
+            schema: AnyRecordSchema,
           }).then(() => null),
     (results) => (results ? null : { title: 'RFQ marked as sent' }),
   );
@@ -466,7 +471,7 @@ function DeclineDialog({
   insurer,
   onClose,
 }: {
-  record: GhiCaseRecord;
+  record: WorkflowCase;
   insurer: GhiCaseInsurer;
   onClose: () => void;
 }) {
@@ -474,10 +479,10 @@ function DeclineDialog({
   const decline = useGhiMutation(
     record.id,
     () =>
-      apiFetch(`ghi/cases/${record.id}/insurers/${insurer.insurerId}/decline`, {
+      apiFetch(`${caseApi(record.product, record.id)}/insurers/${insurer.insurerId}/decline`, {
         method: 'POST',
         body: { reason },
-        schema: GhiCaseRecordSchema,
+        schema: AnyRecordSchema,
       }),
     () => ({ title: 'Decline recorded' }),
   );

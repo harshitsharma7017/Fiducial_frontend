@@ -22,6 +22,11 @@ describe('isAllowedProxyPath', () => {
     [['ghi', 'cases']],
     [['claims', 'board']],
     [['ghi', 'cases', '0123456789abcdef01234567', 'census', 'imports']],
+    [['eb', 'cases']],
+    [['eb', 'gpa', 'cases', '0123456789abcdef01234567', 'rfq']],
+    [['family-plans']],
+    [['family-plans', '0123456789abcdef01234567', 'versions']],
+    [['age-bands', '0123456789abcdef01234567', 'cases']],
     [['auth', 'me']],
   ])('allows %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(true);
@@ -38,6 +43,9 @@ describe('isAllowedProxyPath', () => {
     [['clients', '']],
     [['ghi', '..', 'auth', 'login']],
     [['claim-links', 'current']],
+    [['ebx']],
+    [['family']],
+    [['eb', '..', 'auth', 'login']],
   ])('rejects %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(false);
   });

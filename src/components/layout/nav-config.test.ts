@@ -5,10 +5,14 @@ import { NAV_GROUPS, isOpenToEveryRole, pagePermission, visibleGroups } from './
 const labels = (roles: readonly Role[] | undefined) =>
   visibleGroups(roles).flatMap((group) => group.items.map((item) => item.label));
 
+// Requirement 2.1 changes the navigation: Group Health becomes GMC under Employee Benefits,
+// beside GPA and GTLI, and the Masters gain Family plans (N2) and Age bands (N4).
 const PROPOSALS_AND_MASTERS = [
   'Dashboard',
   'Proposals',
-  'Group Health',
+  'GMC (Group Health)',
+  'GPA (Personal Accident)',
+  'GTLI (Term Life)',
   'RFQ',
   'Quotes and QCR',
   'Placement Slips',
@@ -27,10 +31,12 @@ const MASTERS = [
   'Document templates',
   'Email templates',
   'Clauses',
+  'Family plans',
+  'Age bands',
 ];
-// Claims follow Group Health for every role but Read-only (claims hold medical information).
+// Claims follow Proposals for every role but Read-only (claims hold medical information).
 const WITH_CLAIMS = PROPOSALS_AND_MASTERS.toSpliced(
-  PROPOSALS_AND_MASTERS.indexOf('Group Health') + 1,
+  PROPOSALS_AND_MASTERS.indexOf('Proposals') + 1,
   0,
   'Claims',
 );
@@ -58,6 +64,7 @@ describe('visibleGroups', () => {
   it('drops a group with nothing left to show', () => {
     expect(visibleGroups(['READ_ONLY']).map((group) => group.title)).toEqual([
       'Overview',
+      'Employee Benefits',
       'Workflow',
       'Masters',
     ]);
@@ -81,6 +88,11 @@ describe('pagePermission', () => {
     ['/ghi', 'proposals.view'],
     ['/ghi/0123456789abcdef01234567', 'proposals.view'],
     ['/ghi/new', 'proposals.create'],
+    ['/eb/gpa', 'proposals.view'],
+    ['/eb/gtli/0123456789abcdef01234567', 'proposals.view'],
+    ['/masters/family-plans', 'masters.view'],
+    ['/masters/family-plans/0123456789abcdef01234567', 'masters.view'],
+    ['/masters/age-bands', 'masters.view'],
     ['/claims', 'claims.view'],
     ['/claims/0123456789abcdef01234567', 'claims.view'],
     ['/claims/new', 'claims.process'],

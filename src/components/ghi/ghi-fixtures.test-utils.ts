@@ -16,6 +16,7 @@ export function ghiCase(overrides: Partial<GhiCaseRecord> = {}): GhiCaseRecord {
   const requirements = emptyGhiRequirements();
   return {
     id: CASE_ID,
+    product: 'GMC',
     reference: 'GHI-2026-0001',
     type: 'NEW',
     stage: 'DATA_SHEET',
@@ -47,6 +48,7 @@ export function ghiCase(overrides: Partial<GhiCaseRecord> = {}): GhiCaseRecord {
     insurers: [],
     finalQcr: null,
     policy: null,
+    plan: null,
     nextStep: null,
     activity: [],
     createdAt: '2026-10-01T05:00:00.000Z',

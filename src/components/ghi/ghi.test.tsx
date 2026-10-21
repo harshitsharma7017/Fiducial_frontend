@@ -7,7 +7,7 @@ import { json, urlOf } from '@/components/proposals/rfq/rfq-fixtures.test-utils'
 import type { Role } from '@/shared';
 import { CensusImport } from './census-import';
 import { CASE_ID, censusImport, ghiCase, qcr } from './ghi-fixtures.test-utils';
-import { LineOfBusinessSwitch } from './line-of-business';
+import { LineOfBusinessChoice } from './line-of-business';
 import { QcrTable } from './qcr-table';
 import { RequirementsForm } from './requirements-form';
 
@@ -34,18 +34,19 @@ beforeEach(() => {
   roles.current = ['ACCOUNT_MANAGER'];
 });
 
-describe('LineOfBusinessSwitch', () => {
-  it('offers Property and Group Health, marking the current line', () => {
-    render(<LineOfBusinessSwitch current="PROPERTY" />);
-    const nav = screen.getByRole('navigation', { name: 'Line of business' });
-    expect(within(nav).getByRole('link', { name: /Property/ })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    expect(within(nav).getByRole('link', { name: /Group Health/ })).toHaveAttribute(
-      'href',
-      '/ghi/new',
-    );
+// Requirement 1.1 changes this choice: Property or Employee Benefits, neither chosen at first
+// (it was a Property / Group Health switch with Property marked).
+describe('LineOfBusinessChoice', () => {
+  it('offers Property and Employee Benefits with neither chosen', async () => {
+    const onChange = vi.fn();
+    render(<LineOfBusinessChoice value={null} onChange={onChange} />);
+    const group = screen.getByRole('group', { name: 'Line of business' });
+    const property = within(group).getByRole('radio', { name: /Property/ });
+    const benefits = within(group).getByRole('radio', { name: /Employee Benefits/ });
+    expect(property).not.toBeChecked();
+    expect(benefits).not.toBeChecked();
+    await userEvent.click(benefits);
+    expect(onChange).toHaveBeenCalledWith('EB');
   });
 });
 

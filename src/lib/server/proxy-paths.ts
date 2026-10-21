@@ -17,6 +17,12 @@ const ALLOWED_AREAS = new Set([
   'placement-slips',
   // Group health (GHI) cases and their census, RFQ, quotes, QCR, payments and placement.
   'ghi',
+  // Employee Benefits: GPA and GTLI cases, cases of every product, templates, company employees.
+  'eb',
+  // The Family Plan Master.
+  'family-plans',
+  // The Age Band Master (N4).
+  'age-bands',
   // Group health claims (staff). The employee's link uses /api/public/claim-link instead.
   'claims',
   'health',

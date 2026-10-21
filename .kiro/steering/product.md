@@ -109,7 +109,22 @@ Built (claims, C1 to C4): Claims in the navigation (`/claims` board and table, `
 `/claims/links`, `/claims/settings`; `components/claims/`) and the employee's public page `/claim#t=<token>` (BFF
 `/api/public/claim-link`). Drag-and-drop is native HTML5 with a keyboard "Move to" button on each card.
 
-Not built yet: GHI endorsements; further claim statuses.
+Built (Employee Benefits, N1 to N3): an Employee Benefits group in the navigation with GMC (Group Health) `/ghi`,
+GPA (Personal Accident) `/eb/gpa` and GTLI (Term Life) `/eb/gtli` (`/eb/{product}/{id}`; `components/eb/`). New
+proposal asks Property or Employee Benefits, then the product (none chosen at first). GPA and GTLI cases have their
+Data Sheets, plan card, census (template download, import with mode, policy, row corrections and error report;
+members by hand), RFQ, quotes, QCR with approval, the client's decision, payments and the placement slip. The Family
+Plan Master (`/masters/family-plans`; `components/family-plans/`) edits versioned plans with every rule checked as
+the user types; the seven default plans and each unconfirmed version show "Awaiting client confirmation". A
+company's page shows its employees across GMC, GPA and GTLI (update, resolve) and its default plan per product
+(`components/clients/`). The seven census templates are provisional and say so beside every download.
+
+Built (N4 to N7): Masters → Age bands (`/masters/age-bands`; `components/age-bands/`); the case's Age bands card;
+GPA cover rules by relationship (with the client's example as sample values) and nominees on the Data Sheet and
+members; GTLI monthly salary and sum assured breakdown; the RFQ selection summary card with Excel and PDF on the RFQ
+tab of every product (`components/eb/selection-summary-card.tsx`).
+
+Not built yet: GHI endorsements; further claim statuses; GPA and GTLI endorsements and claims.
 
 ## Rules
 

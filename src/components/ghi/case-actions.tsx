@@ -20,16 +20,33 @@ import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { apiFetch } from '@/lib/api-client';
-import { issuesText, useGhiMutation } from '@/lib/api/ghi';
+import { AnyRecordSchema, caseApi, issuesText, useGhiMutation } from '@/lib/api/ghi';
 import {
-  GhiCaseRecordSchema,
   ProposalOwnersResponseSchema,
   type GhiCaseRecord,
+  type EbProduct,
   type UpdateGhiCaseRequest,
 } from '@/shared';
 
 /** The case's own controls: its details (dates, staff, expiring policy) and closing it. */
-export function CaseActions({ record }: { record: GhiCaseRecord }) {
+/** What the case actions need, whatever the product (GPA and GTLI use them too). */
+type ActionCase = Pick<
+  GhiCaseRecord,
+  | 'id'
+  | 'reference'
+  | 'type'
+  | 'stage'
+  | 'placed'
+  | 'locked'
+  | 'owner'
+  | 'policyStart'
+  | 'policyEnd'
+  | 'dueDate'
+  | 'existingInsurer'
+  | 'existingPolicyNumber'
+> & { product: EbProduct };
+
+export function CaseActions({ record }: { record: ActionCase }) {
   if (record.stage === 'CLOSED') return null;
   return (
     <div className="flex flex-wrap gap-2">
@@ -39,7 +56,7 @@ export function CaseActions({ record }: { record: GhiCaseRecord }) {
   );
 }
 
-function EditDetails({ record }: { record: GhiCaseRecord }) {
+function EditDetails({ record }: { record: ActionCase }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<UpdateGhiCaseRequest>(() => detailsOf(record));
   const owners = useQuery({
@@ -51,7 +68,11 @@ function EditDetails({ record }: { record: GhiCaseRecord }) {
   const save = useGhiMutation(
     record.id,
     (body: UpdateGhiCaseRequest) =>
-      apiFetch(`ghi/cases/${record.id}`, { method: 'PUT', body, schema: GhiCaseRecordSchema }),
+      apiFetch(`${caseApi(record.product, record.id)}`, {
+        method: 'PUT',
+        body,
+        schema: AnyRecordSchema,
+      }),
     () => ({ title: 'Case details saved' }),
   );
   const set = (patch: Partial<UpdateGhiCaseRequest>) =>
@@ -163,7 +184,7 @@ function EditDetails({ record }: { record: GhiCaseRecord }) {
   );
 }
 
-function detailsOf(record: GhiCaseRecord): UpdateGhiCaseRequest {
+function detailsOf(record: ActionCase): UpdateGhiCaseRequest {
   return {
     ownerId: record.owner.id,
     policyStart: record.policyStart ?? '',
@@ -174,16 +195,16 @@ function detailsOf(record: GhiCaseRecord): UpdateGhiCaseRequest {
   };
 }
 
-function CloseCase({ record }: { record: GhiCaseRecord }) {
+function CloseCase({ record }: { record: ActionCase }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
   const close = useGhiMutation(
     record.id,
     (text: string) =>
-      apiFetch(`ghi/cases/${record.id}/close`, {
+      apiFetch(`${caseApi(record.product, record.id)}/close`, {
         method: 'POST',
         body: { reason: text },
-        schema: GhiCaseRecordSchema,
+        schema: AnyRecordSchema,
       }),
     () => ({ title: 'Case closed' }),
   );

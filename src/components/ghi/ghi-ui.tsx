@@ -26,6 +26,7 @@ import {
   QUOTE_ATTACHMENT_TYPES,
   formatIndianNumber,
   ghiStageLabel,
+  type EbProduct,
   type GhiCaseType,
   type GhiFilePurpose,
   type GhiStage,
@@ -80,13 +81,16 @@ export function GhiStageStepper({
   type,
   placed,
   onSelect,
+  stages = GHI_STAGES,
 }: {
   stage: GhiStage;
   type: GhiCaseType;
   placed: boolean;
   onSelect: (stage: GhiStage) => void;
+  /** The product's stages in order (GPA and GTLI have no Final QCR). */
+  stages?: readonly GhiStage[];
 }) {
-  const steps = GHI_STAGES.filter((value) => value !== 'CLOSED');
+  const steps = stages.filter((value) => value !== 'CLOSED');
   const current = stage === 'CLOSED' ? -1 : steps.indexOf(stage);
   return (
     <nav aria-label="Stages">
@@ -179,6 +183,7 @@ const ACCEPT = [
  */
 export function FilePicker({
   caseId,
+  product = 'GMC',
   purpose,
   label,
   value,
@@ -187,6 +192,8 @@ export function FilePicker({
   disabled = false,
 }: {
   caseId: string;
+  /** The case's product: GPA and GTLI files are under /eb/{product}. */
+  product?: EbProduct;
   purpose: GhiFilePurpose;
   label: string;
   value: string[];
@@ -194,11 +201,11 @@ export function FilePicker({
   error?: string;
   disabled?: boolean;
 }) {
-  const files = useQuery(ghiFilesQuery(caseId));
+  const files = useQuery(ghiFilesQuery(caseId, product));
   const input = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const upload = useMutation({
-    mutationFn: (file: File) => uploadGhiFile(caseId, purpose, file),
+    mutationFn: (file: File) => uploadGhiFile(caseId, purpose, file, product),
     onSuccess: (saved) => {
       void files.refetch();
       onChange([...value, saved.id]);
@@ -229,7 +236,7 @@ export function FilePicker({
               </Label>
               <a
                 className="text-xs text-accent-strong hover:underline"
-                href={ghiFileHref(caseId, file.id)}
+                href={ghiFileHref(caseId, file.id, product)}
               >
                 Open
               </a>

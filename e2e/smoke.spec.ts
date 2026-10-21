@@ -41,3 +41,42 @@ test('signs in as the demo admin and shows the dashboard in light and dark', asy
 
   expect(pageErrors).toEqual([]);
 });
+
+// N1: the GPA list opens from the Employee Benefits group; in demo mode it reads no live data.
+test('opens the GPA cases page from Employee Benefits in demo mode', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  await page.goto('/login');
+  await page.getByLabel('Email').fill(ADMIN.email);
+  await page.getByLabel('Password', { exact: true }).fill(ADMIN.password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  const nav = page.getByRole('navigation', { name: 'Main' });
+  await nav.getByRole('link', { name: 'GPA (Personal Accident)' }).click();
+  await expect(page).toHaveURL(/\/eb\/gpa$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByText('Not available in demo mode')).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
+
+// N4: the Age Band Master opens from Masters; in demo mode it reads no live data.
+test('opens Masters → Age bands in demo mode', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  await page.goto('/login');
+  await page.getByLabel('Email').fill(ADMIN.email);
+  await page.getByLabel('Password', { exact: true }).fill(ADMIN.password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  await page.goto('/masters/age-bands');
+  await expect(page.getByText('Not available in demo mode')).toBeVisible();
+  const nav = page.getByRole('navigation', { name: 'Main' });
+  await expect(nav.getByRole('link', { name: 'Age bands' })).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});

@@ -7,7 +7,9 @@ src/
     (auth)/                     login and forgot-password with a shared two-column layout
     (app)/                      signed-in pages inside the app shell: dashboard, proposals (list, new, [id]), rfq,
                                 masters/occupancy, masters/pincodes, masters/clients (list, [id]),
-                                masters/insurers, masters/import, masters/templates, rating/fire, users, audit, ghi,
+                                masters/insurers, masters/import, masters/templates, masters/family-plans (list, [id]),
+                                masters/age-bands,
+                                rating/fire, users, audit, ghi, eb/[product] (list, [id]),
                                 settings, profile
     api/auth/login, logout      BFF: sets and clears the httpOnly session cookie
     api/proxy/[...path]         BFF: forwards allowlisted calls to the API with the bearer token
@@ -25,8 +27,16 @@ src/
                                 new claim form, submission links, template editor and HR contacts, public page
     ghi/                        group health: workspace and tabs (Data Sheet, census and import, RFQ, quotes, QCR,
                                 final QCR, payments, placement), line-of-business switch, new case form
+    eb/                         GPA and GTLI: workspace and tabs (Data Sheet, census and import, RFQ, quotes, QCR,
+                                client decision, payments, placement), product choice and new case chooser, plan
+                                card and assign dialog, template download, member dialog, awaiting-confirmation notes
+                                N4 to N7: age bands card, relationship rules editor, selection summary card
+    age-bands/                  Age Band Master: set editor sheet (rules from the shared schema)
+    family-plans/               Family Plan Master: version editor (rules from the shared schema), new plan sheet,
+                                version card (activate, end date, client confirmation)
     audit/                      audit log toolbar and entry row
-    clients/                    client form sheet, address fieldset, details card, locations card and dialog
+    clients/                    client form sheet, address fieldset, details card, locations card and dialog,
+                                employees card and dialog (shared identity), default plans card
     insurers/                   insurer form sheet, RFQ emails field, activate / deactivate dialog
     imports/                    import panel (record type, template, file drop), record preview table, IIB master
                                 result (report, save, activate), record types, upload hooks
@@ -43,6 +53,8 @@ src/
     api/                        proposal and notification data layer and its TanStack Query hooks;
                                 new-business.ts reads proposals from the API and maps them onto the screen model
     data/                       sample data (imported only by lib/api and tests)
+    eb/                         Employee Benefits queries (cases, census, quotes, plans, company employees) and the
+                                fast-check property tests of the shared EB modules (*.property.test.ts)
     form-errors.ts              puts the API's field errors (and codes such as GSTIN_TAKEN) on form fields
     client-query.ts             one client's query (key and fetch), shared by its page and breadcrumb
     audit-display.ts            audit filters in the URL, field labels and value formatting

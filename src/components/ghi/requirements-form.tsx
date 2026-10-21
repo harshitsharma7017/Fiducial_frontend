@@ -191,7 +191,9 @@ export function RequirementsForm({ record }: { record: GhiCaseRecord }) {
         <CardHeader>
           <CardTitle>Family definition and sum insured</CardTitle>
           <CardDescription>
-            Self, spouse, up to three children, and either parents or parents-in-law.
+            {record.plan
+              ? `The family definition is taken from the plan ${record.plan.name} v${record.plan.versionNumber} (Plan and census tab); the family fields here do not apply while it is assigned.`
+              : 'Self, spouse, up to three children, and either parents or parents-in-law.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">

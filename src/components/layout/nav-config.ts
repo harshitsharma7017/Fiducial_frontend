@@ -22,8 +22,12 @@ import {
   ScrollText,
   Send,
   Settings,
+  ShieldPlus,
+  Umbrella,
   UserCog,
+  UsersRound,
   type LucideIcon,
+  ChartBarStacked,
 } from 'lucide-react';
 import { ROLES, can, type Permission, type Role } from '@/shared';
 
@@ -62,10 +66,22 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       },
       // One entry for every proposal; the page switches between new and existing (renewals).
       { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'proposals.view' },
-      // Group health insurance: its own cases, beside Property's proposals.
-      { label: 'Group Health', href: '/ghi', icon: HeartPulse, permission: 'proposals.view' },
       // Group health claims; hidden from Read-only users (medical information).
       { label: 'Claims', href: '/claims', icon: Stethoscope, permission: 'claims.view' },
+    ],
+  },
+  {
+    // Employee Benefits (N1): one entry per product, beside Property's proposals.
+    title: 'Employee Benefits',
+    items: [
+      { label: 'GMC (Group Health)', href: '/ghi', icon: HeartPulse, permission: 'proposals.view' },
+      {
+        label: 'GPA (Personal Accident)',
+        href: '/eb/gpa',
+        icon: ShieldPlus,
+        permission: 'proposals.view',
+      },
+      { label: 'GTLI (Term Life)', href: '/eb/gtli', icon: Umbrella, permission: 'proposals.view' },
     ],
   },
   {
@@ -149,6 +165,19 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'clients.manage',
       },
       { label: 'Clauses', href: '/masters/clauses', icon: ScrollText, permission: 'masters.view' },
+      // The Family Plan Master (N2).
+      {
+        label: 'Family plans',
+        href: '/masters/family-plans',
+        icon: UsersRound,
+        permission: 'masters.view',
+      },
+      {
+        label: 'Age bands',
+        href: '/masters/age-bands',
+        icon: ChartBarStacked,
+        permission: 'masters.view',
+      },
     ],
   },
   {

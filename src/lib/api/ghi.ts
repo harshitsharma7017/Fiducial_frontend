@@ -20,6 +20,9 @@ import {
   GhiQcrListResponseSchema,
   GhiQuoteListResponseSchema,
   GhiRfqStateSchema,
+  EB_PRODUCT_SLUGS,
+  type EbProduct,
+  type GhiCaseInsurer,
   type GhiCaseType,
   type GhiFilePurpose,
   type GhiRelationship,
@@ -42,6 +45,28 @@ export interface GhiListFilters {
   type: GhiCaseType | '';
   page: number;
 }
+
+/**
+ * The API path of a case of any product: GMC cases are under /ghi, GPA and GTLI under
+ * /eb/{product}; the workflow paths below a case are the same for every product.
+ */
+export function caseApi(product: EbProduct, id: string): string {
+  return product === 'GMC' ? `ghi/cases/${id}` : `eb/${EB_PRODUCT_SLUGS[product]}/cases/${id}`;
+}
+
+/** What the shared RFQ and insurer panels need of a case, whatever its product. */
+export interface WorkflowCase {
+  id: string;
+  product: EbProduct;
+  stage: GhiStage;
+  dueDate: string;
+  locked: boolean;
+  placed: boolean;
+  insurers: GhiCaseInsurer[];
+}
+
+/** A response the panel only needs to succeed (the case is read again afterwards). */
+export const AnyRecordSchema = z.object({ id: z.string() }).passthrough();
 
 export function ghiCasesQuery(filters: GhiListFilters) {
   const params = new URLSearchParams({ page: String(filters.page), limit: '20' });
@@ -81,14 +106,29 @@ export const ghiImportsQuery = (id: string) =>
   part(id, 'census/imports', GhiImportListResponseSchema);
 export const ghiImportQuery = (id: string, importId: string) =>
   part(id, `census/imports/${importId}`, GhiCensusImportSchema);
-export const ghiRfqQuery = (id: string) => part(id, 'rfq', GhiRfqStateSchema);
-export const ghiRfqPreviewQuery = (id: string) => part(id, 'rfq/preview', GhiDocumentPreviewSchema);
+export const ghiRfqQuery = (id: string, product: EbProduct = 'GMC') =>
+  queryOptions({
+    queryKey: ghiKeys.part(id, 'rfq'),
+    queryFn: ({ signal }) =>
+      apiFetch(`${caseApi(product, id)}/rfq`, { schema: GhiRfqStateSchema, signal }),
+  });
+export const ghiRfqPreviewQuery = (id: string, product: EbProduct = 'GMC') =>
+  queryOptions({
+    queryKey: ghiKeys.part(id, 'rfq/preview'),
+    queryFn: ({ signal }) =>
+      apiFetch(`${caseApi(product, id)}/rfq/preview`, { schema: GhiDocumentPreviewSchema, signal }),
+  });
 export const ghiQuotesQuery = (id: string) => part(id, 'quotes', GhiQuoteListResponseSchema);
 export const ghiQcrsQuery = (id: string) => part(id, 'qcrs', GhiQcrListResponseSchema);
 export const ghiFinalQuery = (id: string) => part(id, 'final-qcr', GhiFinalQcrStateSchema);
 export const ghiPaymentsQuery = (id: string) => part(id, 'payments', GhiPaymentsResponseSchema);
 export const ghiPlacementQuery = (id: string) => part(id, 'placement', GhiPlacementStateSchema);
-export const ghiFilesQuery = (id: string) => part(id, 'files', GhiFileListResponseSchema);
+export const ghiFilesQuery = (id: string, product: EbProduct = 'GMC') =>
+  queryOptions({
+    queryKey: ghiKeys.part(id, 'files'),
+    queryFn: ({ signal }) =>
+      apiFetch(`${caseApi(product, id)}/files`, { schema: GhiFileListResponseSchema, signal }),
+  });
 
 export function ghiMembersQuery(
   id: string,
@@ -111,6 +151,8 @@ export function ghiMembersQuery(
 export function refreshGhiCase(queryClient: QueryClient, id: string): void {
   void queryClient.invalidateQueries({ queryKey: ghiKeys.case(id) });
   void queryClient.invalidateQueries({ queryKey: ['ghi', 'list'] });
+  // Employee Benefits lists (GPA, GTLI and every product).
+  void queryClient.invalidateQueries({ queryKey: ['eb'] });
 }
 
 /**
@@ -134,16 +176,21 @@ export function useGhiMutation<TInput, TResult>(
 }
 
 /** Uploads a file to the case for a purpose; the API checks its kind. */
-export function uploadGhiFile(caseId: string, purpose: GhiFilePurpose, file: File) {
+export function uploadGhiFile(
+  caseId: string,
+  purpose: GhiFilePurpose,
+  file: File,
+  product: EbProduct = 'GMC',
+) {
   return apiFetch(
-    `ghi/cases/${caseId}/files?purpose=${purpose}&fileName=${encodeURIComponent(file.name)}`,
+    `${caseApi(product, caseId)}/files?purpose=${purpose}&fileName=${encodeURIComponent(file.name)}`,
     { method: 'POST', body: file, schema: GhiFileSchema },
   );
 }
 
 /** A case file's download link through the proxy. */
-export const ghiFileHref = (caseId: string, fileId: string) =>
-  `/api/proxy/ghi/cases/${caseId}/files/${fileId}`;
+export const ghiFileHref = (caseId: string, fileId: string, product: EbProduct = 'GMC') =>
+  `/api/proxy/${caseApi(product, caseId)}/files/${fileId}`;
 
 /** The API's field problems, joined, for an alert. */
 export function issuesText(error: unknown): string | null {

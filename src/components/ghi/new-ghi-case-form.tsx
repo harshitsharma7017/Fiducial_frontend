@@ -35,8 +35,11 @@ import {
   ClientListResponseSchema,
   CreateGhiCaseRequestSchema,
   GHI_CASE_TYPE_LABELS,
+  EbCaseCreatedSchema,
   GhiCaseRecordSchema,
   ProposalOwnersResponseSchema,
+  ebCasePath,
+  type EbProduct,
   type Client,
   type CreateGhiCaseFormValues,
   type CreateGhiCaseRequest,
@@ -52,8 +55,11 @@ const TYPES: Array<{ value: GhiCaseType; hint: string }> = [
   { value: 'RENEWAL', hint: 'The group’s expiring policy is renewed; give its insurer.' },
 ];
 
-/** Creates a group health case (G1): new business or renewal, the company, period and staff. */
-export function NewGhiCaseForm() {
+/**
+ * Creates a case of an Employee Benefits product (G1, Requirement 1.4): new business or renewal,
+ * the company, period and staff. GMC posts to /ghi as before; GPA and GTLI to /eb/cases.
+ */
+export function NewGhiCaseForm({ product = 'GMC' }: { product?: EbProduct }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const me = useCurrentUser();
@@ -83,15 +89,22 @@ export function NewGhiCaseForm() {
   });
   const create = useMutation({
     mutationFn: (body: CreateGhiCaseRequest) =>
-      apiFetch('ghi/cases', { method: 'POST', body, schema: GhiCaseRecordSchema }),
+      product === 'GMC'
+        ? apiFetch('ghi/cases', { method: 'POST', body, schema: GhiCaseRecordSchema })
+        : apiFetch('eb/cases', {
+            method: 'POST',
+            body: { ...body, product },
+            schema: EbCaseCreatedSchema,
+          }),
     onSuccess: (record) => {
       void queryClient.invalidateQueries({ queryKey: ghiKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ['eb'] });
       toast({
-        title: 'Group health case created',
+        title: `${product === 'GMC' ? 'Group health' : product} case created`,
         description: record.reference,
         variant: 'success',
       });
-      router.push(`/ghi/${record.id}`);
+      router.push(ebCasePath(product, record.id));
     },
     onError: (error) => {
       if (!applyServerFieldErrors(error, form.setError)) setGeneralError(error);
