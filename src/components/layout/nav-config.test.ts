@@ -40,15 +40,18 @@ const WITH_CLAIMS = PROPOSALS_AND_MASTERS.toSpliced(
   0,
   'Claims',
 );
-const WORKING_ROLE = [...WITH_CLAIMS, ...MASTERS];
-const VIEW_ONLY = [...PROPOSALS_AND_MASTERS, ...MASTERS];
+// N8 and N10 add Reports after Workflow: the claims analysis (claims.view, so not for Read-only
+// users) and the renewal analysis (proposals.view).
+const REPORTS = ['Claims analysis', 'Renewal analysis'];
+const WORKING_ROLE = [...WITH_CLAIMS, ...REPORTS, ...MASTERS];
+const VIEW_ONLY = [...PROPOSALS_AND_MASTERS, 'Renewal analysis', ...MASTERS];
 // Import data needs clients.manage: Admins and Relationship Managers.
 const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
   MASTERS.indexOf('Email templates') + 1,
   0,
   'Import data',
 );
-const CLIENT_OWNER = [...WITH_CLAIMS, ...MASTERS_WITH_IMPORT];
+const CLIENT_OWNER = [...WITH_CLAIMS, ...REPORTS, ...MASTERS_WITH_IMPORT];
 
 describe('visibleGroups', () => {
   it.each<[Role, string[]]>([
@@ -66,6 +69,7 @@ describe('visibleGroups', () => {
       'Overview',
       'Employee Benefits',
       'Workflow',
+      'Reports',
       'Masters',
     ]);
   });
@@ -98,6 +102,11 @@ describe('pagePermission', () => {
     ['/claims/new', 'claims.process'],
     ['/claims/links', 'claims.process'],
     ['/claims/settings', 'claims.admin'],
+    ['/claims/tpa', 'claims.view'],
+    ['/claims/tpa/import', 'claims.process'],
+    ['/claims/tpa/formats', 'claims.admin'],
+    ['/claims-analysis', 'claims.view'],
+    ['/renewal', 'proposals.view'],
     ['/rfq', 'proposals.view'],
     ['/masters/occupancy', 'masters.view'],
     ['/masters/clients', 'clients.view'],

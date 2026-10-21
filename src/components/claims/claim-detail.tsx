@@ -150,9 +150,31 @@ function Loaded({ claim }: { claim: ClaimDetail }) {
                 </Fact>
                 <Fact label="Status">{CLAIM_STATUS_LABELS[claim.status]}</Fact>
                 <Fact label="Contact">
-                  {claim.contactEmail}
+                  {claim.contactEmail ?? (
+                    <span className="text-muted-foreground">No email (added by a TPA import)</span>
+                  )}
                   {claim.contactPhone ? <span className="block">{claim.contactPhone}</span> : null}
                 </Fact>
+                {claim.settlement ? (
+                  <Fact label="Settlement (from the TPA)">
+                    {claim.settlement.state === 'SETTLED'
+                      ? `Settled${claim.settlement.amount ? `, ${inr(claim.settlement.amount)}` : ''}${claim.settlement.date ? ` on ${formatDate(claim.settlement.date)}` : ''}`
+                      : 'Not settled'}
+                    <span className="block text-xs text-muted-foreground">
+                      TPA status “{claim.settlement.tpaStatus}”
+                    </span>
+                  </Fact>
+                ) : null}
+                {claim.tpa ? (
+                  <Fact label="TPA record">
+                    <Link className="text-accent-strong hover:underline" href="/claims/tpa">
+                      {claim.tpa.tpaCode} {claim.tpa.tpaClaimId}
+                    </Link>
+                    <span className="block text-xs text-muted-foreground">
+                      Last imported {formatDateTime(claim.tpa.importedAt)}
+                    </span>
+                  </Fact>
+                ) : null}
                 <Fact label="Made">
                   {formatDateTime(claim.createdAt)} by {claim.createdBy}
                 </Fact>

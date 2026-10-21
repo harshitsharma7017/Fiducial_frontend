@@ -1,6 +1,6 @@
 'use client';
 
-import { Link2, Plus, Search, Settings } from 'lucide-react';
+import { FileSpreadsheet, Link2, Plus, Search, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ClaimsBoard } from '@/components/claims/claims-board';
@@ -41,6 +41,12 @@ export function ClaimsView({ initialView }: { initialView: 'board' | 'table' }) 
                 </Link>
               </Button>
             ) : null}
+            <Button asChild variant="outline">
+              <Link href="/claims/tpa">
+                <FileSpreadsheet aria-hidden="true" />
+                TPA claims
+              </Link>
+            </Button>
             {canProcess ? (
               <>
                 <Button asChild variant="outline">

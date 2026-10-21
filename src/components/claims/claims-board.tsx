@@ -5,6 +5,7 @@ import { ArrowRight, Clock, GripVertical } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ErrorState } from '@/components/states';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { claimBoardQuery } from '@/lib/api/claims';
@@ -179,6 +180,14 @@ function ClaimCardItem({
       <p className="text-xs text-muted-foreground">
         {card.assignedTo ? `Assigned to ${card.assignedTo.name}` : 'Not assigned'}
       </p>
+      {card.settled || card.tpaStatus ? (
+        <p className="flex flex-wrap items-center gap-1 text-xs">
+          {card.settled ? <Badge variant="success">Settled</Badge> : null}
+          {card.tpaStatus ? (
+            <span className="text-muted-foreground">TPA: {card.tpaStatus}</span>
+          ) : null}
+        </p>
+      ) : null}
       {next.map((to) => (
         <Button
           key={to}

@@ -28,6 +28,8 @@ import {
   UsersRound,
   type LucideIcon,
   ChartBarStacked,
+  ChartPie,
+  TrendingUp,
 } from 'lucide-react';
 import { ROLES, can, type Permission, type Role } from '@/shared';
 
@@ -93,6 +95,25 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'Placement Slips',
         href: '/placement-slips',
         icon: FileCheck2,
+        permission: 'proposals.view',
+      },
+    ],
+  },
+  {
+    // N8 and N10: analysis of a policy's claims, and of its years for a renewal.
+    title: 'Reports',
+    items: [
+      {
+        label: 'Claims analysis',
+        href: '/claims-analysis',
+        icon: ChartPie,
+        // Claims hold medical information: like Claims, hidden from Read-only users.
+        permission: 'claims.view',
+      },
+      {
+        label: 'Renewal analysis',
+        href: '/renewal',
+        icon: TrendingUp,
         permission: 'proposals.view',
       },
     ],
@@ -220,6 +241,9 @@ const OTHER_PAGES: readonly { path: string; permission: Permission }[] = [
   { path: '/claims/new', permission: 'claims.process' },
   { path: '/claims/links', permission: 'claims.process' },
   { path: '/claims/settings', permission: 'claims.admin' },
+  // TPA claims (N9, N11): read with claims.view (as /claims), imported and configured apart.
+  { path: '/claims/tpa/import', permission: 'claims.process' },
+  { path: '/claims/tpa/formats', permission: 'claims.admin' },
 ];
 
 const PAGE_PERMISSIONS: readonly { path: string; permission: Permission }[] = [

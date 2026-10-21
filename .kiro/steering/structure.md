@@ -10,6 +10,8 @@ src/
                                 masters/insurers, masters/import, masters/templates, masters/family-plans (list, [id]),
                                 masters/age-bands,
                                 rating/fire, users, audit, ghi, eb/[product] (list, [id]),
+                                claims (board, [id], new, links, settings, tpa, tpa/import, tpa/formats),
+                                claims-analysis, renewal,
                                 settings, profile
     api/auth/login, logout      BFF: sets and clears the httpOnly session cookie
     api/proxy/[...path]         BFF: forwards allowlisted calls to the API with the bearer token
@@ -32,6 +34,9 @@ src/
                                 card and assign dialog, template download, member dialog, awaiting-confirmation notes
                                 N4 to N7: age bands card, relationship rules editor, selection summary card
     age-bands/                  Age Band Master: set editor sheet (rules from the shared schema)
+    tpa/                        TPA claims (N9, N11): policy picker, imported claims with review and links, file
+                                import with preview and results, format editor and import email settings
+    reports/                    claims analysis (N10) with endorsement premiums; renewal analysis (N8)
     family-plans/               Family Plan Master: version editor (rules from the shared schema), new plan sheet,
                                 version card (activate, end date, client confirmation)
     audit/                      audit log toolbar and entry row

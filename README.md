@@ -84,6 +84,13 @@ The web app reads the same table:
 | Choose a case's age bands                                       | yes   |          | yes                  | yes                      |           |
 | RFQ selection summary (view)                                    | yes   | yes      | yes                  | yes                      | yes       |
 | RFQ selection summary download                                  | yes   | yes      | yes                  | yes                      |           |
+| Claims, TPA claims, claims analysis (view)                      | yes   | yes      | yes                  | yes                      |           |
+| Diagnosis details (diagnosis, ICD code, rejection reason)       | yes   |          | yes                  | yes                      |           |
+| Import TPA files, review and link TPA claims                    | yes   |          | yes                  | yes                      |           |
+| TPA formats, import email settings, full bank accounts          | yes   |          |                      |                          |           |
+| Endorsement premiums, record past policy years, save reports    | yes   |          | yes                  | yes                      |           |
+| Renewal analysis (view)                                         | yes   | yes      | yes                  | yes                      | yes       |
+| Renewal and claims analysis downloads                           | yes   | yes      | yes                  | yes                      |           |
 
 - Navigation shows only the items a user's permissions allow (`nav-config.ts`); a group with nothing left is hidden.
 - Opening a page without its permission, for example by typing the URL, shows "You do not have access" inside the
@@ -274,6 +281,21 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
 - **Members**: monthly salary and the nominee in the member dialog; the members table shows each cover's basis.
 - **RFQ tab**: the RFQ selection summary (employees and lives by cover, the age band matrix, gender and relationship
   counts, cover by relationship) with Excel and PDF downloads, or as kept on an RFQ version.
+
+## TPA claims, claims analysis and renewal analysis (N8 to N12)
+
+- **Claims → TPA claims** (`/claims/tpa`, `components/tpa/`): a policy's imported TPA claims, with "Needs review",
+  each claim's history and, for processors, the review note and manual board link. Diagnosis details and full bank
+  accounts appear only when the API sends them (the API decides by permission).
+- **Import a TPA file** (`/claims/tpa/import`): policy, format and file; the check's counts, rows and problems
+  (downloadable); import all rows or the valid rows only after confirming; what the import did to the claims board.
+- **TPA formats** (`/claims/tpa/formats`, Admin): the columns, statuses, board columns (with company overrides),
+  request and claim types, and "Read the headers of a sample file"; the import email settings (off by default).
+- **Board and claim**: a card shows "Settled" and the TPA status apart from its column; the claim shows the settlement
+  and its TPA record. A claim a TPA import added has no claimant email until staff enter one.
+- **Reports → Claims analysis** (`/claims-analysis`, `components/reports/`): filters, the sections A to F, the claims in
+  the figures, endorsement premiums, Excel and PDF. **Reports → Renewal analysis** (`/renewal`): up to three years
+  side by side with changes, the coming year's quotes, recorded past years, saved reports, Excel and PDF.
 
 ## Sample proposal data
 
