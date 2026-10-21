@@ -11,6 +11,8 @@ const ALLOWED_AREAS = new Set([
   'templates',
   'email-templates',
   'mail',
+  // The signed-in user's in-app notifications (A4).
+  'notifications',
   'proposals',
   // The lists across cases for the Quotes and QCR and Placement Slips pages.
   'qcrs',

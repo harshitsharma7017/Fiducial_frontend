@@ -33,6 +33,47 @@ vi.mock('@/hooks/use-current-user', () => ({
     refetch: vi.fn(),
   }),
 }));
+// The notification bell reads the real API; stub the hook so the shell test stays focused on the
+// shell. Three unread notifications so the bell's accessible name can be asserted.
+vi.mock('@/lib/api/notifications', () => ({
+  useNotifications: () => ({
+    data: {
+      items: [
+        {
+          id: 'n1',
+          title: 'A',
+          description: 'a',
+          at: '2026-10-01T09:00:00.000Z',
+          unread: true,
+          href: '/proposals/1',
+        },
+        {
+          id: 'n2',
+          title: 'B',
+          description: 'b',
+          at: '2026-10-01T09:00:00.000Z',
+          unread: true,
+          href: '/proposals/2',
+        },
+        {
+          id: 'n3',
+          title: 'C',
+          description: 'c',
+          at: '2026-10-01T09:00:00.000Z',
+          unread: true,
+          href: '/proposals/3',
+        },
+      ],
+      unreadCount: 3,
+      sample: false,
+    },
+    isPending: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
+  useMarkNotificationRead: () => ({ mutate: vi.fn(), isPending: false }),
+  useMarkAllNotificationsRead: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 
 function renderShell({ collapsed = false, demoMode = false } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

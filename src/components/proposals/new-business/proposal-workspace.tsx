@@ -260,6 +260,7 @@ function Activity({ record }: { record: ProposalRecord }) {
                 <p className="text-sm">{event.message}</p>
                 <p className="text-xs text-muted-foreground tabular">
                   {formatDateTime(event.at)} · {event.actor}
+                  {event.actorRole ? `, ${event.actorRole}` : ''}
                 </p>
               </li>
             ))}

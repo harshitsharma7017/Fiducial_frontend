@@ -107,7 +107,14 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
     missing: ['Enter the Fire sums insured for Plant 1.'],
     locked: false,
     insurers: [],
-    activity: [{ at: '2026-10-07T04:00:00.000Z', actor: 'Asha Rao', message: 'Proposal created' }],
+    activity: [
+      {
+        at: '2026-10-07T04:00:00.000Z',
+        actor: 'Asha Rao',
+        actorRole: 'Relationship Manager',
+        message: 'Proposal created',
+      },
+    ],
     createdAt: '2026-10-07T04:00:00.000Z',
     updatedAt: '2026-10-07T04:00:00.000Z',
     ...overrides,

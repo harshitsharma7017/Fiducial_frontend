@@ -104,6 +104,9 @@ export function AuditEntryRow({
             >
               {entry.actor.name}
             </button>
+            {entry.actor.roleLabel ? (
+              <span className="block text-xs text-muted-foreground">{entry.actor.roleLabel}</span>
+            ) : null}
             <span className="block text-xs break-all text-muted-foreground">
               {entry.actor.email}
             </span>

@@ -2,7 +2,6 @@
 
 import { Bell, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,25 +13,29 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIstNow } from '@/hooks/use-ist-now';
-import { useNotifications } from '@/lib/api/notifications';
+import {
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useNotifications,
+} from '@/lib/api/notifications';
 import { formatRelativeTime } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/shared';
 
-/** Sample notifications with relative times. The read state lives in memory until a reload. */
+// A4: the header notification bell. Real notifications come from the API (polled); in demo mode the
+// sample feed is shown and labelled. Unread count badge, mark one / mark all read, click to open
+// the related case. Keyboard and screen-reader accessible via the Radix dropdown primitives.
+
 export function NotificationsMenu() {
   const notifications = useNotifications();
   const nowMs = useIstNow();
-  const [readIds, setReadIds] = useState<ReadonlySet<string>>(() => new Set());
+  const markRead = useMarkNotificationRead();
+  const markAll = useMarkAllNotificationsRead();
 
-  const items = notifications.data ?? [];
-  const isUnread = (id: string, unread: boolean) => unread && !readIds.has(id);
-  const unreadCount = items.filter((item) => isUnread(item.id, item.unread)).length;
+  const data = notifications.data;
+  const items = data?.items ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
   const label = unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications';
-
-  function markRead(id: string) {
-    setReadIds((current) => new Set(current).add(id));
-  }
 
   return (
     <DropdownMenu>
@@ -44,7 +47,7 @@ export function NotificationsMenu() {
               aria-hidden="true"
               className="absolute top-1 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] leading-none font-semibold text-destructive-foreground tabular"
             >
-              {unreadCount}
+              {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : null}
         </Button>
@@ -52,7 +55,7 @@ export function NotificationsMenu() {
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
-          <span className="text-xs text-muted-foreground">Sample data</span>
+          {data?.sample ? <span className="text-xs text-muted-foreground">Sample data</span> : null}
         </div>
 
         {notifications.isPending ? (
@@ -78,34 +81,46 @@ export function NotificationsMenu() {
         ) : (
           <div className="max-h-96 overflow-y-auto py-1">
             {items.map((item) => {
-              const unread = isUnread(item.id, item.unread);
+              const body = (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'mt-1.5 size-2 shrink-0 rounded-full',
+                      item.unread ? 'bg-accent' : 'bg-transparent',
+                    )}
+                  />
+                  <span className="grid min-w-0 gap-0.5">
+                    <span className="font-medium">
+                      {item.unread ? <span className="sr-only">Unread: </span> : null}
+                      {item.title}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{item.description}</span>
+                    <span className="text-xs text-muted-foreground tabular">
+                      {nowMs === null
+                        ? formatDateTime(item.at)
+                        : formatRelativeTime(item.at, nowMs)}
+                    </span>
+                  </span>
+                </>
+              );
+              const onOpen = () => {
+                if (item.unread && !data?.sample) markRead.mutate(item.id);
+              };
               return (
                 <DropdownMenuItem
                   key={item.id}
-                  asChild
+                  asChild={item.href !== null}
                   className="items-start gap-3 rounded-none px-3 py-2.5"
+                  onSelect={item.href === null ? onOpen : undefined}
                 >
-                  <Link href={`/proposals/${item.proposalId}`} onClick={() => markRead(item.id)}>
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        'mt-1.5 size-2 shrink-0 rounded-full',
-                        unread ? 'bg-accent' : 'bg-transparent',
-                      )}
-                    />
-                    <span className="grid min-w-0 gap-0.5">
-                      <span className="font-medium">
-                        {unread ? <span className="sr-only">Unread: </span> : null}
-                        {item.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{item.description}</span>
-                      <span className="text-xs text-muted-foreground tabular">
-                        {nowMs === null
-                          ? formatDateTime(item.at)
-                          : formatRelativeTime(item.at, nowMs)}
-                      </span>
-                    </span>
-                  </Link>
+                  {item.href !== null ? (
+                    <Link href={item.href} onClick={onOpen}>
+                      {body}
+                    </Link>
+                  ) : (
+                    body
+                  )}
                 </DropdownMenuItem>
               );
             })}
@@ -116,11 +131,11 @@ export function NotificationsMenu() {
           <>
             <DropdownMenuSeparator className="my-0" />
             <DropdownMenuItem
-              disabled={unreadCount === 0}
+              disabled={unreadCount === 0 || markAll.isPending || Boolean(data?.sample)}
               className="justify-center rounded-none py-2"
               onSelect={(event) => {
                 event.preventDefault();
-                setReadIds(new Set(items.map((item) => item.id)));
+                markAll.mutate();
               }}
             >
               Mark all as read
