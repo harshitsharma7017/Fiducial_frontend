@@ -7,8 +7,9 @@ import { SESSION_COOKIE } from '@/lib/session';
  * on every call, and an expired or revoked token clears the cookie (see api/proxy).
  */
 /** Pages a signed-out visitor may open. */
-// /claim is the employee's claim submission page: its link token is the credential (C2).
-const PUBLIC_PATHS = new Set(['/login', '/forgot-password', '/claim']);
+// The employee's claim submission page (/claim) is in fiducial-ghi-frontend; next.config.ts sends
+// old links there.
+const PUBLIC_PATHS = new Set(['/login', '/forgot-password']);
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;

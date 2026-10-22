@@ -22,19 +22,6 @@ describe('isAllowedProxyPath', () => {
     [['proposals', '0123456789abcdef01234567', 'mails']],
     [['qcrs']],
     [['placement-slips']],
-    [['ghi', 'cases']],
-    [['claims', 'board']],
-    [['ghi', 'cases', '0123456789abcdef01234567', 'census', 'imports']],
-    [['eb', 'cases']],
-    [['eb', 'gpa', 'cases', '0123456789abcdef01234567', 'rfq']],
-    [['family-plans']],
-    [['family-plans', '0123456789abcdef01234567', 'versions']],
-    [['age-bands', '0123456789abcdef01234567', 'cases']],
-    // N8 to N11: TPA claims, the claims analysis and the renewal analysis.
-    [['tpa', 'imports', '0123456789abcdef01234567', 'rows']],
-    [['claims-analysis']],
-    [['claims-analysis', 'premium', '0123456789abcdef01234567']],
-    [['renewal', 'analysis', 'document']],
     [['auth', 'me']],
   ])('allows %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(true);
@@ -56,6 +43,15 @@ describe('isAllowedProxyPath', () => {
     [['eb', '..', 'auth', 'login']],
     [['tpa', '..', 'auth', 'login']],
     [['renewals']],
+    // Employee Benefits areas are reached through fiducial-ghi-frontend.
+    [['ghi', 'cases']],
+    [['claims', 'board']],
+    [['eb', 'gpa', 'cases', '0123456789abcdef01234567', 'rfq']],
+    [['family-plans']],
+    [['age-bands', '0123456789abcdef01234567', 'cases']],
+    [['tpa', 'imports', '0123456789abcdef01234567', 'rows']],
+    [['claims-analysis']],
+    [['renewal', 'analysis', 'document']],
   ])('rejects %j', (segments) => {
     expect(isAllowedProxyPath(segments)).toBe(false);
   });

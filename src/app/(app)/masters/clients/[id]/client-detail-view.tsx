@@ -4,10 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { History, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { ClientDetailsCard } from '@/components/clients/client-details-card';
-import { EmployeesCard } from '@/components/clients/employees-card';
 import { ClientFormSheet } from '@/components/clients/client-form-sheet';
 import { LocationsCard } from '@/components/clients/locations-card';
-import { PlanDefaultsCard } from '@/components/clients/plan-defaults-card';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
@@ -20,7 +18,6 @@ const OBJECT_ID = /^[a-f0-9]{24}$/i;
 export function ClientDetailView({ id }: { id: string }) {
   const canManage = usePermission('clients.manage');
   const canViewAudit = usePermission('audit.view');
-  const canViewCases = usePermission('proposals.view');
   const validId = OBJECT_ID.test(id);
   const client = useQuery(clientQuery(validId ? id : null));
 
@@ -78,8 +75,6 @@ export function ClientDetailView({ id }: { id: string }) {
       <div className="grid gap-4">
         <ClientDetailsCard client={data} />
         <LocationsCard client={data} canManage={canManage} />
-        <PlanDefaultsCard clientId={data.id} />
-        {canViewCases ? <EmployeesCard clientId={data.id} /> : null}
       </div>
     </>
   );

@@ -1,6 +1,8 @@
-// Only these API areas are reachable through /api/proxy. Sign-in is not: it returns a token,
-// and the token must never reach the browser (see /api/auth/login). The API checks each user's
-// permission for every area (audit, for example, is Admin only).
+// Only these API areas are reachable through /api/proxy: the ones this Property, Fire and
+// Burglary app calls. Employee Benefits areas (ghi, eb, family plans, age bands, claims, TPA and
+// the analyses) are reached through fiducial-ghi-frontend. Sign-in is not reachable: it returns a
+// token, and the token must never reach the browser (see /api/auth/login). The API checks each
+// user's permission for every area (audit, for example, is Admin only).
 const ALLOWED_AREAS = new Set([
   'users',
   'masters',
@@ -17,21 +19,6 @@ const ALLOWED_AREAS = new Set([
   // The lists across cases for the Quotes and QCR and Placement Slips pages.
   'qcrs',
   'placement-slips',
-  // Group health (GHI) cases and their census, RFQ, quotes, QCR, payments and placement.
-  'ghi',
-  // Employee Benefits: GPA and GTLI cases, cases of every product, templates, company employees.
-  'eb',
-  // The Family Plan Master.
-  'family-plans',
-  // The Age Band Master (N4).
-  'age-bands',
-  // Group health claims (staff). The employee's link uses /api/public/claim-link instead.
-  'claims',
-  // TPA claims files, formats and imported claims (N9, N11).
-  'tpa',
-  // Claims analysis with premium endorsements (N10), and the renewal analysis (N8).
-  'claims-analysis',
-  'renewal',
   'health',
   'audit',
 ]);

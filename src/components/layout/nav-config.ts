@@ -5,8 +5,6 @@ import {
   FileSpreadsheet,
   FileText,
   FileUp,
-  HeartPulse,
-  Stethoscope,
   History,
   Landmark,
   LayoutDashboard,
@@ -22,14 +20,8 @@ import {
   ScrollText,
   Send,
   Settings,
-  ShieldPlus,
-  Umbrella,
   UserCog,
-  UsersRound,
   type LucideIcon,
-  ChartBarStacked,
-  ChartPie,
-  TrendingUp,
 } from 'lucide-react';
 import { ROLES, can, type Permission, type Role } from '@/shared';
 
@@ -67,23 +59,9 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'proposals.view',
       },
       // One entry for every proposal; the page switches between new and existing (renewals).
+      // Property, Fire and Burglary. Employee Benefits (GMC, GPA, GTLI) and their claims are in
+      // fiducial-ghi-frontend.
       { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'proposals.view' },
-      // Group health claims; hidden from Read-only users (medical information).
-      { label: 'Claims', href: '/claims', icon: Stethoscope, permission: 'claims.view' },
-    ],
-  },
-  {
-    // Employee Benefits (N1): one entry per product, beside Property's proposals.
-    title: 'Employee Benefits',
-    items: [
-      { label: 'GMC (Group Health)', href: '/ghi', icon: HeartPulse, permission: 'proposals.view' },
-      {
-        label: 'GPA (Personal Accident)',
-        href: '/eb/gpa',
-        icon: ShieldPlus,
-        permission: 'proposals.view',
-      },
-      { label: 'GTLI (Term Life)', href: '/eb/gtli', icon: Umbrella, permission: 'proposals.view' },
     ],
   },
   {
@@ -95,25 +73,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'Placement Slips',
         href: '/placement-slips',
         icon: FileCheck2,
-        permission: 'proposals.view',
-      },
-    ],
-  },
-  {
-    // N8 and N10: analysis of a policy's claims, and of its years for a renewal.
-    title: 'Reports',
-    items: [
-      {
-        label: 'Claims analysis',
-        href: '/claims-analysis',
-        icon: ChartPie,
-        // Claims hold medical information: like Claims, hidden from Read-only users.
-        permission: 'claims.view',
-      },
-      {
-        label: 'Renewal analysis',
-        href: '/renewal',
-        icon: TrendingUp,
         permission: 'proposals.view',
       },
     ],
@@ -186,19 +145,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'clients.manage',
       },
       { label: 'Clauses', href: '/masters/clauses', icon: ScrollText, permission: 'masters.view' },
-      // The Family Plan Master (N2).
-      {
-        label: 'Family plans',
-        href: '/masters/family-plans',
-        icon: UsersRound,
-        permission: 'masters.view',
-      },
-      {
-        label: 'Age bands',
-        href: '/masters/age-bands',
-        icon: ChartBarStacked,
-        permission: 'masters.view',
-      },
     ],
   },
   {
@@ -237,13 +183,6 @@ function pathOf(href: string): string {
 /** Pages outside the navigation, with the permission each needs. */
 const OTHER_PAGES: readonly { path: string; permission: Permission }[] = [
   { path: '/proposals/new', permission: 'proposals.create' },
-  { path: '/ghi/new', permission: 'proposals.create' },
-  { path: '/claims/new', permission: 'claims.process' },
-  { path: '/claims/links', permission: 'claims.process' },
-  { path: '/claims/settings', permission: 'claims.admin' },
-  // TPA claims (N9, N11): read with claims.view (as /claims), imported and configured apart.
-  { path: '/claims/tpa/import', permission: 'claims.process' },
-  { path: '/claims/tpa/formats', permission: 'claims.admin' },
 ];
 
 const PAGE_PERMISSIONS: readonly { path: string; permission: Permission }[] = [

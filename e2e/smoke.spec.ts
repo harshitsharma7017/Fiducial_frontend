@@ -42,11 +42,9 @@ test('signs in as the demo admin and shows the dashboard in light and dark', asy
   expect(pageErrors).toEqual([]);
 });
 
-// N1: the GPA list opens from the Employee Benefits group; in demo mode it reads no live data.
-test('opens the GPA cases page from Employee Benefits in demo mode', async ({ page }) => {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(error.message));
-
+// Employee Benefits (GMC, GPA, GTLI), claims and their reports moved to fiducial-ghi-frontend,
+// whose smoke test opens them; this app's navigation has none of them.
+test('has no Employee Benefits or claims entries in the navigation', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill(ADMIN.email);
   await page.getByLabel('Password', { exact: true }).fill(ADMIN.password);
@@ -54,61 +52,17 @@ test('opens the GPA cases page from Employee Benefits in demo mode', async ({ pa
   await expect(page).toHaveURL(/\/dashboard$/);
 
   const nav = page.getByRole('navigation', { name: 'Main' });
-  await nav.getByRole('link', { name: 'GPA (Personal Accident)' }).click();
-  await expect(page).toHaveURL(/\/eb\/gpa$/);
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByText('Not available in demo mode')).toBeVisible();
-
-  expect(pageErrors).toEqual([]);
-});
-
-// N4: the Age Band Master opens from Masters; in demo mode it reads no live data.
-test('opens Masters → Age bands in demo mode', async ({ page }) => {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(error.message));
-
-  await page.goto('/login');
-  await page.getByLabel('Email').fill(ADMIN.email);
-  await page.getByLabel('Password', { exact: true }).fill(ADMIN.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
-
-  await page.goto('/masters/age-bands');
-  await expect(page.getByText('Not available in demo mode')).toBeVisible();
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  await expect(nav.getByRole('link', { name: 'Age bands' })).toBeVisible();
-
-  expect(pageErrors).toEqual([]);
-});
-
-// N8 to N11: the TPA claims, import, formats, claims analysis and renewal analysis pages open
-// for the demo admin without errors; in demo mode they read no live data.
-test('opens the TPA claims, claims analysis and renewal analysis pages in demo mode', async ({
-  page,
-}) => {
-  const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(error.message));
-
-  await page.goto('/login');
-  await page.getByLabel('Email').fill(ADMIN.email);
-  await page.getByLabel('Password', { exact: true }).fill(ADMIN.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
-
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  await expect(nav.getByRole('link', { name: 'Claims analysis' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Renewal analysis' })).toBeVisible();
-  for (const [path, title] of [
-    ['/claims/tpa', 'TPA claims'],
-    ['/claims/tpa/import', 'Import a TPA file'],
-    ['/claims/tpa/formats', 'TPA formats'],
-    ['/claims-analysis', 'Claims analysis'],
-    ['/renewal', 'Renewal analysis'],
-  ] as const) {
-    await page.goto(path);
-    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
-    await expect(page.getByText('Not available in demo mode').first()).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Proposals' })).toBeVisible();
+  for (const label of [
+    'GMC (Group Health)',
+    'GPA (Personal Accident)',
+    'GTLI (Term Life)',
+    'Claims',
+    'Claims analysis',
+    'Renewal analysis',
+    'Family plans',
+    'Age bands',
+  ]) {
+    await expect(nav.getByRole('link', { name: label, exact: true })).toHaveCount(0);
   }
-
-  expect(pageErrors).toEqual([]);
 });

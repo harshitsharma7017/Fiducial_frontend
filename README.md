@@ -2,7 +2,8 @@
 
 Next.js web app for **Fiducial**, the property insurance placement platform that Spirezen Enterprises is building for
 Fiducial Insurance Brokers. It will replace the Excel chain of Data Sheet → RFQ → insurer quotes → QCR → Placement
-Slip.
+Slip. It covers **Property, Fire and Burglary** insurance; Employee Benefits (GMC, GPA, GTLI) and group health claims
+are in the separate **fiducial-ghi-frontend** app ([Employee Benefits and claims](#employee-benefits-and-claims-moved)).
 
 This repository holds the **foundation** screens: sign-in, a proposals dashboard with the detail drawer and full
 page, occupancy and pincode masters, user admin and the audit log. Each role sees only the
@@ -72,27 +73,10 @@ The web app reads the same table:
 | Document downloads (coming soon)                                | yes   | yes      | yes                  | yes                      |           |
 | New proposal and Start renewal                                  | yes   |          | yes                  |                          |           |
 | Users, Audit log, Settings                                      | yes   |          |                      |                          |           |
-| EB lists and cases (GMC, GPA, GTLI), company employees          | yes   | yes      | yes                  | yes                      | yes       |
-| New Employee Benefits case                                      | yes   |          | yes                  |                          |           |
-| EB case edits, census, payments, placement, employees           | yes   |          | yes                  | yes                      |           |
-| EB RFQ and QCR approval                                         | yes   | yes      |                      |                          |           |
-| Family plans and company default plans (view)                   | yes   | yes      | yes                  | yes                      | yes       |
-| Family plans: create, edit, activate, confirm, deactivate       | yes   |          |                      |                          |           |
-| Company default plans (change)                                  | yes   |          | yes                  |                          |           |
-| Age bands (view)                                                | yes   | yes      | yes                  | yes                      | yes       |
-| Age bands: create, edit, activate, deactivate                   | yes   |          |                      |                          |           |
-| Choose a case's age bands                                       | yes   |          | yes                  | yes                      |           |
-| RFQ selection summary (view)                                    | yes   | yes      | yes                  | yes                      | yes       |
-| RFQ selection summary download                                  | yes   | yes      | yes                  | yes                      |           |
-| Claims, TPA claims, claims analysis (view)                      | yes   | yes      | yes                  | yes                      |           |
-| Diagnosis details (diagnosis, ICD code, rejection reason)       | yes   |          | yes                  | yes                      |           |
-| Import TPA files, review and link TPA claims                    | yes   |          | yes                  | yes                      |           |
-| TPA formats, import email settings, full bank accounts          | yes   |          |                      |                          |           |
-| Endorsement premiums, record past policy years, save reports    | yes   |          | yes                  | yes                      |           |
-| Renewal analysis (view)                                         | yes   | yes      | yes                  | yes                      | yes       |
-| Renewal and claims analysis downloads                           | yes   | yes      | yes                  | yes                      |           |
 
 - Navigation shows only the items a user's permissions allow (`nav-config.ts`); a group with nothing left is hidden.
+- The rows for Employee Benefits, family plans, age bands, claims and the analyses are in fiducial-ghi-frontend's
+  README; the permission table itself is shared.
 - Opening a page without its permission, for example by typing the URL, shows "You do not have access" inside the
   shell (`PageGate`), and the page sends no requests. Pages are mapped to permissions by `pagePermission()`.
 - Actions use `usePermission()` or `can()`; components never compare role codes.
@@ -247,55 +231,17 @@ entries come from the RFQ (download and marking it sent). Entries are never chan
   one onto the screen model (product and add-ons are chosen at the QCR; a renewal's Existing figures and expiry come
   from last year's policy).
 
-## Employee Benefits (GMC, GPA, GTLI)
+## Employee Benefits and claims (moved)
 
-- **Navigation**: the Employee Benefits group lists GMC (Group Health) `/ghi`, GPA (Personal Accident) `/eb/gpa` and
-  GTLI (Term Life) `/eb/gtli`; Masters has Family plans. New proposal asks Property or Employee Benefits, then the
-  product, with nothing chosen at first (`?line=eb&product=GPA` preselects).
-- **GPA and GTLI cases** (`/eb/{product}/{id}`, `components/eb/eb-workspace.tsx`): Data Sheet (validated by the
-  shared schema before saving), family plan card, census with the provisional template download, import (mode,
-  policy chosen explicitly, row corrections, error report) and members by hand, RFQ, quotes (GST and totals from the
-  API), QCR with approval, the client's decision (sent with the QCR fingerprint), payments and the placement slip.
-  The API calls go through the proxy to `/api/v1/eb/{gpa,gtli}/cases/...`.
-- **Family Plan Master** (`/masters/family-plans`): plans by product with the version in effect and its client
-  confirmation; a plan's page edits Draft versions with every rule of `PlanVersionInputSchema` shown on its field as
-  the user types (nothing is sent while a problem shows), activates them, sets an end date once, records the
-  client's confirmation, and deactivates the plan after listing the open cases that use it. Changes need
-  `masters.manage`.
-- **Company page** (`/masters/clients/{id}`): the employees shared by the company's GMC, GPA and GTLI cases (50 a
-  page, unresolved first; update or resolve with a reason, `proposals.edit`) and the default plan per product
-  (`clients.manage`).
-- **Templates**: the seven census templates are provisional (no client format received); every download says so.
+Group Health (GMC/GHI), Group Personal Accident (GPA), Group Term Life (GTLI), group health claims and TPA claims,
+the claims and renewal analyses, Family plans and Age bands are in the separate **fiducial-ghi-frontend** repository,
+which uses the same Fiducial_backend. This app keeps Property, Fire and Burglary.
 
-## Age bands, GPA rules, GTLI sum assured and the RFQ selection summary (N4 to N7)
-
-- **Masters → Age bands** (`/masters/age-bands`, `components/age-bands/`): named sets of bands edited with every rule
-  shown on its field as the user types; the cases using a set are listed. Option 2 is defined by an Admin (open
-  question AB-1).
-- **Case**: an Age bands card on the census tab chooses the case's set (a copy; a newer revision is flagged). The
-  census summary and the RFQ follow it.
-- **GPA Data Sheet**: dependants' cover by relationship (percentage, fixed amount, the employee's, or own), with a
-  button that fills the client's example (spouse 50%, child ₹50,000) as editable sample values; who needs a nominee.
-- **GTLI / GPA salary**: the census gives the annual or the monthly salary; members show how their cover is worked out
-  (for example "₹50,000 a month × 12 = ₹6,00,000 annual CTC × 4 = ₹24,00,000").
-- **Members**: monthly salary and the nominee in the member dialog; the members table shows each cover's basis.
-- **RFQ tab**: the RFQ selection summary (employees and lives by cover, the age band matrix, gender and relationship
-  counts, cover by relationship) with Excel and PDF downloads, or as kept on an RFQ version.
-
-## TPA claims, claims analysis and renewal analysis (N8 to N12)
-
-- **Claims → TPA claims** (`/claims/tpa`, `components/tpa/`): a policy's imported TPA claims, with "Needs review",
-  each claim's history and, for processors, the review note and manual board link. Diagnosis details and full bank
-  accounts appear only when the API sends them (the API decides by permission).
-- **Import a TPA file** (`/claims/tpa/import`): policy, format and file; the check's counts, rows and problems
-  (downloadable); import all rows or the valid rows only after confirming; what the import did to the claims board.
-- **TPA formats** (`/claims/tpa/formats`, Admin): the columns, statuses, board columns (with company overrides),
-  request and claim types, and "Read the headers of a sample file"; the import email settings (off by default).
-- **Board and claim**: a card shows "Settled" and the TPA status apart from its column; the claim shows the settlement
-  and its TPA record. A claim a TPA import added has no claimant email until staff enter one.
-- **Reports → Claims analysis** (`/claims-analysis`, `components/reports/`): filters, the sections A to F, the claims in
-  the figures, endorsement premiums, Excel and PDF. **Reports → Renewal analysis** (`/renewal`): up to three years
-  side by side with changes, the coming year's quotes, recorded past years, saved reports, Excel and PDF.
+- Set `NEXT_PUBLIC_GHI_APP_URL` (public, read at build time) to that app's URL. Notifications about GMC, GPA and GTLI
+  cases then link there (without it they show with no link), and old employee claim links (`/claim#t=...`) are
+  redirected there by `next.config.ts`, the `#t=` token kept by the browser.
+- The company page (`/masters/clients/{id}`) shows the client and its risk locations; employees and default plans are
+  on the same page in fiducial-ghi-frontend.
 
 ## Sample proposal data
 
@@ -342,7 +288,8 @@ that every text and focus pair meets its contrast minimum in both themes.
 - `src/proxy.ts` (Next.js 16's replacement for middleware) sends signed-out visitors to `/login`.
 - Client code calls `apiFetch()` (`src/lib/api-client.ts`). It parses responses with the shared Zod schemas and sends
   the user to sign-in on a 401.
-- `API_URL` is read only on the server (`src/lib/server/bff.ts`). There are no `NEXT_PUBLIC_` variables.
+- `API_URL` is read only on the server (`src/lib/server/bff.ts`). The only `NEXT_PUBLIC_` variable is
+  `NEXT_PUBLIC_GHI_APP_URL`, a public link to fiducial-ghi-frontend; never put a secret in one.
 
 ## Shared contracts
 
