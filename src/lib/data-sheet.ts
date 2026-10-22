@@ -135,25 +135,31 @@ export function fireGroupTotals(locations: readonly LocationFigures[]): Record<F
   ) as Record<FireGroup, Rupees>;
 }
 
-/** All Fire items except buildings, at every location: the contents Burglary covers. */
-export function contentsTotal(locations: readonly Pick<LocationForm, 'fire'>[]): Rupees {
-  return paiseToRupees(
-    totalPaise(
-      locations.flatMap((location) =>
-        location.fire.filter((item) => ITEM_BY_KEY.get(item.key)?.group !== 'BUILDING'),
-      ),
-    ),
-  );
+/**
+ * The contents Burglary covers (C-3, D3). Client-confirmed **Option A**:
+ *   Burglary Sum Insured = Total Fire Sum Insured − Building Sum Insured
+ * where "Building Sum Insured" is the dynamic buildings only (D1). Every Fire item stays in the
+ * base — including the Building line's fixed civil-structure items Compound wall, False ceiling and
+ * **Plinth & Foundation**; only the buildings are deducted. Mirrors the backend `contentsTotals`.
+ */
+export function contentsTotal(locations: readonly LocationFigures[]): Rupees {
+  // Option A: all Fire items at every location (no group is excluded); buildings are not added.
+  return paiseToRupees(totalPaise(locations.flatMap((location) => location.fire)));
 }
 
 /**
- * The Fire contents Burglary covers with a basis (C-3), as the API works them out: Option 1 is all
- * items but buildings; Option 2 adds the contents lines given a second figure (null when none is).
+ * The Fire contents Burglary covers with a basis (C-3, D3 Option A): Option 1 is Total Fire minus
+ * buildings (i.e. all Fire items, civil-structure items included). Option 2 adds the Fire lines'
+ * second figures when given (null when none is); buildings carry no Option 2.
  */
 export function contentsOptions(
-  locations: readonly Pick<LocationForm, 'fire'>[],
+  locations: readonly LocationFigures[],
   option2: readonly { group: FireGroup; amount: string | null }[],
 ): { proposed1: Rupees; proposed2: Rupees | null } {
+  // Option 2 is entered per Fire line, not per item: the Building line's Option 2 is one typed
+  // figure for the whole building line (buildings included) and cannot be split into a
+  // buildings-only part, so it stays out of the Burglary base — the same as before D3. Mirrors the
+  // backend `contentsTotals`.
   const seconds = option2
     .filter((line) => line.group !== 'BUILDING')
     .map((line) => text(line.amount))

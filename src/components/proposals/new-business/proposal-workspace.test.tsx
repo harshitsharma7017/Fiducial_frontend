@@ -272,28 +272,37 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
   });
 
-  it('C-3: takes Burglary from the Fire contents (all but buildings) on its basis', async () => {
+  it('C-3 / D3 (Option A): Burglary is the Fire contents = Total Fire − buildings', async () => {
     serve(record());
     const user = renderWorkspace();
+    // Item 1a is the Compound wall — a Building-line civil-structure item, NOT a building. Under
+    // D3 Option A it stays in the Burglary base (only dynamic buildings are deducted, and there are
+    // none here). Contents = compound wall 5,000,000 + FFF 200,000 + stocks 300,000 = 5,500,000.
     await user.type(await screen.findByLabelText('Item 1a sum insured'), '5000000');
     await user.type(screen.getByLabelText('Item 2 sum insured'), '200000');
     await user.type(screen.getByLabelText('Item 6 sum insured'), '300000');
     await user.click(screen.getByRole('checkbox', { name: 'Burglary' }));
     // A new Burglary starts on 100%: its sum insured is the contents, kept up to date.
-    expect(screen.getByLabelText('Burglary Proposed – Option 1')).toHaveTextContent('₹5,00,000.00');
+    expect(screen.getByLabelText('Burglary Proposed – Option 1')).toHaveTextContent(
+      '₹55,00,000.00',
+    );
     await user.selectOptions(
       screen.getByLabelText('Burglary basis'),
       '1st loss basis 25% of sum insured',
     );
+    // 5,500,000 × 25% = 1,375,000.
     expect(
-      screen.getByText(/On this basis: Proposed – Option 1 ₹1,25,000\.00/),
+      screen.getByText(/On this basis: Proposed – Option 1 ₹13,75,000\.00/),
     ).toBeInTheDocument();
+    // Typing "0" appends to Item 6 (stocks): 300000 → 3000000. Contents = 5,000,000 + 200,000 +
+    // 3,000,000 = 8,200,000.
     await user.type(screen.getByLabelText('Item 6 sum insured'), '0');
     expect(screen.getByLabelText('Burglary Proposed – Option 1')).toHaveTextContent(
-      '₹32,00,000.00',
+      '₹82,00,000.00',
     );
+    // 8,200,000 × 25% = 2,050,000.
     expect(
-      screen.getByText(/On this basis: Proposed – Option 1 ₹8,00,000\.00/),
+      screen.getByText(/On this basis: Proposed – Option 1 ₹20,50,000\.00/),
     ).toBeInTheDocument();
   });
 

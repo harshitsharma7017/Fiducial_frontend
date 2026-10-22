@@ -127,6 +127,70 @@ describe('totals', () => {
   });
 });
 
+// D3 (client-confirmed Option A): Burglary = Total Fire − Building (the dynamic buildings only).
+// Plinth & Foundation and the other civil-structure items stay in the Burglary base. Mirrors the
+// backend `contentsTotals`.
+describe('contentsTotal (D3 — Burglary Option A)', () => {
+  const at = (amounts: Partial<Record<string, string>>, buildings: string[] = []) => {
+    const blank = blankLocation('a'.repeat(24));
+    return {
+      ...blank,
+      buildings: buildings.map((amount, i) => ({
+        name: `Building ${i + 1}`,
+        sqFt: '',
+        ratePerSqFt: '',
+        amount,
+      })),
+      fire: blank.fire.map((item) => ({ ...item, amount: amounts[item.key] ?? '' })),
+    };
+  };
+
+  it('Test 1 & 4: deducts only the building; Plinth & Foundation (and compound wall) stay in', () => {
+    // Total Fire 10,000,000 = building 4,000,000 + P&F 1,000,000 + stocks 5,000,000.
+    const location = at({ PLINTH_FOUNDATION: '1000000', STOCKS: '5000000' }, ['4000000']);
+    expect(fireTotal([location])).toBe('10000000');
+    // Burglary = 10,000,000 − 4,000,000 = 6,000,000 (P&F not deducted).
+    expect(contentsTotal([location])).toBe('6000000');
+  });
+
+  it('Test 2: raising Plinth & Foundation raises Burglary (it is never deducted)', () => {
+    const base = at({ PLINTH_FOUNDATION: '1000000', STOCKS: '5000000' }, ['4000000']);
+    const more = at({ PLINTH_FOUNDATION: '2000000', STOCKS: '5000000' }, ['4000000']);
+    expect(contentsTotal([base])).toBe('6000000');
+    expect(contentsTotal([more])).toBe('7000000');
+  });
+
+  it('Test 3: aggregates buildings across multiple buildings and locations, deducted once', () => {
+    const plant1 = at({ STOCKS: '2000000' }, ['3000000', '1000000']);
+    const plant2 = at({ STOCKS: '1500000' }, ['2000000']);
+    // Total Fire 9,500,000; buildings 6,000,000 → Burglary 3,500,000.
+    expect(fireTotal([plant1, plant2])).toBe('9500000');
+    expect(contentsTotal([plant1, plant2])).toBe('3500000');
+  });
+
+  it('Test 5: zero/missing buildings deduct nothing', () => {
+    expect(contentsTotal([at({ PLINTH_FOUNDATION: '1000000', STOCKS: '5000000' })])).toBe(
+      '6000000',
+    );
+    expect(contentsTotal([at({ STOCKS: '5000000' }, ['0'])])).toBe('5000000');
+  });
+
+  it('Test 6: frontend contentsTotal matches the backend formula (Total Fire − buildings)', () => {
+    const location = at(
+      { COMPOUND_WALL: '500000', PLINTH_FOUNDATION: '1000000', STOCKS: '5000000' },
+      ['4000000'],
+    );
+    // Total Fire 10,500,000 − buildings 4,000,000 = 6,500,000 (civil items stay in the base).
+    expect(fireTotal([location])).toBe('10500000');
+    expect(contentsTotal([location])).toBe('6500000');
+    // Option 2 keeps each Fire line's second figure; buildings have none.
+    expect(contentsOptions([location], [{ group: 'STOCKS', amount: '7000000' }])).toEqual({
+      proposed1: '6500000',
+      proposed2: '7000000',
+    });
+  });
+});
+
 function requestOf(overrides: Partial<DataSheetInput> = {}): DataSheetInput {
   return {
     dueDate: '2026-10-20',
