@@ -7,16 +7,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { formatDate, formatIndianNumber } from '@/shared';
 import {
+  OCR_READER_LABELS,
   OCR_REVIEW_STATE_LABELS,
   type OcrField,
+  type OcrReader,
   type OcrReviewState,
   type QuoteExpectation,
   type QuoteExtraction,
 } from '@/shared';
 
-// Auto-fill of the quote form from the insurer's PDF (Q1). The values are only candidates: they
-// land in the ordinary form fields, each is listed here with the line it came from and how sure
-// the reader was, and the quote cannot be saved until the person says they checked them.
+// Auto-fill of the quote form from the insurer's PDF or picture (Q1). The values are only
+// candidates: they land in the ordinary form fields, each is listed here with the line it came
+// from and how sure the reader was, and the quote cannot be saved until the person says they
+// checked them. Which reader read the file (built in, or Gemini outside the server) is shown.
 
 export interface FilledValue {
   label: string;
@@ -27,11 +30,16 @@ export interface FilledValue {
 }
 export interface FillSummary {
   fileName: string;
+  /** "PDF" or "file", for the wording. */
+  document: string;
+  reader: OcrReader;
   values: FilledValue[];
   /** Sections the RFQ asked for that the PDF did not give a premium for. */
   notFound: string[];
   /** What the PDF states for the whole quote, to compare with the form's totals. */
   stated: Array<{ label: string; shown: string }>;
+  /** Whose quote the PDF says it is, to check it is the right insurer's file. */
+  named: Array<{ label: string; shown: string }>;
   discrepancies: string[];
   manualEntryRequired: boolean;
 }
@@ -98,11 +106,22 @@ export function applyExtraction(
   ).flatMap(([label, candidate]) =>
     candidate.value === null ? [] : [{ label, shown: rupees(candidate.value) }],
   );
+  const named = (
+    [
+      ['Insurer', extraction.insurerName],
+      ['Quotation no.', extraction.quoteReference],
+    ] as const
+  ).flatMap(([label, candidate]) =>
+    candidate.value === null ? [] : [{ label, shown: candidate.value }],
+  );
   return {
     fileName,
+    document: /\.pdf$/i.test(fileName) ? 'PDF' : 'file',
+    reader: extraction.reader,
     values,
     notFound,
     stated,
+    named,
     discrepancies: extraction.discrepancies,
     manualEntryRequired: extraction.manualEntryRequired,
   };
@@ -132,8 +151,21 @@ export function FillReview({
   return (
     <section aria-labelledby="quote-fill" className="grid gap-3 rounded-md border p-3">
       <h3 id="quote-fill" className="text-sm font-semibold">
-        Filled from {summary.fileName}: check each value against the PDF
+        Filled from {summary.fileName}: check each value against the {summary.document}
       </h3>
+      {summary.reader === 'GEMINI' ? (
+        <p className="text-xs text-muted-foreground">
+          Read by {OCR_READER_LABELS.GEMINI}. A value marked “Read clearly” was also found in the
+          PDF’s own text; every other value could not be checked by the system.
+        </p>
+      ) : null}
+      {summary.named.length > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          The {summary.document} names{' '}
+          {summary.named.map((item) => `${item.label} ${item.shown}`).join(', ')}. Check it is this
+          insurer’s quote.
+        </p>
+      ) : null}
       {summary.values.length > 0 ? (
         <ul className="grid gap-1 text-sm">
           {summary.values.map((item) => (
@@ -152,13 +184,14 @@ export function FillReview({
       ) : null}
       {summary.notFound.length > 0 ? (
         <p className="text-sm text-muted-foreground">
-          Not found in the PDF, enter by hand: {summary.notFound.join(', ')}.
+          Not found in the {summary.document}, enter by hand: {summary.notFound.join(', ')}.
         </p>
       ) : null}
       {summary.stated.length > 0 ? (
         <p className="text-sm text-muted-foreground">
-          The PDF states {summary.stated.map((item) => `${item.label} ${item.shown}`).join(', ')}.
-          Compare them with the totals below.
+          The {summary.document} states{' '}
+          {summary.stated.map((item) => `${item.label} ${item.shown}`).join(', ')}. Compare them
+          with the totals below.
         </p>
       ) : null}
       {summary.discrepancies.map((message) => (
@@ -169,7 +202,7 @@ export function FillReview({
       ))}
       <Label className="flex items-center gap-2 text-sm font-normal">
         <Checkbox checked={checked} onCheckedChange={(value) => onChecked(value === true)} />I have
-        checked the values filled from the PDF against the PDF
+        checked the values filled from the {summary.document} against the {summary.document}
       </Label>
       {showError && !checked ? (
         <p role="alert" className="text-sm text-destructive">

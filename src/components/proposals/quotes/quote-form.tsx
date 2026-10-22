@@ -72,6 +72,8 @@ const ACCEPT = [
   ...Object.keys(QUOTE_ATTACHMENT_TYPES),
   ...Object.values(QUOTE_ATTACHMENT_TYPES),
 ].join(',');
+/** Q1: files that can be read to fill the form (pictures only when the server reads them). */
+const READABLE: ReadonlySet<string> = new Set(['application/pdf', 'image/png', 'image/jpeg']);
 
 const paise = (value: string) => `₹${formatIndianNumber(value, 2)}`;
 
@@ -704,7 +706,7 @@ function Proof({
                 >
                   Download
                 </a>
-                {attachment.contentType === 'application/pdf' ? (
+                {READABLE.has(attachment.contentType) ? (
                   <Button
                     type="button"
                     variant="outline"
@@ -717,7 +719,9 @@ function Proof({
                     ) : (
                       <FileText aria-hidden="true" />
                     )}
-                    Fill the form from this PDF
+                    {attachment.contentType === 'application/pdf'
+                      ? 'Fill the form from this PDF'
+                      : 'Fill the form from this picture'}
                   </Button>
                 ) : null}
               </li>

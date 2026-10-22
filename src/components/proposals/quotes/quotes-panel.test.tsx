@@ -218,6 +218,7 @@ describe('QuotesPanel', { timeout: 20_000 }, () => {
     const none: OcrField = { raw: null, value: null, state: 'MISSING' };
     const extraction: QuoteExtraction = {
       source: 'PDF_TEXT',
+      reader: 'BUILT_IN',
       attachmentId: ATTACHMENT.id,
       insurerName: none,
       insuredName: none,
@@ -361,5 +362,135 @@ describe('QuotesPanel', { timeout: 20_000 }, () => {
     expect(
       within(sheet).queryByRole('checkbox', { name: /I have checked/ }),
     ).not.toBeInTheDocument();
+  });
+  it('Q1 with Gemini: reads a picture, says it went to Gemini and whose quote it is, and still needs the check', async () => {
+    const PICTURE = { ...ATTACHMENT, fileName: 'Kavach quote.jpg', contentType: 'image/jpeg' };
+    const low = (raw: string, value: string): OcrField => ({ raw, value, state: 'LOW' });
+    const none: OcrField = { raw: null, value: null, state: 'MISSING' };
+    const extraction: QuoteExtraction = {
+      source: 'OCR_IMAGE',
+      reader: 'GEMINI',
+      attachmentId: PICTURE.id,
+      insurerName: low('Page 1: Kavach General Insurance Ltd.', 'Kavach General Insurance Ltd.'),
+      insuredName: none,
+      quoteReference: low('Page 1: Quote Ref KGI/77/2026', 'KGI/77/2026'),
+      option: { value: null, state: 'MISSING' },
+      sections: [
+        {
+          code: 'FIRE',
+          premium: low('Page 1: Fire (incl. terrorism) 1,00,000.50', '100000.50'),
+          premiumWithoutTerrorism: low('Page 1: Fire (excl. terrorism) 90,000', '90000'),
+        },
+      ],
+      netPremium: none,
+      gstRatePercent: none,
+      gstAmount: none,
+      totalPremium: none,
+      validUntil: none,
+      discrepancies: [],
+      manualEntryRequired: false,
+    };
+    let sent: Record<string, unknown> | undefined;
+    fetchMock.mockImplementation((input, init) => {
+      const url = urlOf(input);
+      if (url.endsWith(`/quote-attachments/${PICTURE.id}/read`)) {
+        return Promise.resolve(json(extraction));
+      }
+      if (url.includes('/quote-attachments')) return Promise.resolve(json(PICTURE, 201));
+      if (init?.method === 'POST' && url.endsWith(`/insurers/${INSURER_A}/quotes`)) {
+        sent = JSON.parse(init.body as string) as Record<string, unknown>;
+        return Promise.resolve(json(quotes([version()]), 201));
+      }
+      if (url.endsWith(`/proposals/${CASE_ID}/quotes`)) return Promise.resolve(json(quotes()));
+      return Promise.resolve(json({ code: 'NOT_FOUND', message: 'Not found' }, 404));
+    });
+    const user = renderPanel();
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Enter quote for Kavach General, Pune, Proposed – Option 1',
+      }),
+    );
+    const sheet = await screen.findByRole('dialog');
+    await user.upload(
+      within(sheet).getByLabelText('Insurer’s mail or PDF'),
+      new File(['jpeg'], 'Kavach quote.jpg', { type: 'image/jpeg' }),
+    );
+    await user.click(
+      await within(sheet).findByRole('button', { name: 'Fill the form from this picture' }),
+    );
+    expect(
+      await within(sheet).findByText(
+        /Filled from Kavach quote.jpg: check each value against the file/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).getByText(/Read by Gemini \(Google’s external AI service\)/),
+    ).toBeInTheDocument();
+    expect(
+      within(sheet).getByText(
+        /names Insurer Kavach General Insurance Ltd., Quotation no. KGI\/77\/2026\. Check it is this insurer’s quote/,
+      ),
+    ).toBeInTheDocument();
+    expect(within(sheet).getAllByText('Low confidence — please check')).toHaveLength(2);
+    expect(within(sheet).getByLabelText(/^Fire premium with terrorism$/i)).toHaveValue(
+      '1,00,000.50',
+    );
+
+    await user.click(within(sheet).getByRole('button', { name: 'Save quote' }));
+    expect(await within(sheet).findByText(/Tick this once you have checked/)).toBeInTheDocument();
+    expect(sent).toBeUndefined();
+    await user.click(
+      within(sheet).getByRole('checkbox', {
+        name: 'I have checked the values filled from the file against the file',
+      }),
+    );
+    await user.click(within(sheet).getByRole('button', { name: 'Save quote' }));
+    await waitFor(() => expect(sent).toMatchObject({ attachmentIds: [PICTURE.id] }));
+  });
+
+  it('Q1: shows why a read failed, keeps the form usable, and the read can be retried', async () => {
+    let attempts = 0;
+    fetchMock.mockImplementation((input) => {
+      const url = urlOf(input);
+      if (url.endsWith(`/quote-attachments/${ATTACHMENT.id}/read`)) {
+        attempts += 1;
+        return Promise.resolve(
+          json(
+            {
+              code: 'UPSTREAM_UNAVAILABLE',
+              message:
+                'The reading service (Gemini) is busy. Wait a minute and try again, or enter the figures by hand.',
+              details: { reader: 'GEMINI', reason: 'RATE_LIMITED' },
+            },
+            503,
+          ),
+        );
+      }
+      if (url.includes('/quote-attachments')) return Promise.resolve(json(ATTACHMENT, 201));
+      if (url.endsWith(`/proposals/${CASE_ID}/quotes`)) return Promise.resolve(json(quotes()));
+      return Promise.resolve(json({ code: 'NOT_FOUND', message: 'Not found' }, 404));
+    });
+    const user = renderPanel();
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Enter quote for Kavach General, Pune, Proposed – Option 1',
+      }),
+    );
+    const sheet = await screen.findByRole('dialog');
+    await user.upload(
+      within(sheet).getByLabelText('Insurer’s mail or PDF'),
+      new File(['%PDF-1.4'], 'Kavach quote.pdf', { type: 'application/pdf' }),
+    );
+    const fill = await within(sheet).findByRole('button', { name: 'Fill the form from this PDF' });
+    await user.click(fill);
+    expect(
+      await within(sheet).findByText(/The reading service \(Gemini\) is busy/),
+    ).toBeInTheDocument();
+    // Nothing was filled and no check is asked for; the file stays attached for the save.
+    expect(within(sheet).queryByText(/Filled from/)).not.toBeInTheDocument();
+    expect(within(sheet).getByLabelText('Money premium')).toHaveValue('');
+    await waitFor(() => expect(fill).toBeEnabled());
+    await user.click(fill);
+    await waitFor(() => expect(attempts).toBe(2));
   });
 });
