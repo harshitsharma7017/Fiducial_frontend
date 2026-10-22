@@ -7,9 +7,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
 import { formatInr } from '@/lib/money';
 import { coverageColumns, coverageTotals, sectionAmount } from '@/lib/proposal-metrics';
+import { isSectionShown } from '@/shared';
 import {
   SECTION_CODES,
   SECTION_LABELS,
@@ -19,19 +19,25 @@ import {
 import { Section } from './section-heading';
 
 /**
- * All 14 sections in the glossary order, each marked included or not, with the sum insured per
- * option (Existing only for renewals). A totals row adds up the included sections per option.
+ * The coverage sections the case includes, in the glossary order, with the sum insured per option
+ * (Existing only for renewals). B5: a section not marked required is not listed (the same rule as
+ * the RFQ, QCR and documents, `isSectionShown`); its figures stay on the case. A totals row adds
+ * up the listed sections per option.
  */
 export function CoverageTable({ proposal }: { proposal: Proposal }) {
   const columns = coverageColumns(proposal);
   const totals = coverageTotals(proposal);
-  const includedCount = proposal.sections.filter((section) => section.included).length;
+  const shown = SECTION_CODES.filter((code) =>
+    proposal.sections.some((section) => section.code === code && isSectionShown(section)),
+  );
 
   return (
     <Section
       title="Coverage sections"
       action={
-        <span className="text-xs text-muted-foreground tabular">{includedCount}/14 included</span>
+        <span className="text-xs text-muted-foreground tabular">
+          {shown.length}/{SECTION_CODES.length} included
+        </span>
       }
     >
       <div className="overflow-x-auto rounded-lg border">
@@ -39,7 +45,6 @@ export function CoverageTable({ proposal }: { proposal: Proposal }) {
           <TableHeader>
             <TableRow>
               <TableHead scope="col">Section</TableHead>
-              <TableHead scope="col">Status</TableHead>
               {columns.map((option) => (
                 <TableHead key={option} scope="col" className="text-right">
                   {SUM_INSURED_OPTION_LABELS[option]}
@@ -48,21 +53,18 @@ export function CoverageTable({ proposal }: { proposal: Proposal }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {SECTION_CODES.map((code) => {
-              const line = proposal.sections.find((section) => section.code === code);
-              const included = line?.included ?? false;
-              return (
-                <TableRow key={code} className={cn(!included && 'text-muted-foreground')}>
+            {shown.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length + 1} className="text-muted-foreground">
+                  No coverage section is included yet.
+                </TableCell>
+              </TableRow>
+            ) : (
+              shown.map((code) => (
+                <TableRow key={code}>
                   <TableCell className="font-medium">{SECTION_LABELS[code]}</TableCell>
-                  <TableCell>
-                    {included ? (
-                      'Included'
-                    ) : (
-                      <span className="text-muted-foreground">Not included</span>
-                    )}
-                  </TableCell>
                   {columns.map((option) => {
-                    const amount = included ? sectionAmount(proposal, option, code) : null;
+                    const amount = sectionAmount(proposal, option, code);
                     return (
                       <TableCell key={option} className="text-right tabular">
                         {amount === null ? '—' : formatInr(amount)}
@@ -70,13 +72,12 @@ export function CoverageTable({ proposal }: { proposal: Proposal }) {
                     );
                   })}
                 </TableRow>
-              );
-            })}
+              ))
+            )}
           </TableBody>
           <TableFooter>
             <TableRow>
               <TableCell className="font-semibold">Total of included sections</TableCell>
-              <TableCell />
               {columns.map((option) => (
                 <TableCell key={option} className="text-right font-semibold tabular">
                   {totals[option] === undefined ? '—' : formatInr(totals[option])}

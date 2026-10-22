@@ -1,6 +1,6 @@
 import { daysBetween } from '@/lib/dates';
 import { sumRupees } from '@/lib/money';
-import { INSURER_STATUSES, type InsurerStatus } from '@/shared';
+import { INSURER_STATUSES, isSectionShown, type InsurerStatus } from '@/shared';
 import {
   STAGES,
   type Product,
@@ -41,7 +41,7 @@ export function sectionAmount(
 /** The total of the included sections for one option. */
 export function coverageTotal(proposal: Proposal, option: SumInsuredOption): Rupees {
   const amounts = proposal.sections
-    .filter((section) => section.included)
+    .filter(isSectionShown)
     .map((section) => sectionAmount(proposal, option, section.code))
     .filter((amount): amount is Rupees => amount !== null);
   return sumRupees(amounts);
@@ -129,7 +129,7 @@ export function toSummary(proposal: Proposal, today: string): ProposalSummary {
     product: proposal.product,
     stage: proposal.stage,
     fireSumInsured: fireSumInsured(proposal),
-    sectionsIncluded: proposal.sections.filter((section) => section.included).length,
+    sectionsIncluded: proposal.sections.filter(isSectionShown).length,
     insurersResponded: respondedCount(proposal),
     insurersListed: proposal.insurers.length,
     insurerStatusCounts: statusCounts(proposal),
