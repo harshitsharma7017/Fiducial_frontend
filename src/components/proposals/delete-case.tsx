@@ -20,7 +20,7 @@ import { apiFetch } from '@/lib/api-client';
 import { isRecordId } from '@/lib/api/new-business';
 import { ProposalRecordSchema } from '@/shared';
 
-// Moving a case to the Deleted bin (Admins, proposals.delete): it is kept with all its work but
+// Moving a case to the Deleted bin (Admins, property.delete): it is kept with all its work but
 // left out of every list until restored from the bin. Used on the Proposals list and the RFQ,
 // Quotes and QCR and Placement Slips lists, which all refresh under the "proposals" key.
 
@@ -33,7 +33,7 @@ export function DeleteCaseButton({
   reference: string;
   clientName: string;
 }) {
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const remove = useMutation({

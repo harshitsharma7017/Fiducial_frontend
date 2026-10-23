@@ -46,7 +46,7 @@ export function MailDetailSheet({
   /** The row that opened it: not a Radix trigger, so focus goes back by hand. */
   returnFocus: RefObject<HTMLButtonElement | null>;
 }) {
-  const canExport = usePermission('proposals.export');
+  const canExport = usePermission('property.export');
   const detail = useQuery({
     queryKey: ['proposals', proposalId, 'mails', mail?.id ?? null],
     queryFn: ({ signal }) =>

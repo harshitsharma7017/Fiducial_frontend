@@ -59,8 +59,14 @@ the real API again, unchanged.
 
 ## Roles and permissions
 
-What each role may do is one table, `src/shared/permissions.ts`, shared with the API (the backend's README lists it).
-The web app reads the same table:
+Roles are database records that administrators manage on **Admin › Roles** (`/roles`, `roles.view`). They create
+roles, choose each role's permissions from the catalog in `src/shared/permissions.ts`, and assign roles on
+**Admin › Users**, which shows the effective permissions of the roles chosen. Screens and actions follow the
+`permissions` that `GET /auth/me` returns for the signed-in user, never role names. The API enforces the same
+permissions, and changes apply to the user's next request. See the backend's `docs/RBAC.md`.
+
+The table below is what the five migrated system roles allow by default. Administrators can change it without code
+changes:
 
 | Screen or action                                                | Admin | Approver | Relationship Manager | Underwriting / Placement | Read-only |
 | --------------------------------------------------------------- | ----- | -------- | -------------------- | ------------------------ | --------- |

@@ -28,7 +28,7 @@ import {
 const COLUMNS = 5;
 
 /**
- * The Deleted bin (Admins, proposals.delete): the cases moved there, newest first, each with who
+ * The Deleted bin (Admins, property.delete): the cases moved there, newest first, each with who
  * deleted it and when, and Restore to bring it back as it was.
  */
 export function DeletedBinView() {

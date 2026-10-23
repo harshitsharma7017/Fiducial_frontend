@@ -49,7 +49,7 @@ export function phaseOf(row: QcrSummary): Phase {
 const paise = (value: string) => `₹${formatIndianNumber(value, 2)}`;
 
 export function QuotesView({ serverSearch }: { serverSearch: string }) {
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
   const { params, replace } = useUrlSearchParams(serverSearch);
   const phase = PHASES.find((value) => value.toLowerCase() === params.get('status')) ?? null;
   const q = params.get('q') ?? '';
@@ -141,7 +141,7 @@ export function QuotesView({ serverSearch }: { serverSearch: string }) {
 
 function QuoteRow({ row }: { row: QcrSummary }) {
   const phase = phaseOf(row);
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
   const daysLeft = daysBetween(todayIst(), row.dueDate);
   return (
     <TableRow>

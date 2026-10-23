@@ -91,9 +91,9 @@ const rupees = (value: string | null) =>
   value === null ? '—' : `₹${formatIndianNumber(value, 0)}`;
 
 export function PlacementSlipPanel({ record }: { record: ProposalRecord }) {
-  const canEdit = usePermission('proposals.edit') && record.stage !== 'CLOSED';
-  const canApprove = usePermission('proposals.approve') && record.stage !== 'CLOSED';
-  const canSend = usePermission('proposals.send') && record.stage !== 'CLOSED';
+  const canEdit = usePermission('property.edit') && record.stage !== 'CLOSED';
+  const canApprove = usePermission('property.approve') && record.stage !== 'CLOSED';
+  const canSend = usePermission('property.send') && record.stage !== 'CLOSED';
   const query = useQuery({
     queryKey: queryKeys.proposals.placementSlip(record.id),
     queryFn: ({ signal }) =>

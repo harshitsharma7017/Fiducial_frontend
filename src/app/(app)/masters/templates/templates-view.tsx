@@ -182,7 +182,7 @@ function TemplateCard({ item, canManage }: { item: Item; canManage: boolean }) {
 
 /** R-3: the client's Excel formats that documents are filled from. */
 export function TemplatesView() {
-  const canManage = usePermission('masters.manage');
+  const canManage = usePermission('templates.manage');
   const templates = useQuery({
     queryKey: ['templates'],
     queryFn: ({ signal }) => apiFetch('templates', { schema: DocumentTemplateListSchema, signal }),

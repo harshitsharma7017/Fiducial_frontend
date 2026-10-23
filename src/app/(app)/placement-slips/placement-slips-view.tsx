@@ -48,7 +48,7 @@ export function phaseOf(row: PlacementSlipSummary): Phase {
 const paise = (value: string) => `₹${formatIndianNumber(value, 2)}`;
 
 export function PlacementSlipsView({ serverSearch }: { serverSearch: string }) {
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
   const { params, replace } = useUrlSearchParams(serverSearch);
   const phase =
     PHASES.find((value) => value.toLowerCase().replace(/_/g, '-') === params.get('status')) ?? null;
@@ -139,7 +139,7 @@ export function PlacementSlipsView({ serverSearch }: { serverSearch: string }) {
 
 function SlipRow({ row }: { row: PlacementSlipSummary }) {
   const phase = phaseOf(row);
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
   return (
     <TableRow>
       <TableCell className="font-medium whitespace-nowrap">

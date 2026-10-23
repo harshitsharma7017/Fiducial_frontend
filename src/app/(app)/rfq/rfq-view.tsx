@@ -64,14 +64,14 @@ const STATUS_ORDER: Record<RfqStatus, number> = { READY: 0, PARTLY_SENT: 1, NOT_
  * what has gone to which insurers. Each row opens the proposal on its Insurers and RFQ tab.
  */
 export function RfqView({ serverSearch }: { serverSearch: string }) {
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
   const columns = canDelete ? 8 : 7;
   const searchId = useId();
   const { params, replace } = useUrlSearchParams(serverSearch);
   const status = parseRfqStatus(params.get('status'));
   const q = params.get('q') ?? '';
   const overdueOnly = params.get('filter') === OVERDUE_FILTER;
-  const canCreate = usePermission('proposals.create');
+  const canCreate = usePermission('property.create');
 
   const rfqs = useQuery({
     queryKey: ['proposals', 'rfq'],
@@ -266,7 +266,7 @@ function RfqRow({ record }: { record: ProposalRecord }) {
   const latest = lastSent(record);
   const daysLeft = daysBetween(todayIst(), record.dueDate);
   const waiting = status !== 'SENT';
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
 
   return (
     <TableRow>

@@ -69,8 +69,8 @@ const sameEdits = (a: RfqEdits, b: RfqEdits) => JSON.stringify(a) === JSON.strin
 
 export function RfqReviewPanel({ record }: { record: ProposalRecord }) {
   const open = record.stage !== 'CLOSED';
-  const canEdit = usePermission('proposals.edit') && open;
-  const canApprove = usePermission('proposals.approve') && open;
+  const canEdit = usePermission('property.edit') && open;
+  const canApprove = usePermission('property.approve') && open;
   const queryClient = useQueryClient();
   const state = useQuery(rfqStateQuery(record.id));
   const client = useQuery(clientQuery(record.client.id));

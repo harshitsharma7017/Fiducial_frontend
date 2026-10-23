@@ -123,8 +123,8 @@ function StatusCard({
   record: ProposalRecord;
   coverage: CoverageConfirmation;
 }) {
-  const canSend = usePermission('proposals.send') && record.stage !== 'CLOSED';
-  const canExport = usePermission('proposals.export');
+  const canSend = usePermission('property.send') && record.stage !== 'CLOSED';
+  const canExport = usePermission('property.export');
   const recorded = coverage.confirmation !== null;
   const channel = coverage.confirmation?.channel ?? null;
   // The configured channel decides which output this confirmation calls for; the interface makes
@@ -314,7 +314,7 @@ function RecordCard({
   record: ProposalRecord;
   coverage: CoverageConfirmation;
 }) {
-  const canEdit = usePermission('proposals.edit') && record.stage !== 'CLOSED';
+  const canEdit = usePermission('property.edit') && record.stage !== 'CLOSED';
   const setCoverage = useSetCoverage(record.id);
   const kindId = useId();
   const form = useForm<

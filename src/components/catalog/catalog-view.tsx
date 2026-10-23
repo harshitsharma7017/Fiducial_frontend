@@ -245,7 +245,7 @@ function rowText(item: object): string {
 
 /** Download and upload of the product and cover masters workbook, for page headers. */
 export function CatalogWorkbookActions() {
-  const canManage = usePermission('masters.manage');
+  const canManage = usePermission('catalog.manage');
   return (
     <>
       <Button asChild variant="outline">
@@ -284,7 +284,7 @@ export function CatalogTable<M extends CatalogMaster>({
 }) {
   const searchId = useId();
   const queryClient = useQueryClient();
-  const canManage = usePermission('masters.manage');
+  const canManage = usePermission('catalog.manage');
   const spec = CATALOG_SHEETS[master];
   const rows = useQuery(catalogQuery(master));
   const [search, setSearch] = useState('');

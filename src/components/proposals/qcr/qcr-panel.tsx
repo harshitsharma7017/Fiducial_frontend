@@ -64,9 +64,9 @@ import { QcrComparison } from './qcr-comparison';
 // approval of exactly what is shown, the downloads, and the mail to the insured once approved.
 
 export function QcrPanel({ record }: { record: ProposalRecord }) {
-  const canEdit = usePermission('proposals.edit') && record.stage !== 'CLOSED';
-  const canApprove = usePermission('proposals.approve');
-  const canSend = usePermission('proposals.send');
+  const canEdit = usePermission('property.edit') && record.stage !== 'CLOSED';
+  const canApprove = usePermission('property.approve');
+  const canSend = usePermission('property.send');
   const qcr = useQuery({
     queryKey: queryKeys.proposals.qcr(record.id),
     queryFn: ({ signal }) => apiFetch(`proposals/${record.id}/qcr`, { schema: QcrSchema, signal }),

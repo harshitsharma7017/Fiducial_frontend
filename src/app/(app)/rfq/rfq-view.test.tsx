@@ -8,13 +8,16 @@ import {
   OTHER_SECTIONS,
   type ProposalInsurer,
   type ProposalRecord,
-  type Role,
+  type LegacyRole as Role,
+  legacyPermissionsOf,
 } from '@/shared';
 import { RfqView } from './rfq-view';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: { roles: roles.current, roleNames: [], permissions: legacyPermissionsOf(roles.current) },
+  }),
 }));
 
 function insurer(n: number, sentAt: string | null): ProposalInsurer {

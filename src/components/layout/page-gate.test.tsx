@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Role } from '@/shared';
+import { legacyPermissionsOf, type LegacyRole as Role } from '@/shared';
 import { PageGate } from './page-gate';
 
 const navigation = vi.hoisted(() => ({ pathname: '/dashboard' }));
@@ -11,7 +11,8 @@ vi.mock('next/navigation', () => ({
 function renderGate(pathname: string, roles: readonly Role[] | undefined) {
   navigation.pathname = pathname;
   render(
-    <PageGate roles={roles}>
+    // A user holding these migrated system roles, with the permissions /auth/me gives them.
+    <PageGate permissions={roles ? legacyPermissionsOf(roles) : undefined}>
       <h1>Page content</h1>
     </PageGate>,
   );
@@ -56,8 +57,19 @@ describe('PageGate', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Checking your access…');
   });
 
-  it('shows pages every role may open at once, and pages that need nothing', () => {
+  it('waits for the user before any page that needs a permission, and shows pages that need nothing', () => {
     renderGate('/dashboard', undefined);
+    expect(pageShown()).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Checking your access…');
+  });
+
+  it('follows the permissions, not the role: a custom role with only the permission opens the page', () => {
+    navigation.pathname = '/masters/products';
+    render(
+      <PageGate permissions={['catalog.view']}>
+        <h1>Page content</h1>
+      </PageGate>,
+    );
     expect(pageShown()).toBeInTheDocument();
   });
 

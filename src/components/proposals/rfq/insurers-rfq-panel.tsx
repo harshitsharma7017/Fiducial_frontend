@@ -44,9 +44,9 @@ function Step({ number, title, children }: { number: number; title: string; chil
  * sent locks the Data Sheet.
  */
 export function InsurersRfqPanel({ record }: { record: ProposalRecord }) {
-  const canEdit = usePermission('proposals.edit');
-  const canSend = usePermission('proposals.send');
-  const canExport = usePermission('proposals.export');
+  const canEdit = usePermission('property.edit');
+  const canSend = usePermission('property.send');
+  const canExport = usePermission('property.export');
   const mail = useMailStatus();
   // Unknown (the user cannot read the settings) counts as on until a send says otherwise.
   const mailOn = mail?.transport !== 'off';

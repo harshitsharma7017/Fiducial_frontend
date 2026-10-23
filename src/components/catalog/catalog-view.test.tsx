@@ -3,12 +3,14 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogImportResult } from '@/components/imports/catalog-import-result';
-import type { CatalogImportReport, Role } from '@/shared';
+import { legacyPermissionsOf, type CatalogImportReport, type LegacyRole as Role } from '@/shared';
 import { CatalogTable } from './catalog-view';
 
 const roles = vi.hoisted(() => ({ current: ['ADMIN'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: { roles: roles.current, roleNames: [], permissions: legacyPermissionsOf(roles.current) },
+  }),
 }));
 
 const AT = '2026-10-07T04:00:00.000Z';

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Role, User } from '@/shared';
+import { legacyPermissionsOf, type LegacyRole as Role, type CurrentUser as User } from '@/shared';
 import { DashboardHeader } from './dashboard-header';
 
 const session = vi.hoisted(() => ({ roles: ['ADMIN'] as Role[] }));
@@ -12,6 +12,8 @@ vi.mock('@/hooks/use-current-user', () => ({
       email: 'asha@example.com',
       name: 'Asha Menon',
       roles: session.roles,
+      roleNames: [],
+      permissions: legacyPermissionsOf(session.roles),
       active: true,
       lockedUntil: null,
       lastLoginAt: null,

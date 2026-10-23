@@ -18,8 +18,8 @@ export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
   const { params, replace } = useUrlSearchParams(serverSearch);
   const { type, stage } = parseProposalParams(params);
   const [drawer, setDrawer] = useState<DrawerTarget | null>(null);
-  const canCreate = usePermission('proposals.create');
-  const canDelete = usePermission('proposals.delete');
+  const canCreate = usePermission('property.create');
+  const canDelete = usePermission('property.delete');
 
   const newStats = useDashboardStats('NEW');
   const existingStats = useDashboardStats('EXISTING');

@@ -18,13 +18,21 @@ import {
   OTHER_SECTION_LABELS,
   RISK_DETAIL_FIELDS,
   type RfqState,
-  type Role,
+  type LegacyRole as Role,
+  legacyPermissionsOf,
 } from '@/shared';
 import { RfqReviewPanel } from './rfq-review-panel';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { name: 'Asha Rao', roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: {
+      name: 'Asha Rao',
+      roles: roles.current,
+      roleNames: [],
+      permissions: legacyPermissionsOf(roles.current),
+    },
+  }),
 }));
 
 const LOCATION_ID = 'c'.repeat(24);

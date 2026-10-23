@@ -9,11 +9,11 @@ import { DocStatusBadge } from '../badges';
 import { Section } from './section-heading';
 
 /**
- * The four documents with status badges. Users who may export (proposals.export) also see the
+ * The four documents with status badges. Users who may export (property.export) also see the
  * download buttons, disabled and marked "Coming soon" until document export is built.
  */
 export function DocumentsSection({ proposal }: { proposal: Proposal }) {
-  const canExport = usePermission('proposals.export');
+  const canExport = usePermission('property.export');
 
   return (
     <Section title="Documents">

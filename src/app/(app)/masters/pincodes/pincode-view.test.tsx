@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PincodeRecord, Role } from '@/shared';
+import { legacyPermissionsOf, type PincodeRecord, type LegacyRole as Role } from '@/shared';
 import { PincodeView } from './pincode-view';
 
 const RECORDS: PincodeRecord[] = [
@@ -44,6 +44,8 @@ function renderView(roles: Role[]) {
           email: 'a@example.com',
           name: 'Asha',
           roles,
+          roleNames: [],
+          permissions: legacyPermissionsOf(roles),
           active: true,
           lockedUntil: null,
           lastLoginAt: null,

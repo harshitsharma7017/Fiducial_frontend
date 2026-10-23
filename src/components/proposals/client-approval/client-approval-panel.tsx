@@ -59,7 +59,7 @@ const choiceKey = (choice: { insurerId: string; option: string }) =>
   `${choice.insurerId}|${choice.option}`;
 
 export function ClientApprovalPanel({ record }: { record: ProposalRecord }) {
-  const canEdit = usePermission('proposals.edit');
+  const canEdit = usePermission('property.edit');
   const query = useQuery({
     queryKey: queryKeys.proposals.clientApproval(record.id),
     queryFn: ({ signal }) =>

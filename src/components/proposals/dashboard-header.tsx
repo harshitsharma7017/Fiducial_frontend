@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { useDemoMode } from '@/hooks/use-demo-mode';
 import { useIstNow } from '@/hooks/use-ist-now';
-import { can, formatDate } from '@/shared';
+import { formatDate, hasPermission } from '@/shared';
 import type { ProposalType } from '@/types/proposal';
 
 function greeting(hourIst: number): string {
@@ -30,13 +30,13 @@ function istHour(nowMs: number): number {
 
 /**
  * Greeting with the user's first name, today's IST date, and the type's primary action, shown
- * only to users who may create proposals (proposals.create).
+ * only to users who may create proposals (property.create).
  */
 export function DashboardHeader({ type }: { type: ProposalType }) {
   const me = useCurrentUser();
   const nowMs = useIstNow();
   const firstName = me.data?.name.split(/\s+/)[0];
-  const canCreate = me.data ? can(me.data.roles, 'proposals.create') : false;
+  const canCreate = hasPermission(me.data?.permissions, 'property.create');
   // Every case comes from the API; demo mode shows sample proposals.
   const sampleNote = useDemoMode()
     ? 'Demo mode: sample proposals.'

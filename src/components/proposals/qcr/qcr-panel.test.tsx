@@ -10,12 +10,19 @@ import {
   json,
   urlOf,
 } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
-import type { Qcr, Role } from '@/shared';
+import { legacyPermissionsOf, type Qcr, type LegacyRole as Role } from '@/shared';
 import { QcrPanel } from './qcr-panel';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { name: 'Asha Rao', roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: {
+      name: 'Asha Rao',
+      roles: roles.current,
+      roleNames: [],
+      permissions: legacyPermissionsOf(roles.current),
+    },
+  }),
 }));
 
 function qcr(overrides: Partial<Qcr> = {}): Qcr {

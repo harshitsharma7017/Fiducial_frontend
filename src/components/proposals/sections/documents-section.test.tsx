@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { buildSampleProposals } from '@/lib/data/proposals';
-import type { Role } from '@/shared';
+import { legacyPermissionsOf, type LegacyRole as Role } from '@/shared';
 import { DocumentsSection } from './documents-section';
 
 const session = vi.hoisted(() => ({ roles: ['ADMIN'] as Role[] }));
 
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { roles: session.roles } }),
+  useCurrentUser: () => ({
+    data: { roles: session.roles, roleNames: [], permissions: legacyPermissionsOf(session.roles) },
+  }),
 }));
 
 const proposal = buildSampleProposals(new Date('2026-10-05T06:30:00.000Z'))[0];

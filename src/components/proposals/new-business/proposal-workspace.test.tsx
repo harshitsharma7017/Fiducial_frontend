@@ -8,15 +8,18 @@ import {
   OTHER_SECTIONS,
   RISK_DETAIL_FIELDS,
   type ProposalRecord,
-  type Role,
+  type LegacyRole as Role,
   type InsurerStatus,
+  legacyPermissionsOf,
 } from '@/shared';
 import { approvedRfqState } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
 import { ProposalWorkspace } from './proposal-workspace';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: { roles: roles.current, roleNames: [], permissions: legacyPermissionsOf(roles.current) },
+  }),
 }));
 
 const ID = 'aaaaaaaaaaaaaaaaaaaaaaaa';

@@ -16,7 +16,7 @@ import { useUrlSearchParams } from '@/lib/use-url-search-params';
 export function NewProposalView({ serverSearch }: { serverSearch: string }) {
   const { params } = useUrlSearchParams(serverSearch);
   const renewal = parseType(params.get('type')) === 'EXISTING';
-  const canCreate = usePermission('proposals.create');
+  const canCreate = usePermission('property.create');
 
   return (
     <>

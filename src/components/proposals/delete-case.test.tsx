@@ -2,13 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Role } from '@/shared';
+import { legacyPermissionsOf, type LegacyRole as Role } from '@/shared';
 import { caseRecord } from './rfq/rfq-fixtures.test-utils';
 import { DeleteCaseButton } from './delete-case';
 
 const roles = vi.hoisted(() => ({ current: ['ADMIN'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: { roles: roles.current, roleNames: [], permissions: legacyPermissionsOf(roles.current) },
+  }),
 }));
 
 const ID = 'a'.repeat(24);

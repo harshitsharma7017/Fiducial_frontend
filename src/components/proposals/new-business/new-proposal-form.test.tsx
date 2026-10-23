@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Client, ClientLocation } from '@/shared';
+import { legacyPermissionsOf, type Client, type ClientLocation } from '@/shared';
 import { NewProposalForm } from './new-proposal-form';
 
 const push = vi.fn();
@@ -11,7 +11,13 @@ const ME = 'f'.repeat(24);
 const OTHER = 'e'.repeat(24);
 vi.mock('@/hooks/use-current-user', () => ({
   useCurrentUser: () => ({
-    data: { id: 'f'.repeat(24), name: 'Asha Rao', roles: ['ACCOUNT_MANAGER'] },
+    data: {
+      id: 'f'.repeat(24),
+      name: 'Asha Rao',
+      roles: ['ACCOUNT_MANAGER'],
+      roleNames: ['Relationship Manager'],
+      permissions: legacyPermissionsOf(['ACCOUNT_MANAGER']),
+    },
   }),
 }));
 const OWNERS = {

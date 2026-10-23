@@ -20,19 +20,21 @@ import {
   ScrollText,
   Send,
   Settings,
+  ShieldCheck,
   UserCog,
   type LucideIcon,
 } from 'lucide-react';
-import { ROLES, can, type Permission, type Role } from '@/shared';
+import { hasAnyPermission, type Permission } from '@/shared';
 
 export interface NavItem {
   label: string;
   icon: LucideIcon;
   /**
-   * What a user needs to see the item and, for a link, to open its page (src/shared/permissions.ts).
-   * Planned items use the permission of the area they belong to.
+   * What a user needs to see the item and, for a link, to open its page (src/shared/permissions.ts):
+   * one permission, or a list of which any one is enough. Planned items use the permission of the
+   * area they belong to.
    */
-  permission: Permission;
+  permission: PagePermission;
   /** Omitted for planned features, which show as disabled with a "Planned" tag. */
   href?: string;
   planned?: true;
@@ -41,6 +43,14 @@ export interface NavItem {
    * whether a page without that parameter counts as a match (the list's default type).
    */
   activeParam?: { name: string; value: string; isDefault?: true };
+}
+
+/** One permission, or a list of which the user needs at least one. */
+export type PagePermission = Permission | readonly Permission[];
+
+/** True when the user's permissions satisfy a page permission. */
+export function allows(permissions: readonly Permission[], needed: PagePermission): boolean {
+  return hasAnyPermission(permissions, typeof needed === 'string' ? [needed] : needed);
 }
 
 export interface NavGroup {
@@ -56,24 +66,24 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'Dashboard',
         href: '/dashboard',
         icon: LayoutDashboard,
-        permission: 'proposals.view',
+        permission: 'property.view',
       },
       // One entry for every proposal; the page switches between new and existing (renewals).
       // Property, Fire and Burglary. Employee Benefits (GMC, GPA, GTLI) and their claims are in
       // fiducial-ghi-frontend.
-      { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'proposals.view' },
+      { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'property.view' },
     ],
   },
   {
     title: 'Workflow',
     items: [
-      { label: 'RFQ', href: '/rfq', icon: Send, permission: 'proposals.view' },
-      { label: 'Quotes and QCR', href: '/quotes', icon: Scale, permission: 'proposals.view' },
+      { label: 'RFQ', href: '/rfq', icon: Send, permission: 'property.view' },
+      { label: 'Quotes and QCR', href: '/quotes', icon: Scale, permission: 'property.view' },
       {
         label: 'Placement Slips',
         href: '/placement-slips',
         icon: FileCheck2,
-        permission: 'proposals.view',
+        permission: 'property.view',
       },
     ],
   },
@@ -90,7 +100,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         label: 'Insurers',
         href: '/masters/insurers',
         icon: Landmark,
-        permission: 'masters.view',
+        permission: 'insurers.view',
       },
       {
         label: 'Occupancy',
@@ -99,77 +109,74 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'masters.view',
       },
       { label: 'Pincodes', href: '/masters/pincodes', icon: MapPin, permission: 'masters.view' },
-      { label: 'Policies', href: '/masters/products', icon: Package, permission: 'masters.view' },
+      { label: 'Policies', href: '/masters/products', icon: Package, permission: 'catalog.view' },
       {
         label: 'Coverage sections',
         href: '/masters/sections',
         icon: Layers,
-        permission: 'masters.view',
+        permission: 'catalog.view',
       },
       {
         label: 'Add-on Covers',
         href: '/masters/addons',
         icon: PackagePlus,
-        permission: 'masters.view',
+        permission: 'catalog.view',
       },
-      { label: 'Tax rates', href: '/masters/tax-rates', icon: Percent, permission: 'masters.view' },
+      { label: 'Tax rates', href: '/masters/tax-rates', icon: Percent, permission: 'catalog.view' },
       {
         label: 'Standard notes',
         href: '/masters/notes',
         icon: NotebookText,
-        permission: 'masters.view',
+        permission: 'catalog.view',
       },
       {
         label: 'Occupancy cover defaults',
         href: '/masters/occupancy-defaults',
         icon: ListChecks,
-        permission: 'masters.view',
+        permission: 'catalog.view',
       },
       {
         label: 'Document templates',
         href: '/masters/templates',
         icon: FileSpreadsheet,
-        permission: 'masters.view',
+        permission: 'templates.view',
       },
       {
         label: 'Email templates',
         href: '/masters/email-templates',
         icon: Mail,
-        permission: 'masters.view',
+        permission: 'email_templates.view',
       },
       {
         label: 'Import data',
         href: '/masters/import',
         icon: FileUp,
-        // Clients and risk locations need clients.manage; the insurer import also masters.manage.
-        permission: 'clients.manage',
+        // Any import permission; the page lists only the record types the user may import.
+        permission: ['clients.import', 'insurers.import', 'masters.manage', 'catalog.manage'],
       },
-      { label: 'Clauses', href: '/masters/clauses', icon: ScrollText, permission: 'masters.view' },
+      { label: 'Clauses', href: '/masters/clauses', icon: ScrollText, permission: 'catalog.view' },
     ],
   },
   {
     title: 'Admin',
     items: [
-      { label: 'Users', href: '/users', icon: UserCog, permission: 'users.manage' },
+      { label: 'Users', href: '/users', icon: UserCog, permission: 'users.view' },
+      { label: 'Roles', href: '/roles', icon: ShieldCheck, permission: 'roles.view' },
       { label: 'Audit log', href: '/audit', icon: History, permission: 'audit.view' },
       { label: 'Settings', href: '/settings', icon: Settings, permission: 'settings.view' },
     ],
   },
 ];
 
-/** True when every role holds the permission, so it can show before the user has loaded. */
-export function isOpenToEveryRole(permission: Permission): boolean {
-  return ROLES.every((role) => can([role], permission));
-}
-
 /**
- * The groups and items a user may see. Each item needs its permission, and a group left with
- * no items is dropped. While the user loads (roles undefined) only the items every role may see
- * are shown, so nothing appears and then disappears.
+ * The groups and items a user may see, from the permissions of their active roles (/auth/me).
+ * Each item needs its permission, and a group left with no items is dropped. Roles are
+ * configurable, so no item is known to be open to everyone: while the user loads (permissions
+ * undefined) nothing is shown.
  */
-export function visibleGroups(roles: readonly Role[] | undefined): NavGroup[] {
-  const allowed = (item: NavItem) =>
-    roles ? can(roles, item.permission) : isOpenToEveryRole(item.permission);
+export function visibleGroups(permissions: readonly Permission[] | undefined): NavGroup[] {
+  if (!permissions) return [];
+  const allowed = (item: NavItem) => allows(permissions, item.permission);
   return NAV_GROUPS.flatMap((group) => {
     const items = group.items.filter(allowed);
     return items.length > 0 ? [{ ...group, items }] : [];
@@ -181,11 +188,12 @@ function pathOf(href: string): string {
 }
 
 /** Pages outside the navigation, with the permission each needs. */
-const OTHER_PAGES: readonly { path: string; permission: Permission }[] = [
-  { path: '/proposals/new', permission: 'proposals.create' },
+const OTHER_PAGES: readonly { path: string; permission: PagePermission }[] = [
+  { path: '/proposals/new', permission: 'property.create' },
+  { path: '/proposals/deleted', permission: 'property.delete' },
 ];
 
-const PAGE_PERMISSIONS: readonly { path: string; permission: Permission }[] = [
+const PAGE_PERMISSIONS: readonly { path: string; permission: PagePermission }[] = [
   ...NAV_GROUPS.flatMap((group) =>
     group.items.flatMap((item) =>
       item.href && !item.planned ? [{ path: pathOf(item.href), permission: item.permission }] : [],
@@ -196,12 +204,12 @@ const PAGE_PERMISSIONS: readonly { path: string; permission: Permission }[] = [
 
 /**
  * The permission needed to open a page: that of the nav link or other page with the longest
- * path that is the page or one of its parents (so /proposals/{id} needs proposals.view and
- * /proposals/new needs proposals.create). Null for pages open to every signed-in user, such as
+ * path that is the page or one of its parents (so /proposals/{id} needs property.view and
+ * /proposals/new needs property.create). Null for pages open to every signed-in user, such as
  * /profile.
  */
-export function pagePermission(pathname: string): Permission | null {
-  let match: { path: string; permission: Permission } | null = null;
+export function pagePermission(pathname: string): PagePermission | null {
+  let match: { path: string; permission: PagePermission } | null = null;
   for (const page of PAGE_PERMISSIONS) {
     const covers = pathname === page.path || pathname.startsWith(`${page.path}/`);
     if (covers && (!match || page.path.length > match.path.length)) match = page;

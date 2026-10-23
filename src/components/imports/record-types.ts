@@ -1,12 +1,11 @@
 import {
+  hasPermission,
   IMPORT_ENTITIES,
   IMPORT_SHEETS,
   MASTER_WORKBOOK_MAX_BYTES,
   MAX_IMPORT_BYTES,
-  can,
   type ImportEntity,
   type Permission,
-  type Role,
 } from '@/shared';
 
 /**
@@ -51,7 +50,7 @@ export const RECORD_TYPES: Record<RecordType, RecordTypeInfo> = {
     label: 'Policy and cover masters',
     description:
       'Policies and their sum insured ranges, the 14 coverage sections, the add-on lists, the BSUS and BLUS add-on limits and rates, GST rates and the standard notes. One workbook, a sheet per master.',
-    permission: 'masters.manage',
+    permission: 'catalog.manage',
     templateLabel: 'Download current masters',
     templateUrl: '/api/proxy/catalog/workbook',
     maxBytes: MASTER_WORKBOOK_MAX_BYTES,
@@ -65,7 +64,9 @@ export function isRecordType(value: string | null): value is RecordType {
   return value !== null && (RECORD_TYPE_ORDER as readonly string[]).includes(value);
 }
 
-/** The record types a user's roles may import. */
-export function allowedRecordTypes(roles: readonly Role[]): RecordType[] {
-  return RECORD_TYPE_ORDER.filter((type) => can(roles, RECORD_TYPES[type].permission));
+/** The record types the user's permissions allow them to import. */
+export function allowedRecordTypes(permissions: readonly Permission[]): RecordType[] {
+  return RECORD_TYPE_ORDER.filter((type) =>
+    hasPermission(permissions, RECORD_TYPES[type].permission),
+  );
 }

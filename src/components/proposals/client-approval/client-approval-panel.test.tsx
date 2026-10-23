@@ -8,12 +8,23 @@ import {
   caseRecord,
   json,
 } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
-import type { ProposalClientApproval, Role } from '@/shared';
+import {
+  legacyPermissionsOf,
+  type ProposalClientApproval,
+  type LegacyRole as Role,
+} from '@/shared';
 import { ClientApprovalPanel } from './client-approval-panel';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { name: 'Asha Rao', roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: {
+      name: 'Asha Rao',
+      roles: roles.current,
+      roleNames: [],
+      permissions: legacyPermissionsOf(roles.current),
+    },
+  }),
 }));
 
 const FILE_ID = 'f'.repeat(24);

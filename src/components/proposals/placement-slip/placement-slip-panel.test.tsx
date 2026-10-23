@@ -8,12 +8,19 @@ import {
   json,
   urlOf,
 } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
-import type { PlacementSlip, Role } from '@/shared';
+import { legacyPermissionsOf, type PlacementSlip, type LegacyRole as Role } from '@/shared';
 import { PlacementSlipPanel } from './placement-slip-panel';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { name: 'Asha Rao', roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: {
+      name: 'Asha Rao',
+      roles: roles.current,
+      roleNames: [],
+      permissions: legacyPermissionsOf(roles.current),
+    },
+  }),
 }));
 
 const FILE_ID = 'f'.repeat(24);

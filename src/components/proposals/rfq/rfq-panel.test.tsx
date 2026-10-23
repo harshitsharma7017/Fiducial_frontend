@@ -2,7 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ProposalRecord, Role, SendResult } from '@/shared';
+import {
+  legacyPermissionsOf,
+  type ProposalRecord,
+  type LegacyRole as Role,
+  type SendResult,
+} from '@/shared';
 import { InsurersRfqPanel } from './insurers-rfq-panel';
 import { MailLog } from './mail-log';
 import {
@@ -21,7 +26,14 @@ import {
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { name: 'Asha Rao', roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: {
+      name: 'Asha Rao',
+      roles: roles.current,
+      roleNames: [],
+      permissions: legacyPermissionsOf(roles.current),
+    },
+  }),
 }));
 
 const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>();

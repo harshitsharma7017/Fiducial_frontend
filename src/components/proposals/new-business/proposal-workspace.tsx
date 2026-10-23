@@ -83,7 +83,7 @@ function Workspace({ id, initialTab }: { id: string; initialTab?: string }) {
 }
 
 function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: string }) {
-  const canEdit = usePermission('proposals.edit');
+  const canEdit = usePermission('property.edit');
   // The tab asked for in the link (?tab=rfq from the RFQ page), else where the case's work goes
   // on next, by its stage.
   const [tab, setTab] = useState<string>(

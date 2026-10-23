@@ -5,11 +5,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlacementSlipsView } from '@/app/(app)/placement-slips/placement-slips-view';
 import { QuotesView } from '@/app/(app)/quotes/quotes-view';
 import { json, urlOf } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
-import type { PlacementSlipSummary, QcrSummary, Role } from '@/shared';
+import {
+  legacyPermissionsOf,
+  type PlacementSlipSummary,
+  type QcrSummary,
+  type LegacyRole as Role,
+} from '@/shared';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: { roles: roles.current, roleNames: [], permissions: legacyPermissionsOf(roles.current) },
+  }),
 }));
 
 function qcr(n: number, overrides: Partial<QcrSummary> = {}): QcrSummary {

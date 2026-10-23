@@ -42,7 +42,7 @@ export function ProposalsTable({
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState>({ by: 'date', dir: 'asc' });
   const debouncedQuery = useDebouncedValue(query, 250);
-  const canDelete = usePermission('proposals.delete');
+  const canDelete = usePermission('property.delete');
 
   // The query the data layer should run. The debounced value changing resets the page below via
   // the key, so paging and filtering stay in step without a page-resetting effect.

@@ -8,7 +8,7 @@ import {
   json,
   urlOf,
 } from '@/components/proposals/rfq/rfq-fixtures.test-utils';
-import type { CoverageConfirmation, Role } from '@/shared';
+import { legacyPermissionsOf, type CoverageConfirmation, type LegacyRole as Role } from '@/shared';
 import { CoverageConfirmationPanel } from './coverage-confirmation-panel';
 
 // Q4: the Coverage confirmation tab. Records the insurer's confirmation, shows the policy details
@@ -17,7 +17,14 @@ import { CoverageConfirmationPanel } from './coverage-confirmation-panel';
 
 const roles = vi.hoisted(() => ({ current: ['ACCOUNT_MANAGER'] as Role[] }));
 vi.mock('@/hooks/use-current-user', () => ({
-  useCurrentUser: () => ({ data: { name: 'Asha Rao', roles: roles.current } }),
+  useCurrentUser: () => ({
+    data: {
+      name: 'Asha Rao',
+      roles: roles.current,
+      roleNames: [],
+      permissions: legacyPermissionsOf(roles.current),
+    },
+  }),
 }));
 
 function coverage(overrides: Partial<CoverageConfirmation> = {}): CoverageConfirmation {

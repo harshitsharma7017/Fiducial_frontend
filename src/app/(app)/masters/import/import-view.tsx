@@ -23,8 +23,8 @@ import { useUrlSearchParams } from '@/lib/use-url-search-params';
 export function ImportView({ serverSearch = '' }: { serverSearch?: string }) {
   const me = useCurrentUser();
   const { params, replace } = useUrlSearchParams(serverSearch);
-  // Each record type needs its own permission (the master and insurers: Admin only).
-  const types = me.data ? allowedRecordTypes(me.data.roles) : [];
+  // Each record type needs its own import permission.
+  const types = me.data ? allowedRecordTypes(me.data.permissions) : [];
   const fromUrl = params.get('type');
   const type: RecordType | undefined =
     isRecordType(fromUrl) && types.includes(fromUrl) ? fromUrl : types[0];
