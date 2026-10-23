@@ -60,14 +60,19 @@ describe('matching the client’s Excel', () => {
 describe('itemSumInsured', () => {
   it('prefers the typed amount', () => {
     expect(
-      itemSumInsured({ key: 'INTERIOR', sqFt: '1000', ratePerSqFt: '2000', amount: '500' }),
+      itemSumInsured({
+        key: 'PLINTH_FOUNDATION',
+        sqFt: '1000',
+        ratePerSqFt: '2000',
+        amount: '500',
+      }),
     ).toBe('500');
   });
 
   it('prices a measured item as area × rate when no amount is typed', () => {
-    expect(itemSumInsured({ key: 'INTERIOR', sqFt: '1000', ratePerSqFt: '2000', amount: '' })).toBe(
-      '2000000',
-    );
+    expect(
+      itemSumInsured({ key: 'PLINTH_FOUNDATION', sqFt: '1000', ratePerSqFt: '2000', amount: '' }),
+    ).toBe('2000000');
   });
 
   it('ignores area and rate on an item that is not measured', () => {
@@ -194,8 +199,8 @@ describe('contentsTotal (D3 — Burglary Option A)', () => {
 function requestOf(overrides: Partial<DataSheetInput> = {}): DataSheetInput {
   return {
     dueDate: '2026-10-20',
-    policyStart: null,
-    policyEnd: null,
+    policyStart: '2026-12-01',
+    policyEnd: '2027-11-30',
     locations: [],
     fireOption2: [],
     fireCovers: [],
@@ -227,8 +232,8 @@ describe('toDataSheetRequest', () => {
     const request = toDataSheetRequest({
       ...requestOf(),
       dueDate: '2026-10-20',
-      policyStart: null,
-      policyEnd: null,
+      policyStart: '2026-12-01',
+      policyEnd: '2027-11-30',
       locations: [
         {
           ...blank,

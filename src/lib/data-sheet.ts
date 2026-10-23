@@ -234,9 +234,8 @@ const answered = (covers: ProposalRecord['fire']['covers']): CoverInput[] =>
 
 const asRupees = (value: string | null) => (value === null ? '' : wholeRupees(value));
 
-/** A renewal's Existing column as form values: what the record shows, typed or copied. */
+/** The Existing column as form values: what the record shows, typed or (renewals) copied. */
 function existingForm(record: ProposalRecord): DataSheetForm['existing'] {
-  if (record.type !== 'EXISTING') return null;
   const anyLine = record.fire.groups.some((line) => line.existing !== null);
   return {
     insurer: record.existing?.insurer ?? '',

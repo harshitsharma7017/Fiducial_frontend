@@ -269,11 +269,14 @@ export function LocationCard({
                       </TableRow>
                     ) : null}
                     <TableRow>
-                      <TableCell className="align-top text-muted-foreground tabular">
+                      {/* Sub-items sit indented under their heading: the letter and the text. */}
+                      <TableCell
+                        className={cn('align-top text-muted-foreground tabular', isSub && 'pl-6')}
+                      >
                         {isSub ? item.number.slice(-1) : item.number}
                       </TableCell>
                       <TableCell
-                        className={cn('min-w-64 align-top whitespace-normal', isSub && 'pl-6')}
+                        className={cn('min-w-64 align-top whitespace-normal', isSub && 'pl-10')}
                       >
                         {item.label}
                       </TableCell>

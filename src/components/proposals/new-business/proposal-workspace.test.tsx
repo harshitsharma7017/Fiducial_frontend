@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  FIRE_GROUP_LABELS,
   FIRE_GROUPS,
   OTHER_SECTION_LABELS,
   OTHER_SECTIONS,
@@ -36,7 +37,7 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
     nextStage: null,
     closedReason: null,
     deleted: null,
-    policyEnd: null,
+    policyEnd: '2027-11-30',
     existingPolicy: null,
     existingPolicyLookup: null,
     existing: null,
@@ -52,7 +53,7 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
     },
     owner: { id: 'eeeeeeeeeeeeeeeeeeeeeeee', name: 'Asha Rao' },
     dueDate: '2026-10-14',
-    policyStart: null,
+    policyStart: '2026-12-01',
     locations: [
       {
         locationId: LOCATION_ID,
@@ -593,6 +594,30 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
     expect(
       within(screen.getByRole('row', { name: /^Money/ })).getByText('Not required'),
     ).toBeInTheDocument();
+  });
+
+  it('C-2: new business has the Existing column too, for the client’s current policy', async () => {
+    let sent: unknown;
+    serve(record(), (_url, body) => {
+      sent = body;
+      return record();
+    });
+    const user = renderWorkspace();
+    // Existing, Proposed – Option 1 and Proposed – Option 2 on the Fire lines.
+    const existing = await screen.findByLabelText(`Existing for ${FIRE_GROUP_LABELS.STOCKS}`);
+    expect(
+      screen.getByLabelText(`Proposed – Option 2 for ${FIRE_GROUP_LABELS.STOCKS}`),
+    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Item 6 sum insured'), '5000000');
+    await user.type(existing, '4500000');
+    await user.type(screen.getByLabelText('Insurer'), 'Current General, Fort');
+    await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
+    await waitFor(() => expect(sent).toBeDefined());
+    const body = sent as {
+      existing: { insurer: string; fireLines: { group: string; amount: string | null }[] };
+    };
+    expect(body.existing.insurer).toBe('Current General, Fort');
+    expect(body.existing.fireLines.find((line) => line.group === 'STOCKS')?.amount).toBe('4500000');
   });
 
   it('saves only the Fire items that were filled and shows the saved figures', async () => {

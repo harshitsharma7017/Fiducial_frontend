@@ -5,7 +5,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { CircleAlert, LoaderCircle, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useForm, useFormContext, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { EmptyState, ErrorState, LoadingState, errorMessage } from '@/components/states';
@@ -295,7 +295,7 @@ function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
         name="policyStart"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Policy period from{renewal ? '' : ' (optional)'}</FormLabel>
+            <FormLabel>Policy period from</FormLabel>
             <FormControl>
               <Input
                 type="date"
@@ -313,9 +313,7 @@ function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
               />
             </FormControl>
             <FormDescription>
-              {renewal
-                ? 'Usually the day after last year’s policy ends.'
-                : 'Leave blank for 1 year from the date of payment.'}
+              {renewal ? 'Usually the day after last year’s policy ends.' : 'The day cover starts.'}
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -326,7 +324,7 @@ function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
         name="policyEnd"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Policy period to{renewal ? '' : ' (optional)'}</FormLabel>
+            <FormLabel>Policy period to</FormLabel>
             <FormControl>
               <Input
                 type="date"
@@ -337,6 +335,9 @@ function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
                 onChange={(event) => field.onChange(event.target.value)}
               />
             </FormControl>
+            <FormDescription>
+              A year less a day after the start, unless you change it.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -556,15 +557,18 @@ function LocationsCard({ client }: { client: Client }) {
   const form = useFormContext<CreateProposalFormValues, unknown, CreateProposalRequest>();
   const chosen = useWatch({ control: form.control, name: 'locationIds' });
 
-  // Every location is ticked when the client's list arrives; untick the ones not covered.
+  // Every location is ticked when the client's list first arrives; untick the ones not covered.
+  // A refetch of the list (after a submit the form refused, say) keeps what was unticked.
+  const tickedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (locations.data) {
+    if (locations.data && tickedFor.current !== client.id) {
+      tickedFor.current = client.id;
       form.setValue(
         'locationIds',
         locations.data.map((location) => location.id),
       );
     }
-  }, [locations.data, form]);
+  }, [locations.data, client.id, form]);
 
   return (
     <Card>

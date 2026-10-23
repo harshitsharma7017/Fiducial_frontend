@@ -38,18 +38,16 @@ import { RupeesField, TextField } from './data-sheet-fields';
 
 /**
  * The Data Sheet's lines under a section (D-4: FLOP, Money, Fidelity, Public Liability) in the
- * RFQ's columns (C-2): last year's figure on a renewal, Option 1 and Option 2.
+ * RFQ's columns (C-2): the policy in force (Existing), Option 1 and Option 2.
  */
 export function SectionLines({
   index,
   code,
   name,
-  renewal,
 }: {
   index: number;
   code: OtherSection;
   name: string;
-  renewal: boolean;
 }) {
   const lines = SECTION_LINES[code as SectionWithLines] ?? [];
   return (
@@ -58,7 +56,7 @@ export function SectionLines({
       <TableHeader>
         <TableRow>
           <TableHead>Line</TableHead>
-          {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
+          <TableHead className="text-right">Existing</TableHead>
           <TableHead className="text-right">Proposed – Option 1</TableHead>
           <TableHead className="text-right">Proposed – Option 2</TableHead>
         </TableRow>
@@ -98,13 +96,11 @@ export function SectionLines({
                   </span>
                 ) : null}
               </TableCell>
-              {renewal ? (
-                <TableCell className="align-top">
-                  {isSumInsured
-                    ? null
-                    : field(`sections.${index}.existingLines.${line.key}`, `${label} Existing`)}
-                </TableCell>
-              ) : null}
+              <TableCell className="align-top">
+                {isSumInsured
+                  ? null
+                  : field(`sections.${index}.existingLines.${line.key}`, `${label} Existing`)}
+              </TableCell>
               <TableCell className="align-top">
                 {field(`sections.${index}.lines.${line.key}`, label)}
               </TableCell>
