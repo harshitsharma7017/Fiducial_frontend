@@ -21,6 +21,8 @@ describe('isAllowedProxyPath', () => {
     [['notifications']],
     [['notifications', 'unread-count']],
     [['notifications', '0123456789abcdef01234567', 'read']],
+    [['chat', 'events']],
+    [['chat', 'conversations', '0123456789abcdef01234567', 'messages']],
     [['proposals', '0123456789abcdef01234567', 'mails']],
     [['qcrs']],
     [['placement-slips']],

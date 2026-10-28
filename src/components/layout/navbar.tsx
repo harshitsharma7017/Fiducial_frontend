@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { Button } from '@/components/ui/button';
 import type { User } from '@/shared';
 import { Breadcrumbs } from './breadcrumbs';
+import { ChatButton } from './chat-button';
 import { DemoBadge } from './demo-badge';
 import { NotificationsMenu } from './notifications-menu';
 import { SearchTrigger } from './search-trigger';
@@ -24,9 +25,9 @@ export interface NavbarProps {
 }
 
 /**
- * The top bar: sidebar button and breadcrumbs on the left; search, demo badge, theme and user
- * menu on the right. CSS decides which sidebar button shows: the collapse toggle at 1024 px and
- * wider, the drawer's menu button below.
+ * The top bar: sidebar button and breadcrumbs on the left; search, demo badge, chat,
+ * notifications, theme and user menu on the right. CSS decides which sidebar button shows: the
+ * collapse toggle at 1024 px and wider, the drawer's menu button below.
  */
 export function Navbar({
   collapsed,
@@ -67,6 +68,7 @@ export function Navbar({
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <SearchTrigger onOpen={onOpenSearch} />
         {demoMode ? <DemoBadge /> : null}
+        {demoMode ? null : <ChatButton />}
         <NotificationsMenu />
         <ThemeToggle />
         <UserMenu user={user} />

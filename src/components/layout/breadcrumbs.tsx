@@ -38,6 +38,7 @@ export interface Crumb {
 const FIXED_TRAILS: Readonly<Record<string, Crumb[]>> = {
   '/dashboard': [{ label: 'Dashboard' }],
   '/profile': [{ label: 'Profile' }],
+  '/chat': [{ label: 'Chat' }],
 };
 
 /**

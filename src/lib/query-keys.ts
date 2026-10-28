@@ -50,4 +50,12 @@ export const queryKeys = {
     rfq: (id: string) => ['proposals', 'rfq', id] as const,
     stats: (type: string) => ['proposals', 'stats', type] as const,
   },
+  /** The internal chat: kept fresh by its live connection (chat-live.tsx). */
+  chat: {
+    all: ['chat'] as const,
+    directory: ['chat', 'directory'] as const,
+    conversations: ['chat', 'conversations'] as const,
+    conversation: (id: string) => ['chat', 'conversation', id] as const,
+    messages: (id: string) => ['chat', 'messages', id] as const,
+  },
 };

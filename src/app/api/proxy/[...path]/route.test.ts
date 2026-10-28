@@ -55,6 +55,26 @@ describe('/api/proxy/[...path]', () => {
     expect(response.headers.get('x-request-id')).toBe('abc12345');
   });
 
+  it('streams the chat’s live connection unbuffered, and ends it with the browser', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('retry: 5000\n\n', {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream; charset=utf-8', 'x-accel-buffering': 'no' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const response = await GET(
+      request('http://localhost:3000/api/proxy/chat/events', { cookie: 'erp_session=token-123' }),
+      context(['chat', 'events']),
+    );
+    expect(response.headers.get('content-type')).toMatch(/^text\/event-stream/);
+    expect(response.headers.get('cache-control')).toBe('no-cache, no-transform');
+    expect(response.headers.get('x-accel-buffering')).toBe('no');
+    await expect(response.text()).resolves.toBe('retry: 5000\n\n');
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it('does not expose the sign-in endpoint, which returns a token', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

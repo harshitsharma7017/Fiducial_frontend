@@ -47,6 +47,8 @@ const FORWARDED_RESPONSE_HEADERS = [
   'retry-after',
   'ratelimit',
   'ratelimit-policy',
+  // The chat's live connection: Nginx passes each event on at once.
+  'x-accel-buffering',
 ];
 
 async function forward(request: NextRequest, { params }: RouteParams): Promise<Response> {
@@ -79,6 +81,8 @@ async function forward(request: NextRequest, { params }: RouteParams): Promise<R
       body: hasBody ? await request.arrayBuffer() : undefined,
       cache: 'no-store',
       redirect: 'manual',
+      // A closed tab ends the upstream request too (the chat's live connection stays open).
+      signal: request.signal,
     });
   } catch {
     return upstreamUnavailable();
@@ -88,6 +92,11 @@ async function forward(request: NextRequest, { params }: RouteParams): Promise<R
   for (const name of FORWARDED_RESPONSE_HEADERS) {
     const value = upstream.headers.get(name);
     if (value) responseHeaders.set(name, value);
+  }
+  // An event stream must not be compressed or buffered on the way (no-transform), or the events
+  // arrive only when the connection closes.
+  if (upstream.headers.get('content-type')?.startsWith('text/event-stream')) {
+    responseHeaders.set('Cache-Control', 'no-cache, no-transform');
   }
   const response = new NextResponse(upstream.status === 204 ? null : upstream.body, {
     status: upstream.status,

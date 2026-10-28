@@ -17,6 +17,8 @@ const ALLOWED_AREAS = new Set([
   'mail',
   // The signed-in user's in-app notifications (A4).
   'notifications',
+  // The internal chat: conversations, messages, files and the live connection (events).
+  'chat',
   'proposals',
   // The lists across cases for the Quotes and QCR and Placement Slips pages.
   'qcrs',

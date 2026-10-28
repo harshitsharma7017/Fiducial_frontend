@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
+import { ChatLiveProvider } from '@/components/chat/chat-live';
 import { ErrorState } from '@/components/states';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { DemoModeProvider } from '@/hooks/use-demo-mode';
@@ -66,50 +67,52 @@ export function AppShell({
 
   return (
     <DemoModeProvider value={demoMode}>
-      <div className="flex min-h-screen">
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:shadow focus:ring-2 focus:ring-ring"
-        >
-          Skip to content
-        </a>
-        <Sidebar collapsed={collapsed} user={user} />
-        <MobileNav
-          open={navOpen}
-          onOpenChange={setNavOpen}
-          returnFocusRef={menuButtonRef}
-          user={user}
-        />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Navbar
-            collapsed={collapsed}
-            onToggleCollapsed={toggleCollapsed}
-            navOpen={navOpen}
-            onOpenNav={() => setNavOpen(true)}
-            menuButtonRef={menuButtonRef}
-            onOpenSearch={openPalette}
+      <ChatLiveProvider userId={user?.id ?? null} enabled={!demoMode}>
+        <div className="flex min-h-screen">
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:shadow focus:ring-2 focus:ring-ring"
+          >
+            Skip to content
+          </a>
+          <Sidebar collapsed={collapsed} user={user} />
+          <MobileNav
+            open={navOpen}
+            onOpenChange={setNavOpen}
+            returnFocusRef={menuButtonRef}
             user={user}
-            demoMode={demoMode}
           />
-          <main id="main" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6 lg:p-8">
-            {failed ? (
-              <ErrorState
-                error={me.error}
-                onRetry={() => void me.refetch()}
-                title="Could not load your account"
-              />
-            ) : (
-              <PageGate permissions={user?.permissions}>{children}</PageGate>
-            )}
-          </main>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Navbar
+              collapsed={collapsed}
+              onToggleCollapsed={toggleCollapsed}
+              navOpen={navOpen}
+              onOpenNav={() => setNavOpen(true)}
+              menuButtonRef={menuButtonRef}
+              onOpenSearch={openPalette}
+              user={user}
+              demoMode={demoMode}
+            />
+            <main id="main" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6 lg:p-8">
+              {failed ? (
+                <ErrorState
+                  error={me.error}
+                  onRetry={() => void me.refetch()}
+                  title="Could not load your account"
+                />
+              ) : (
+                <PageGate permissions={user?.permissions}>{children}</PageGate>
+              )}
+            </main>
+          </div>
+          <CommandPalette
+            open={paletteOpen}
+            onOpenChange={setPaletteOpen}
+            permissions={user?.permissions}
+            returnFocusRef={paletteReturnFocusRef}
+          />
         </div>
-        <CommandPalette
-          open={paletteOpen}
-          onOpenChange={setPaletteOpen}
-          permissions={user?.permissions}
-          returnFocusRef={paletteReturnFocusRef}
-        />
-      </div>
+      </ChatLiveProvider>
     </DemoModeProvider>
   );
 }
