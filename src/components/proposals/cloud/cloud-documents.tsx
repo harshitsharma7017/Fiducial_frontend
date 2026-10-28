@@ -41,8 +41,8 @@ import {
   type CloudDocumentKind,
 } from '@/shared';
 
-// Cloud copies of a case's documents (client review, 27 Oct 2026). Everything stays in the app by
-// default; a document goes to cloud storage (the S3 bucket) only when a user saves it there.
+// Saved copies of a case's documents. Every file is kept in cloud storage (S3); "Save to cloud"
+// keeps a copy of a generated document (the RFQ, QCR or placement slip) as it is now.
 
 /** The case's documents in cloud storage, and whether the server has cloud storage at all. */
 export function useCloudDocuments(proposalId: string) {
@@ -181,8 +181,9 @@ export function CloudDocumentsCard({ proposalId }: { proposalId: string }) {
       <CardHeader>
         <CardTitle>Cloud documents</CardTitle>
         <CardDescription>
-          Documents and data stay in Fiducial. Only the documents saved here with “Save to cloud”
-          (on the RFQ review, QCR and Placement slip tabs) are kept in cloud storage.
+          Every file of the case is kept in cloud storage. The RFQ, QCR and placement slip are also
+          made fresh on each download; “Save to cloud” (on the RFQ review, QCR and Placement slip
+          tabs) keeps a copy of one as it is now.
         </CardDescription>
       </CardHeader>
       <CardContent>
