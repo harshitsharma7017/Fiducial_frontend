@@ -1,10 +1,13 @@
 import {
   Building2,
   BriefcaseBusiness,
+  ChartBarStacked,
+  ChartPie,
   FileCheck2,
   FileSpreadsheet,
   FileText,
   FileUp,
+  HeartPulse,
   History,
   Landmark,
   LayoutDashboard,
@@ -21,7 +24,12 @@ import {
   Send,
   Settings,
   ShieldCheck,
+  ShieldPlus,
+  Stethoscope,
+  TrendingUp,
+  Umbrella,
   UserCog,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import { hasAnyPermission, type Permission } from '@/shared';
@@ -69,8 +77,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'property.view',
       },
       // One entry for every proposal; the page switches between new and existing (renewals).
-      // Property, Fire and Burglary. Employee Benefits (GMC, GPA, GTLI) and their claims are in
-      // fiducial-ghi-frontend.
+      // Property, Fire and Burglary; Employee Benefits has its own group below.
       { label: 'Proposals', href: '/proposals', icon: FileText, permission: 'property.view' },
     ],
   },
@@ -84,6 +91,46 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         href: '/placement-slips',
         icon: FileCheck2,
         permission: 'property.view',
+      },
+    ],
+  },
+  {
+    // Employee Benefits (N1): one entry per product, beside Property's proposals.
+    title: 'Employee Benefits',
+    items: [
+      { label: 'GMC (Group Health)', href: '/ghi', icon: HeartPulse, permission: 'gmc.view' },
+      {
+        label: 'GPA (Personal Accident)',
+        href: '/eb/gpa',
+        icon: ShieldPlus,
+        permission: 'gpa.view',
+      },
+      { label: 'GTLI (Term Life)', href: '/eb/gtli', icon: Umbrella, permission: 'gtli.view' },
+    ],
+  },
+  {
+    title: 'Claims',
+    items: [
+      // Group health claims; hidden from Read-only users (medical information).
+      { label: 'Claims', href: '/claims', icon: Stethoscope, permission: 'claims.view' },
+    ],
+  },
+  {
+    // N8 and N10: analysis of a policy's claims, and of its years for a renewal.
+    title: 'Reports',
+    items: [
+      {
+        label: 'Claims analysis',
+        href: '/claims-analysis',
+        icon: ChartPie,
+        // Claims hold medical information: like Claims, hidden from Read-only users.
+        permission: 'claims_analysis.view',
+      },
+      {
+        label: 'Renewal analysis',
+        href: '/renewal',
+        icon: TrendingUp,
+        permission: 'renewal_analysis.view',
       },
     ],
   },
@@ -155,6 +202,19 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: ['clients.import', 'insurers.import', 'masters.manage', 'catalog.manage'],
       },
       { label: 'Clauses', href: '/masters/clauses', icon: ScrollText, permission: 'catalog.view' },
+      // The Family Plan Master (N2).
+      {
+        label: 'Family plans',
+        href: '/masters/family-plans',
+        icon: UsersRound,
+        permission: 'family_plans.view',
+      },
+      {
+        label: 'Age bands',
+        href: '/masters/age-bands',
+        icon: ChartBarStacked,
+        permission: 'age_bands.view',
+      },
     ],
   },
   {
@@ -189,8 +249,20 @@ function pathOf(href: string): string {
 
 /** Pages outside the navigation, with the permission each needs. */
 const OTHER_PAGES: readonly { path: string; permission: PagePermission }[] = [
-  { path: '/proposals/new', permission: 'property.create' },
+  // A new case: Property or an Employee Benefits product, as the user may create them.
+  {
+    path: '/proposals/new',
+    permission: ['property.create', 'gmc.create', 'gpa.create', 'gtli.create'],
+  },
   { path: '/proposals/deleted', permission: 'property.delete' },
+  // A new Employee Benefits case (GMC unless ?product= names another).
+  { path: '/ghi/new', permission: ['gmc.create', 'gpa.create', 'gtli.create'] },
+  { path: '/claims/new', permission: 'claims.create' },
+  { path: '/claims/links', permission: 'claims.links' },
+  { path: '/claims/settings', permission: 'claims.settings' },
+  // TPA claims (N9, N11): read with claims.view (as /claims), imported and configured apart.
+  { path: '/claims/tpa/import', permission: 'claims.tpa_import' },
+  { path: '/claims/tpa/formats', permission: 'claims.tpa_manage' },
 ];
 
 const PAGE_PERMISSIONS: readonly { path: string; permission: PagePermission }[] = [

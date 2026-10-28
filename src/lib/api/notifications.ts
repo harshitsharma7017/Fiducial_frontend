@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
-import { ghiAppUrl } from '@/lib/app-links';
 import { buildSampleNotifications } from '@/lib/data/notifications';
 import { isDemoModeError } from '@/lib/demo-mode';
 import { queryKeys } from '@/lib/query-keys';
@@ -27,17 +26,14 @@ export interface NotificationView {
   href: string | null;
 }
 
-/**
- * Where a notification opens. Property → the case; GHI/EB → the case by its reference prefix in
- * the GHI app, when its URL is configured.
- */
+/** Where a notification opens. Property → the case; GHI/EB → the case by its reference prefix. */
 export function notificationHref(notification: Notification): string | null {
   if (notification.entity === 'proposal') return `/proposals/${notification.entityId}`;
-  if (notification.entity === 'ghi_case') return ghiAppUrl(`/ghi/${notification.entityId}`);
+  if (notification.entity === 'ghi_case') return `/ghi/${notification.entityId}`;
   if (notification.entity === 'eb_case') {
     // The reference prefix tells GPA from GTLI (GPA-…, GTLI-…); fall back to the GPA workspace.
     const product = notification.reference?.startsWith('GTLI') ? 'gtli' : 'gpa';
-    return ghiAppUrl(`/eb/${product}/${notification.entityId}`);
+    return `/eb/${product}/${notification.entityId}`;
   }
   return null;
 }

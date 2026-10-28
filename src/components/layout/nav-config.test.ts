@@ -7,15 +7,13 @@ const labels = (permissions: readonly Permission[] | undefined) =>
 /** What a user holding these migrated system roles sees (their permissions as /auth/me gives). */
 const labelsOf = (roles: readonly LegacyRole[]) => labels(legacyPermissionsOf(roles));
 
-// This app holds Property, Fire and Burglary. Employee Benefits (GMC, GPA, GTLI), group health
-// claims, the claims and renewal analyses, Family plans and Age bands are in fiducial-ghi-frontend.
-const PROPOSALS_AND_MASTERS = [
-  'Dashboard',
-  'Proposals',
-  'RFQ',
-  'Quotes and QCR',
-  'Placement Slips',
-];
+// Property, Fire and Burglary, then Employee Benefits (GMC, GPA, GTLI), group health claims and the
+// claims and renewal analyses, then the masters both lines use.
+const PROPERTY = ['Dashboard', 'Proposals', 'RFQ', 'Quotes and QCR', 'Placement Slips'];
+const BENEFITS = ['GMC (Group Health)', 'GPA (Personal Accident)', 'GTLI (Term Life)'];
+// Claims and the claims analysis need claims permissions, so not for Read-only users (claims hold
+// medical information); the renewal analysis needs renewal_analysis.view.
+const CLAIMS_AND_REPORTS = ['Claims', 'Claims analysis', 'Renewal analysis'];
 const MASTERS = [
   'Clients',
   'Insurers',
@@ -30,15 +28,18 @@ const MASTERS = [
   'Document templates',
   'Email templates',
   'Clauses',
+  'Family plans',
+  'Age bands',
 ];
-const WORKING_ROLE = [...PROPOSALS_AND_MASTERS, ...MASTERS];
+const WORKING_ROLE = [...PROPERTY, ...BENEFITS, ...CLAIMS_AND_REPORTS, ...MASTERS];
+const VIEW_ONLY = [...PROPERTY, ...BENEFITS, 'Renewal analysis', ...MASTERS];
 // Import data needs an import permission: Admins and Relationship Managers (clients.import).
 const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
   MASTERS.indexOf('Email templates') + 1,
   0,
   'Import data',
 );
-const CLIENT_OWNER = [...PROPOSALS_AND_MASTERS, ...MASTERS_WITH_IMPORT];
+const CLIENT_OWNER = [...PROPERTY, ...BENEFITS, ...CLAIMS_AND_REPORTS, ...MASTERS_WITH_IMPORT];
 
 describe('visibleGroups for the migrated legacy roles (unchanged navigation)', () => {
   it.each<[LegacyRole, string[]]>([
@@ -46,7 +47,7 @@ describe('visibleGroups for the migrated legacy roles (unchanged navigation)', (
     ['MANAGER', WORKING_ROLE],
     ['ACCOUNT_MANAGER', CLIENT_OWNER],
     ['PLACEMENT_EXEC', WORKING_ROLE],
-    ['READ_ONLY', WORKING_ROLE],
+    ['READ_ONLY', VIEW_ONLY],
   ])('shows %s only the screens its permissions allow', (role, expected) => {
     expect(labelsOf([role])).toEqual(expected);
   });
@@ -71,6 +72,15 @@ describe('visibleGroups for custom roles', () => {
     expect(labels(['roles.view', 'audit.view'])).toEqual(['Roles', 'Audit log']);
   });
 
+  it('keeps products apart: a GPA-only role sees GPA, not GMC or GTLI', () => {
+    expect(labels(['gpa.view'])).toEqual(['GPA (Personal Accident)']);
+  });
+
+  it('shows a claims handler only the claims screens their role grants', () => {
+    expect(labels(['claims.view', 'claims.process'])).toEqual(['Claims']);
+    expect(labels(['claims_analysis.view'])).toEqual(['Claims analysis']);
+  });
+
   it('drops a group with nothing left to show', () => {
     expect(visibleGroups(['users.view']).map((group) => group.title)).toEqual(['Admin']);
     expect(visibleGroups([])).toEqual([]);
@@ -86,7 +96,7 @@ describe('pagePermission', () => {
     ['/dashboard', 'property.view'],
     ['/proposals', 'property.view'],
     ['/proposals/prp-0101', 'property.view'],
-    ['/proposals/new', 'property.create'],
+    ['/proposals/new', ['property.create', 'gmc.create', 'gpa.create', 'gtli.create']],
     ['/proposals/deleted', 'property.delete'],
     ['/rfq', 'property.view'],
     ['/masters/occupancy', 'masters.view'],
@@ -99,6 +109,24 @@ describe('pagePermission', () => {
     ['/masters/tax-rates', 'catalog.view'],
     ['/masters/templates', 'templates.view'],
     ['/masters/email-templates', 'email_templates.view'],
+    ['/masters/family-plans', 'family_plans.view'],
+    ['/masters/family-plans/0123456789abcdef01234567', 'family_plans.view'],
+    ['/masters/age-bands', 'age_bands.view'],
+    ['/ghi', 'gmc.view'],
+    ['/ghi/0123456789abcdef01234567', 'gmc.view'],
+    ['/ghi/new', ['gmc.create', 'gpa.create', 'gtli.create']],
+    ['/eb/gpa', 'gpa.view'],
+    ['/eb/gtli/0123456789abcdef01234567', 'gtli.view'],
+    ['/claims', 'claims.view'],
+    ['/claims/0123456789abcdef01234567', 'claims.view'],
+    ['/claims/new', 'claims.create'],
+    ['/claims/links', 'claims.links'],
+    ['/claims/settings', 'claims.settings'],
+    ['/claims/tpa', 'claims.view'],
+    ['/claims/tpa/import', 'claims.tpa_import'],
+    ['/claims/tpa/formats', 'claims.tpa_manage'],
+    ['/claims-analysis', 'claims_analysis.view'],
+    ['/renewal', 'renewal_analysis.view'],
     ['/users', 'users.view'],
     ['/roles', 'roles.view'],
     ['/audit', 'audit.view'],
@@ -109,9 +137,6 @@ describe('pagePermission', () => {
 
   it('needs nothing for pages open to every signed-in user', () => {
     expect(pagePermission('/profile')).toBeNull();
-    // Employee Benefits pages are not part of this app.
-    expect(pagePermission('/ghi')).toBeNull();
-    expect(pagePermission('/claims')).toBeNull();
     // A shared prefix is not a parent path.
     expect(pagePermission('/usersettings')).toBeNull();
   });
