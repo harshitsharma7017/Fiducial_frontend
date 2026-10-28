@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { SaveToCloud } from '@/components/proposals/cloud/cloud-documents';
 import { ErrorState, LoadingState, errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -183,6 +184,7 @@ function StatusCard({
               Download QCR ({format === 'pdf' ? 'PDF' : 'Excel'})
             </Button>
           ))}
+          <SaveToCloud proposalId={record.id} document="QCR" disabled={!anyQuote} />
           {canApprove && qcr.status === 'DRAFT' ? (
             <Button
               type="button"

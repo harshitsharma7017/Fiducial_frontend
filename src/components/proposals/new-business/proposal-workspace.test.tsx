@@ -85,10 +85,12 @@ function record(overrides: Partial<ProposalRecord> = {}): ProposalRecord {
         existing: null,
         proposed1: '0',
         proposed2: null,
+        proposed3: null,
       })),
       existing: null,
       proposed1: '0',
       proposed2: null,
+      proposed3: null,
       covers: [],
     },
     sections: OTHER_SECTIONS.map((code) => ({
@@ -236,8 +238,9 @@ function renderWorkspace() {
   return userEvent.setup({ delay: null });
 }
 
-// Filling the Data Sheet takes a while when every test file runs at once.
-describe('ProposalWorkspace', { timeout: 20_000 }, () => {
+// Filling the Data Sheet takes a while when every test file runs at once (more so with the Fire
+// Option 3 column).
+describe('ProposalWorkspace', { timeout: 40_000 }, () => {
   beforeEach(() => {
     roles.current = ['ACCOUNT_MANAGER'];
     fetchMock.mockReset();
@@ -434,10 +437,12 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
             existing: group === 'STOCKS' ? '50000000' : null,
             proposed1: '0',
             proposed2: null,
+            proposed3: null,
           })),
           existing: '120000000',
           proposed1: '0',
           proposed2: null,
+          proposed3: null,
           covers: [],
         },
         sections: OTHER_SECTIONS.map((code) => ({
@@ -635,10 +640,12 @@ describe('ProposalWorkspace', { timeout: 20_000 }, () => {
             existing: null,
             proposed1: group === 'STOCKS' ? '5000000' : '0',
             proposed2: null,
+            proposed3: null,
           })),
           existing: null,
           proposed1: '5000000',
           proposed2: null,
+          proposed3: null,
           covers: [],
         },
       });

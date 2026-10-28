@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useForm, useWatch, type Control } from 'react-hook-form';
+import { SaveToCloud } from '@/components/proposals/cloud/cloud-documents';
 import { ErrorState, LoadingState, errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -232,6 +233,11 @@ function StatusCard({
               Download slip ({format === 'pdf' ? 'PDF' : 'Excel'})
             </Button>
           ))}
+          <SaveToCloud
+            proposalId={record.id}
+            document="PLACEMENT_SLIP"
+            disabled={!slip.templateUploaded}
+          />
           {canApprove && slip.status === 'DRAFT' ? (
             <Button
               type="button"

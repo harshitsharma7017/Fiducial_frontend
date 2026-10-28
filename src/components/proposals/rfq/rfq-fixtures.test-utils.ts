@@ -82,10 +82,12 @@ export function caseRecord(overrides: Partial<ProposalRecord> = {}): ProposalRec
         existing: null,
         proposed1: '0',
         proposed2: null,
+        proposed3: null,
       })),
       existing: null,
       proposed1: '5000000',
       proposed2: null,
+      proposed3: null,
       covers: [],
     },
     sections: OTHER_SECTIONS.map((code) => ({

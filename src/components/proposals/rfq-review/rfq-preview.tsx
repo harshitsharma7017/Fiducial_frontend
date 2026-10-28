@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { Check, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -155,7 +155,9 @@ export function RfqPreview({
                       ? record.fire.existing
                       : option === 'P1'
                         ? record.fire.proposed1
-                        : record.fire.proposed2,
+                        : option === 'P2'
+                          ? record.fire.proposed2
+                          : record.fire.proposed3,
                   )}
                 </TableCell>
               ))}
@@ -167,11 +169,12 @@ export function RfqPreview({
                 {options.map((option) => (
                   <TableCell key={option} className="text-right tabular">
                     {rupees(
+                      // Option 3 is Fire's: the sections are quoted at Option 1 in it.
                       option === 'EXISTING'
                         ? section.existing
-                        : option === 'P1'
-                          ? section.proposed1
-                          : section.proposed2,
+                        : option === 'P2'
+                          ? section.proposed2
+                          : section.proposed1,
                     )}
                   </TableCell>
                 ))}
@@ -236,23 +239,29 @@ export function RfqPreview({
             ...record.fire.groups
               .filter(
                 (line) =>
-                  line.proposed1 !== '0' || line.proposed2 !== null || line.existing !== null,
+                  line.proposed1 !== '0' ||
+                  line.proposed2 !== null ||
+                  line.proposed3 !== null ||
+                  line.existing !== null,
               )
               .map((line) => ({
                 label: FIRE_GROUP_LABELS[line.group],
                 existing: line.existing,
                 p1: line.proposed1,
                 p2: line.proposed2,
+                p3: line.proposed3,
               })),
             {
               label: 'Total Sum Insured - Fire & Allied Perils',
               existing: record.fire.existing,
               p1: record.fire.proposed1,
               p2: record.fire.proposed2,
+              p3: record.fire.proposed3,
               total: true,
             },
           ]}
           covers={record.fire.covers}
+          option3={record.fire.proposed3 !== null}
         />
 
         {included.map((section) => {
@@ -572,6 +581,7 @@ function FiguresTable({
   renewal,
   rows,
   covers,
+  option3 = false,
 }: {
   caption: string;
   renewal: boolean;
@@ -580,9 +590,12 @@ function FiguresTable({
     existing: string | null;
     p1: string | null;
     p2: string | null;
+    p3?: string | null;
     total?: boolean;
   }[];
   covers: readonly { name: string; required: boolean | null }[];
+  /** Fire's Option 3 column (the other sections have no third figure). */
+  option3?: boolean;
 }) {
   return (
     <Table>
@@ -595,6 +608,7 @@ function FiguresTable({
           {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
           <TableHead className="text-right">Proposed – Option 1</TableHead>
           <TableHead className="text-right">Proposed – Option 2</TableHead>
+          {option3 ? <TableHead className="text-right">Proposed – Option 3</TableHead> : null}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -606,6 +620,9 @@ function FiguresTable({
             ) : null}
             <TableCell className="text-right tabular">{rupees(row.p1)}</TableCell>
             <TableCell className="text-right tabular">{rupees(row.p2)}</TableCell>
+            {option3 ? (
+              <TableCell className="text-right tabular">{rupees(row.p3 ?? null)}</TableCell>
+            ) : null}
           </TableRow>
         ))}
         {covers
@@ -615,9 +632,18 @@ function FiguresTable({
               <TableCell className="text-muted-foreground">Add-on: {cover.name}</TableCell>
               {renewal ? <TableCell /> : null}
               <TableCell className="text-right">
-                {cover.required ? 'Required' : 'Not required'}
+                {cover.required ? (
+                  // A green tick, as on the documents (client review, 27 Oct 2026).
+                  <span className="inline-flex justify-end">
+                    <Check aria-hidden="true" className="size-4 text-success" />
+                    <span className="sr-only">Required</span>
+                  </span>
+                ) : (
+                  'Not required'
+                )}
               </TableCell>
               <TableCell />
+              {option3 ? <TableCell /> : null}
             </TableRow>
           ))}
       </TableBody>

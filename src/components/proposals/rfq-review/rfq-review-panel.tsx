@@ -13,6 +13,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import { useId, useState } from 'react';
+import { SaveToCloud } from '@/components/proposals/cloud/cloud-documents';
 import { ErrorState, LoadingState, errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -235,7 +236,13 @@ export function RfqReviewPanel({ record }: { record: ProposalRecord }) {
                 ))}
               </NativeSelect>
             </div>
-            {viewing !== 'draft' ? <Downloads record={record} version={viewing} /> : null}
+            {viewing !== 'draft' ? (
+              <Downloads
+                record={record}
+                version={viewing}
+                latest={viewing === Math.max(...data.versions.map((item) => item.version))}
+              />
+            ) : null}
           </div>
           {viewing === 'draft' && canEdit ? (
             <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-md border bg-card/95 p-2 shadow-sm backdrop-blur">
@@ -356,7 +363,16 @@ export function RfqReviewPanel({ record }: { record: ProposalRecord }) {
   );
 }
 
-function Downloads({ record, version }: { record: ProposalRecord; version: number }) {
+/** A version's files; the latest version can also be saved to cloud storage. */
+function Downloads({
+  record,
+  version,
+  latest,
+}: {
+  record: ProposalRecord;
+  version: number;
+  latest: boolean;
+}) {
   const download = useMutation({
     mutationFn: (format: 'xlsx' | 'pdf') =>
       apiDownload(
@@ -380,6 +396,7 @@ function Downloads({ record, version }: { record: ProposalRecord; version: numbe
           {version} {format === 'pdf' ? 'PDF' : 'Excel'}
         </Button>
       ))}
+      {latest ? <SaveToCloud proposalId={record.id} document="RFQ" /> : null}
       {download.isError ? (
         <p role="alert" className="text-sm text-destructive">
           {errorMessage(download.error)}

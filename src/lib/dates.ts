@@ -39,14 +39,3 @@ export function daysBetween(from: IsoDate, to: IsoDate): number {
 export function isSameIstMonth(a: IsoDate, b: IsoDate): boolean {
   return a.slice(0, 7) === b.slice(0, 7);
 }
-
-/** The last day of a one-year policy starting on a date: a year on, less a day (29 Feb safe). */
-export function policyYearEnd(start: IsoDate): IsoDate {
-  const date = new Date(`${start}T00:00:00Z`);
-  const month = date.getUTCMonth();
-  date.setUTCFullYear(date.getUTCFullYear() + 1);
-  // 29 Feb plus a year rolls into March; step back to the end of February.
-  if (date.getUTCMonth() !== month) date.setUTCDate(0);
-  else date.setUTCDate(date.getUTCDate() - 1);
-  return date.toISOString().slice(0, 10);
-}

@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientApprovalPanel } from '@/components/proposals/client-approval/client-approval-panel';
+import { CloudDocumentsCard } from '@/components/proposals/cloud/cloud-documents';
 import { CoverageConfirmationPanel } from '@/components/proposals/coverage-confirmation/coverage-confirmation-panel';
 import { PlacementSlipPanel } from '@/components/proposals/placement-slip/placement-slip-panel';
 import { QcrPanel } from '@/components/proposals/qcr/qcr-panel';
@@ -224,6 +225,7 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
           <CoverageConfirmationPanel record={record} />
         </TabsContent>
         <TabsContent value="activity" className="grid gap-6">
+          <CloudDocumentsCard proposalId={record.id} />
           <MailLog proposalId={record.id} />
           <Activity record={record} />
         </TabsContent>

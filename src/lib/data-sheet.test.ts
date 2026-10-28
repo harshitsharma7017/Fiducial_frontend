@@ -203,6 +203,7 @@ function requestOf(overrides: Partial<DataSheetInput> = {}): DataSheetInput {
     policyEnd: '2027-11-30',
     locations: [],
     fireOption2: [],
+    fireOption3: [],
     fireCovers: [],
     product: { code: null, reason: null },
     addons: [],
@@ -298,6 +299,11 @@ describe('toDataSheetRequest', () => {
     );
     const burglary = toDataSheetRequest(values).sections.find((s) => s.code === 'BURGLARY');
     expect(burglary).toMatchObject({ proposed1: '50000000', proposed2: '70000000' });
+  });
+
+  it('sends Fire Option 3 by line as typed (client review, 27 Oct 2026)', () => {
+    const fireOption3 = [{ group: 'STOCKS' as const, amount: '80000000' }];
+    expect(toDataSheetRequest(requestOf({ fireOption3 })).fireOption3).toEqual(fireOption3);
   });
 });
 

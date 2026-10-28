@@ -113,12 +113,17 @@ describe('NewProposalForm', () => {
     // Assigned to the signed-in user unless someone else is chosen.
     await waitFor(() => expect(screen.getByLabelText('Assigned to')).toHaveValue(ME));
     await user.selectOptions(screen.getByLabelText('Assigned to'), 'Vikram Shah');
-    // The policy period is required; the end follows the start (a year less a day).
+    // The policy period is required, start and end alike; the end is typed, never worked out
+    // from the start (client review, 27 Oct 2026).
     await user.click(screen.getByRole('button', { name: 'Create proposal' }));
     expect(await screen.findByText('Enter the start of the policy period')).toBeInTheDocument();
     expect(created).toBeUndefined();
     await user.type(screen.getByLabelText('Policy period from'), '2026-12-01');
-    expect(screen.getByLabelText('Policy period to')).toHaveValue('2027-11-30');
+    expect(screen.getByLabelText('Policy period to')).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Create proposal' }));
+    expect(await screen.findByText('Enter the end of the policy period')).toBeInTheDocument();
+    expect(created).toBeUndefined();
+    await user.type(screen.getByLabelText('Policy period to'), '2027-11-30');
     await user.click(screen.getByRole('button', { name: 'Create proposal' }));
 
     await waitFor(() =>
@@ -134,7 +139,7 @@ describe('NewProposalForm', () => {
     );
   });
 
-  it('starts a renewal from last year’s policy, which sets the new policy period', async () => {
+  it('starts a renewal from last year’s policy, which sets the new policy’s start', async () => {
     let created: unknown;
     fetchMock.mockImplementation((input, init) => {
       const url = input instanceof Request ? input.url : input.toString();
@@ -186,7 +191,9 @@ describe('NewProposalForm', () => {
     expect(last).toHaveTextContent('Example General, Fort');
     expect(last).toHaveTextContent('₹12,00,00,000.00');
     expect(screen.getByLabelText('Policy period from')).toHaveValue('2026-11-01');
-    expect(screen.getByLabelText('Policy period to')).toHaveValue('2027-10-31');
+    // The end is typed: no term is assumed.
+    expect(screen.getByLabelText('Policy period to')).toHaveValue('');
+    await user.type(screen.getByLabelText('Policy period to'), '2027-10-31');
     await waitFor(() => expect(screen.getByLabelText('Assigned to')).toHaveValue(ME));
     await user.click(screen.getByRole('button', { name: 'Create renewal' }));
     await waitFor(() =>

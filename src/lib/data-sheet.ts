@@ -251,6 +251,7 @@ function existingForm(record: ProposalRecord): DataSheetForm['existing'] {
 /** The saved Data Sheet as form values: every Fire item and section in order, blanks as "". */
 export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
   const option2 = new Map(record.fire.groups.map((line) => [line.group, line.proposed2]));
+  const option3 = new Map(record.fire.groups.map((line) => [line.group, line.proposed3]));
   return {
     dueDate: record.dueDate,
     policyStart: record.policyStart ?? '',
@@ -283,6 +284,7 @@ export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
       };
     }),
     fireOption2: FIRE_GROUPS.map((group) => ({ group, amount: option2.get(group) ?? '' })),
+    fireOption3: FIRE_GROUPS.map((group) => ({ group, amount: option3.get(group) ?? '' })),
     fireCovers: answered(record.fire.covers),
     // Only a product chosen on the case is a choice; a suggestion is left to follow the Fire total.
     product: {

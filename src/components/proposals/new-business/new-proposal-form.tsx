@@ -31,7 +31,7 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { apiFetch } from '@/lib/api-client';
 import { clientLocationsQuery } from '@/lib/api/new-business';
 import { setPendingDataSheet } from '@/lib/data-sheet-import';
-import { addDays, policyYearEnd, todayIst } from '@/lib/dates';
+import { addDays, todayIst } from '@/lib/dates';
 import { applyServerFieldErrors } from '@/lib/form-errors';
 import { formatInr } from '@/lib/money';
 import { queryKeys } from '@/lib/query-keys';
@@ -285,7 +285,10 @@ export function NewProposalForm({ initialType = 'NEW' }: { initialType?: Proposa
   );
 }
 
-/** Start and end of the policy period; the end follows the start (a year less a day) until typed. */
+/**
+ * Start and end of the policy period, each typed: the end is not worked out from the start (client
+ * review, 27 Oct 2026), as policies run for other terms than a year.
+ */
 function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
   const form = useFormContext<CreateProposalFormValues, unknown, CreateProposalRequest>();
   return (
@@ -303,13 +306,7 @@ function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
                 ref={field.ref}
                 onBlur={field.onBlur}
                 value={field.value ?? ''}
-                onChange={(event) => {
-                  const start = event.target.value;
-                  field.onChange(start);
-                  if (start && !form.getFieldState('policyEnd').isDirty) {
-                    form.setValue('policyEnd', policyYearEnd(start));
-                  }
-                }}
+                onChange={(event) => field.onChange(event.target.value)}
               />
             </FormControl>
             <FormDescription>
@@ -335,9 +332,7 @@ function PolicyPeriodFields({ renewal }: { renewal: boolean }) {
                 onChange={(event) => field.onChange(event.target.value)}
               />
             </FormControl>
-            <FormDescription>
-              A year less a day after the start, unless you change it.
-            </FormDescription>
+            <FormDescription>The day cover ends.</FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -388,7 +383,7 @@ function OwnerField() {
 
 /**
  * Last year's policy for a renewal, from the policy software. When found, the new policy period
- * starts the day after it ends.
+ * starts the day after it ends; its end is typed.
  */
 function LastPolicy({ client }: { client: Client }) {
   const form = useFormContext<CreateProposalFormValues, unknown, CreateProposalRequest>();
@@ -404,9 +399,7 @@ function LastPolicy({ client }: { client: Client }) {
 
   useEffect(() => {
     if (!policy?.periodEnd || form.getFieldState('policyStart').isDirty) return;
-    const start = addDays(policy.periodEnd, 1);
-    form.setValue('policyStart', start);
-    if (!form.getFieldState('policyEnd').isDirty) form.setValue('policyEnd', policyYearEnd(start));
+    form.setValue('policyStart', addDays(policy.periodEnd, 1));
   }, [policy, form]);
 
   if (lookup.isPending) return <LoadingState label="Looking up last year’s policy" />;

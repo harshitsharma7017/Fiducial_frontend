@@ -69,7 +69,8 @@ import {
   type ProposalRecord,
 } from '@/shared';
 import { RupeesField, TextAreaField, TextField } from './data-sheet-fields';
-import { AnnexureGrid, BasisField, CoverToggles, SectionLines } from './section-details';
+import { CoverToggles } from './cover-toggles';
+import { AnnexureGrid, BasisField, SectionLines } from './section-details';
 import { LocationCard, type LocationInfo } from './location-card';
 import { ProductAndAddons, useProductChoice } from './product-addons';
 
@@ -120,8 +121,8 @@ function useLocationInfo(record: ProposalRecord, clientLocations: ClientLocation
 }
 
 /**
- * The Data Sheet: dates, each risk location's Fire items and risk details, the Fire Option 2
- * lines, the other sections, past claims and notes. Saved as a whole; read-only once the RFQ has
+ * The Data Sheet: dates, each risk location's Fire items and risk details, the Fire Option 2 and
+ * 3 lines, the other sections, past claims and notes. Saved as a whole; read-only once the RFQ has
  * been sent or for roles that cannot edit proposals.
  */
 export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; canEdit: boolean }) {
@@ -296,7 +297,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
             <TextAreaField
               name="notes"
               label="Notes"
-              description="Printed on the RFQ schedule."
+              description="Shown in the note on the QCR’s first page, under the recommendation. The RFQ and placement slip carry no notes."
               maxLength={1000}
             />
           </CardContent>
@@ -512,17 +513,25 @@ function ExistingPolicyFields({ record }: { record: ProposalRecord }) {
   );
 }
 
+/** The total of the typed figures of an option, or "—" while none is typed (or one is invalid). */
+function optionTotal(lines: readonly { amount?: string | null }[] | undefined): string {
+  const typed = (lines ?? []).map((line) => line.amount?.trim() ?? '').filter(Boolean);
+  return typed.length > 0 && typed.every((value) => /^\d+$/.test(value))
+    ? formatInr(sumRupeesOf(typed))
+    : '—';
+}
+
 /**
- * The RFQ's Fire lines in three options (C-2): Existing (the policy in force), Option 1 adding
- * up the locations, and Option 2 typed per line; then Fire's add-on covers (C-6).
+ * The RFQ's Fire lines in four options (C-2): Existing (the policy in force), Option 1 adding
+ * up the locations, and Options 2 and 3 typed per line; then Fire's add-on covers (C-6).
  */
 function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: boolean }) {
   const form = useFormContext<DataSheetFormValues>();
   const locations = useWatch({ control: form.control, name: 'locations' });
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
+  const option3 = useWatch({ control: form.control, name: 'fireOption3' });
   const existingLines = useWatch({ control: form.control, name: 'existing.fireLines' });
   const totals = fireGroupTotals(locations ?? []);
-  const seconds = (option2 ?? []).map((line) => line.amount?.trim() ?? '').filter(Boolean);
   const typedLines = (existingLines ?? [])
     .map((line) => line.amount?.trim() ?? '')
     .filter((value) => /^\d+$/.test(value));
@@ -532,8 +541,9 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
       <CardHeader>
         <CardTitle>Fire and allied perils</CardTitle>
         <CardDescription>
-          Sum insured by line. Option 2 is optional: enter it for the lines the client wants quoted
-          at a second figure.
+          Sum insured by line. Options 2 and 3 are optional: enter them for the lines the client
+          wants quoted at other figures. Option 3 changes Fire only; the other covers are quoted at
+          their Option 1 figures in it.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
@@ -544,6 +554,7 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
               <TableHead className="text-right">Existing</TableHead>
               <TableHead className="text-right">Proposed – Option 1</TableHead>
               <TableHead className="text-right">Proposed – Option 2</TableHead>
+              <TableHead className="text-right">Proposed – Option 3</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -569,6 +580,13 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
                     hideLabel
                   />
                 </TableCell>
+                <TableCell className="align-top">
+                  <RupeesField
+                    name={`fireOption3.${index}.amount`}
+                    label={`Proposed – Option 3 for ${FIRE_GROUP_LABELS[group]}`}
+                    hideLabel
+                  />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -591,9 +609,10 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
                 {formatInr(fireTotal(locations ?? []))}
               </TableCell>
               <TableCell className="text-right font-medium tabular whitespace-nowrap">
-                {seconds.length > 0 && seconds.every((value) => /^\d+$/.test(value))
-                  ? formatInr(sumRupeesOf(seconds))
-                  : '—'}
+                {optionTotal(option2)}
+              </TableCell>
+              <TableCell className="text-right font-medium tabular whitespace-nowrap">
+                {optionTotal(option3)}
               </TableCell>
             </TableRow>
           </TableFooter>

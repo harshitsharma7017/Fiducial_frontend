@@ -209,11 +209,13 @@ describe('RfqReviewPanel', { timeout: 20_000 }, () => {
         proposed1: '5000000',
         // B1: a Fire Option 2 total is shown in the preview.
         proposed2: '6000000',
+        proposed3: null,
         groups: FIRE_GROUPS.map((group) => ({
           group,
           existing: null,
           proposed1: group === 'STOCKS' ? '5000000' : '0',
           proposed2: group === 'STOCKS' ? '6000000' : null,
+          proposed3: null,
         })),
       },
       sections: OTHER_SECTIONS.map((code) => ({

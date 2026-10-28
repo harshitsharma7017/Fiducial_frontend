@@ -77,10 +77,12 @@ function proposal(
         existing: null,
         proposed1: '0',
         proposed2: null,
+        proposed3: null,
       })),
       existing: null,
       proposed1: '25000000',
       proposed2: null,
+      proposed3: null,
       covers: [],
     },
     sections: OTHER_SECTIONS.map((code) => ({

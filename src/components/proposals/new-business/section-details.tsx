@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
-import { annexureTotal, blankAnnexureRow, withCover, type DataSheetForm } from '@/lib/data-sheet';
+import { annexureTotal, blankAnnexureRow, type DataSheetForm } from '@/lib/data-sheet';
 import { formatInr } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import {
@@ -30,7 +30,6 @@ import {
   type AnnexureColumn,
   type AnnexureSection,
   type BurglaryBasis,
-  type Cover,
   type OtherSection,
   type SectionWithLines,
 } from '@/shared';
@@ -114,68 +113,6 @@ export function SectionLines({
         })}
       </TableBody>
     </Table>
-  );
-}
-
-/**
- * The add-on covers of a section (C-6: earthquake, STFI, terrorism, floater...), each asked for
- * or not. Pressing the answer given again takes it back: the RFQ then leaves the cover blank.
- */
-export function CoverToggles({
-  path,
-  covers,
-  name,
-  readOnly,
-}: {
-  path: 'fireCovers' | `sections.${number}.covers`;
-  covers: readonly Cover[];
-  name: string;
-  readOnly: boolean;
-}) {
-  const form = useFormContext<DataSheetForm>();
-  const answers = useWatch({ control: form.control, name: path }) ?? [];
-  if (covers.length === 0) return null;
-  return (
-    <fieldset className="grid gap-2">
-      <legend className="mb-1 text-sm font-medium">Add-on covers</legend>
-      <ul className="grid gap-1.5 sm:grid-cols-2">
-        {covers.map((cover) => {
-          const answer = answers.find((item) => item.name === cover.name)?.required ?? null;
-          const choose = (required: boolean) =>
-            form.setValue(
-              path,
-              withCover(answers, cover.name, answer === required ? null : required),
-              {
-                shouldDirty: true,
-              },
-            );
-          return (
-            <li
-              key={cover.name}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-1.5"
-            >
-              <span className="text-sm">{cover.name}</span>
-              <span role="group" aria-label={`${name}: ${cover.name}`} className="flex gap-1">
-                {([true, false] as const).map((required) => (
-                  <Button
-                    key={String(required)}
-                    type="button"
-                    size="sm"
-                    variant={answer === required ? 'default' : 'outline'}
-                    aria-pressed={answer === required}
-                    disabled={readOnly}
-                    className="h-7 px-2 text-xs"
-                    onClick={() => choose(required)}
-                  >
-                    {required ? 'Required' : 'Not required'}
-                  </Button>
-                ))}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </fieldset>
   );
 }
 
