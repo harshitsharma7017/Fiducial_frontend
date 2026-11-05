@@ -22,6 +22,7 @@ import { usePermission } from '@/hooks/use-permission';
 import { apiFetch } from '@/lib/api-client';
 import { ghiFileHref, ghiQuotesQuery, issuesText, useGhiMutation } from '@/lib/api/ghi';
 import {
+  ghiQuoteOptions,
   GhiQuoteSchema,
   emptyGhiQuoteTerms,
   formatDate,
@@ -33,7 +34,7 @@ import {
   type GhiRequirements,
 } from '@/shared';
 import { Field } from './case-actions';
-import { ConfirmDialog, FilePicker, inr } from './ghi-ui';
+import { rupees, ConfirmDialog, FilePicker, inr } from './ghi-ui';
 import { TermsFields } from './terms-fields';
 
 /** The RFQ's terms as quote terms, for an insurer that quotes exactly as asked. */
@@ -192,8 +193,19 @@ function QuoteRow({
           <Badge variant="outline">Superseded</Badge>
         )}
         <span className="tabular">
-          Base {inr(quote.basePremium)} · GST {quote.gstRatePercent}% {inr(quote.gst)} ·{' '}
+          {quote.options.length > 1 ? 'Option 1: ' : ''}Base {inr(quote.basePremium)} · GST{' '}
+          {quote.gstRatePercent}% {inr(quote.gst)} ·{' '}
           <span className="font-semibold">Total {inr(quote.totalPremium)}</span>
+          {quote.options.slice(1).map((item) => (
+            <span key={item.option} className="block">
+              {item.label} ({rupees(item.sumInsured)}):{' '}
+              {item.totalPremium ? (
+                <span className="font-semibold">Total {inr(item.totalPremium)}</span>
+              ) : (
+                'not quoted'
+              )}
+            </span>
+          ))}
         </span>
         <span className="text-xs text-muted-foreground">
           {quote.finalizedAt
@@ -265,6 +277,13 @@ function QuoteDialog({
 }) {
   const start = draft ?? from;
   const [basePremium, setBasePremium] = useState(start?.basePremium ?? '');
+  // Options 2–4 (alteration 3/11/2026): a premium per option the Data Sheet adds; blank: not quoted.
+  const extraOptions = ghiQuoteOptions(record.requirements).slice(1);
+  const [optionPremiums, setOptionPremiums] = useState<string[]>(() =>
+    extraOptions.map(
+      (info) => start?.options.find((item) => item.option === info.option)?.basePremium ?? '',
+    ),
+  );
   const [terms, setTerms] = useState<GhiQuoteTermsInput>(start?.terms ?? emptyGhiQuoteTerms());
   const [otherTerms, setOtherTerms] = useState(start?.otherTerms ?? '');
   const [validUntil, setValidUntil] = useState(start?.validUntil ?? '');
@@ -276,7 +295,16 @@ function QuoteDialog({
   const save = useGhiMutation(
     record.id,
     (finalize: boolean) => {
-      const body = { basePremium, terms, otherTerms, validUntil, reason, attachmentIds, finalize };
+      const body = {
+        basePremium,
+        optionPremiums,
+        terms,
+        otherTerms,
+        validUntil,
+        reason,
+        attachmentIds,
+        finalize,
+      };
       return draft
         ? apiFetch(`ghi/cases/${record.id}/quotes/${draft.id}`, {
             method: 'PUT',
@@ -312,13 +340,35 @@ function QuoteDialog({
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Base premium before GST (₹)">
+            <Field
+              label={
+                extraOptions.length > 0
+                  ? 'Option 1: base premium before GST (₹)'
+                  : 'Base premium before GST (₹)'
+              }
+            >
               <Input
                 inputMode="decimal"
                 value={basePremium ?? ''}
                 onChange={(event) => setBasePremium(event.target.value)}
               />
             </Field>
+            {extraOptions.map((info, index) => (
+              <Field
+                key={info.option}
+                label={`${info.label} (sum insured ${rupees(info.sumInsured)}): base premium (₹, blank if not quoted)`}
+              >
+                <Input
+                  inputMode="decimal"
+                  value={optionPremiums[index] ?? ''}
+                  onChange={(event) =>
+                    setOptionPremiums((current) =>
+                      current.map((value, at) => (at === index ? event.target.value : value)),
+                    )
+                  }
+                />
+              </Field>
+            ))}
             <Field label="Valid until (optional)">
               <Input
                 type="date"

@@ -123,7 +123,9 @@ describe('RequirementsForm', { timeout: 20_000 }, () => {
   it('saves the Data Sheet to the API', async () => {
     let body: Record<string, unknown> | null = null;
     fetchMock.mockImplementation((_input, init) => {
-      body = JSON.parse(init?.body as string) as Record<string, unknown>;
+      // The Data Sheet also lists the company details workbooks kept with the case.
+      if (init?.method !== 'PUT') return Promise.resolve(json({ items: [] }));
+      body = JSON.parse(init.body as string) as Record<string, unknown>;
       return Promise.resolve(json(ghiCase({ requirementsRevision: 2 })));
     });
     const user = renderWithQuery(
@@ -138,7 +140,7 @@ describe('RequirementsForm', { timeout: 20_000 }, () => {
       employeeCount: 50,
       familyDefinition: { spouse: true, maxChildren: 0, parents: 'NONE' },
     });
-    const [input, init] = fetchMock.mock.calls[0]!;
+    const [input, init] = fetchMock.mock.calls.find(([, call]) => call?.method === 'PUT')!;
     expect(urlOf(input)).toBe(`/api/proxy/ghi/cases/${CASE_ID}/requirements`);
     expect(init?.method).toBe('PUT');
   });

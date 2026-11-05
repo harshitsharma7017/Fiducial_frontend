@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { chatFileType, useSendMessage } from '@/lib/api/chat';
-import { MAX_CHAT_FILE_BYTES, MAX_CHAT_TEXT } from '@/shared';
+import { MAX_CHAT_FILE_BYTES, MAX_CHAT_FILE_MB, MAX_CHAT_TEXT } from '@/shared';
 import { fileSize } from './chat-format';
 
 /**
@@ -43,7 +43,9 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
     if (fileInput.current) fileInput.current.value = '';
     if (!chosen) return;
     if (!chatFileType(chosen)) return setProblem('This kind of file cannot be shared in the chat.');
-    if (chosen.size > MAX_CHAT_FILE_BYTES) return setProblem('The file is larger than 10 MB.');
+    if (chosen.size > MAX_CHAT_FILE_BYTES) {
+      return setProblem(`The file is larger than ${MAX_CHAT_FILE_MB} MB.`);
+    }
     setProblem(null);
     clientId.current = null;
     setFile(chosen);

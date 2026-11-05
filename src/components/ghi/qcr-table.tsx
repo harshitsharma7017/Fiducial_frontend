@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { GhiComparison, GhiQcr } from '@/shared';
-import { inr } from './ghi-ui';
+import { rupees, inr } from './ghi-ui';
 
 const KIND_TEXT: Record<GhiComparison, string | null> = {
   MATCH: null,
@@ -60,25 +60,56 @@ export function QcrTable({ qcr }: { qcr: GhiQcr }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(['basePremium', 'gst', 'totalPremium'] as const).map((key) => (
-            <TableRow key={key} className={key === 'totalPremium' ? 'font-semibold' : undefined}>
-              <TableCell>
-                {key === 'basePremium' ? 'Base premium' : key === 'gst' ? 'GST' : 'Total premium'}
-              </TableCell>
-              <TableCell />
-              {qcr.columns.map((column) => (
-                <TableCell
-                  key={column.quoteId}
-                  className={cn(
-                    'text-right tabular',
-                    key === 'totalPremium' && column.lowest && 'bg-success-soft text-success',
-                  )}
-                >
-                  {inr(column[key])}
+          {/* Each option's premium (alteration 3/11/2026); one set when the case has Option 1 only. */}
+          {qcr.options.map((option, at) => {
+            const several = qcr.options.length > 1;
+            return (['basePremium', 'gst', 'totalPremium'] as const).map((key) => (
+              <TableRow
+                key={`${option.option}-${key}`}
+                className={key === 'totalPremium' ? 'font-semibold' : undefined}
+              >
+                <TableCell>
+                  {several ? `${option.label}: ` : ''}
+                  {key === 'basePremium' ? 'Base premium' : key === 'gst' ? 'GST' : 'Total premium'}
                 </TableCell>
-              ))}
-            </TableRow>
-          ))}
+                <TableCell className="text-muted-foreground">
+                  {several && key === 'basePremium'
+                    ? option.sumInsured
+                      ? `Sum insured ${rupees(option.sumInsured)}`
+                      : 'As in the census'
+                    : null}
+                </TableCell>
+                {qcr.columns.map((column) => {
+                  const item = column.options[at];
+                  const value = several ? (item?.[key] ?? null) : column[key];
+                  const lowest = several ? (item?.lowest ?? false) : column.lowest;
+                  const recommended =
+                    several && column.recommended && qcr.recommendedOption === option.option;
+                  return (
+                    <TableCell
+                      key={column.quoteId}
+                      className={cn(
+                        'text-right tabular',
+                        key === 'totalPremium' && lowest && 'bg-success-soft text-success',
+                      )}
+                    >
+                      {value ? (
+                        inr(value)
+                      ) : (
+                        <span className="text-muted-foreground">Not quoted</span>
+                      )}
+                      {key === 'totalPremium' && several && lowest ? (
+                        <span className="ml-1 text-xs font-medium">(lowest)</span>
+                      ) : null}
+                      {key === 'totalPremium' && recommended ? (
+                        <span className="ml-1 text-xs font-medium">(recommended)</span>
+                      ) : null}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ));
+          })}
           {qcr.rows.map((row) => (
             <TableRow key={row.key}>
               <TableCell>{row.label}</TableCell>

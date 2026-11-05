@@ -212,6 +212,8 @@ function detail(overrides: Partial<ClaimDetail> = {}): ClaimDetail {
     hospital: { name: 'Lakeview Hospital', city: 'Pune' },
     admissionDate: '2026-06-02',
     dischargeDate: '2026-06-06',
+    formSubmissionDate: null,
+    settlementDate: null,
     claimType: 'REIMBURSEMENT',
     amountClaimed: '48500.50',
     contactEmail: 'ravi@acme.example',

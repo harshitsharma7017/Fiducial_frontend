@@ -93,8 +93,9 @@ export function GhiStageStepper({
   const steps = stages.filter((value) => value !== 'CLOSED');
   const current = stage === 'CLOSED' ? -1 : steps.indexOf(stage);
   return (
-    <nav aria-label="Stages">
-      <ol className="flex items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:thin]">
+    // The stages wrap onto further lines rather than run under the facts beside them.
+    <nav aria-label="Stages" className="min-w-0">
+      <ol className="flex flex-wrap items-center gap-x-1 gap-y-2">
         {steps.map((value, index) => {
           const done = index < current || (placed && index === current);
           const isCurrent = index === current && !placed;

@@ -17,6 +17,7 @@ import {
   GHI_AGE_GROUPS,
   GHI_AGE_GROUP_LABELS,
   GHI_CLAIM_YEARS,
+  MAX_GHI_QUOTE_OPTIONS,
   type GhiRequirements,
   type GhiRequirementsFormValues,
   type GhiRequirementsInput,
@@ -288,5 +289,84 @@ export function AgeLimits({ form, disabled }: { form: RequirementsForm; disabled
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+/**
+ * Options 2–4 (alteration 3/11/2026), as in Fire: other sums insured each insurer quotes besides
+ * Option 1 (the sums insured above, as in the census). Each is the sum insured of every family or
+ * person; options are numbered in the order added and can be deleted.
+ */
+export function QuoteOptions({
+  value,
+  onChange,
+  disabled,
+  error,
+}: {
+  value: { sumInsured: string }[];
+  onChange: (value: { sumInsured: string }[]) => void;
+  disabled: boolean;
+  error?: string;
+}) {
+  const [text, setText] = useState('');
+  const amount = text.replace(/[₹,\s]/g, '');
+  const full = value.length >= MAX_GHI_QUOTE_OPTIONS - 1;
+  const valid = /^\d{1,13}$/.test(amount) && BigInt(amount) > 0n;
+  const add = () => {
+    if (!valid || full || value.some((item) => item.sumInsured === amount)) return;
+    onChange([...value, { sumInsured: amount }]);
+    setText('');
+  };
+  return (
+    <fieldset className="grid gap-2" disabled={disabled}>
+      <legend className="text-sm">Options for the insurers to quote</legend>
+      <p className="text-xs text-muted-foreground">
+        Option 1 is the sums insured above (as in the census). Add up to three more options, each a
+        sum insured for every family or person; each insurer quotes a premium for every option.
+      </p>
+      <ol className="grid gap-1" aria-label="Quote options">
+        <li className="text-sm">Option 1: the sums insured above</li>
+        {value.map((item, index) => (
+          <li key={item.sumInsured} className="flex items-center gap-2 text-sm">
+            <span className="tabular">
+              Option {index + 2}: {rupees(item.sumInsured)}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              aria-label={`Delete Option ${index + 2}`}
+              onClick={() => onChange(value.filter((_, at) => at !== index))}
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
+          </li>
+        ))}
+      </ol>
+      {full ? null : (
+        <div className="flex flex-wrap gap-2">
+          <Input
+            inputMode="numeric"
+            aria-label={`Sum insured of Option ${value.length + 2}, in rupees`}
+            placeholder="For example 700000"
+            className="max-w-48"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                add();
+              }
+            }}
+          />
+          <Button type="button" variant="outline" size="sm" onClick={add} disabled={!valid}>
+            <Plus aria-hidden="true" />
+            Add Option {value.length + 2}
+          </Button>
+        </div>
+      )}
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+    </fieldset>
   );
 }

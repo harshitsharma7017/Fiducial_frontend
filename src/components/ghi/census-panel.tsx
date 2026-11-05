@@ -45,6 +45,7 @@ import {
   type GhiMember,
   type GhiRelationship,
 } from '@/shared';
+import { CensusBreakup } from './census-breakup';
 import { CensusImport } from './census-import';
 import { MemberDialog } from './member-dialog';
 
@@ -125,7 +126,9 @@ function SummaryCard({ summary }: { summary: GhiCensusSummary }) {
             {summary.employees}.
           </p>
         ) : null}
-        <div className="grid gap-4 lg:grid-cols-3">
+        {/* Lives by age band sits beside (to the right of) lives by relationship at every width
+            but the narrowest (alteration 3/11/2026); the sum insured table follows. */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SmallTable
             caption="Lives by relationship"
             head={['Relationship', 'Lives']}
@@ -160,6 +163,7 @@ function SummaryCard({ summary }: { summary: GhiCensusSummary }) {
             ])}
           />
         </div>
+        <CensusBreakup summary={summary} />
       </CardContent>
     </Card>
   );

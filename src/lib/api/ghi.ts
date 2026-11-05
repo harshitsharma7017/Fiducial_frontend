@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { toast } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/api-client';
 import {
+  CompanyDetailsImportSchema,
   GhiCaseListResponseSchema,
   GhiCaseRecordSchema,
   GhiCensusImportSchema,
@@ -185,6 +186,17 @@ export function uploadGhiFile(
   return apiFetch(
     `${caseApi(product, caseId)}/files?purpose=${purpose}&fileName=${encodeURIComponent(file.name)}`,
     { method: 'POST', body: file, schema: GhiFileSchema },
+  );
+}
+
+/**
+ * Reads the company details from the client's workbook (alteration 3/11/2026). The API keeps the
+ * workbook with the case's files and returns the values for the Data Sheet form to apply.
+ */
+export function importCompanyDetails(caseId: string, file: File, product: EbProduct = 'GMC') {
+  return apiFetch(
+    `${caseApi(product, caseId)}/company-details?fileName=${encodeURIComponent(file.name)}`,
+    { method: 'POST', body: file, schema: CompanyDetailsImportSchema },
   );
 }
 

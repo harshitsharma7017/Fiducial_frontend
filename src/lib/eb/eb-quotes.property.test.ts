@@ -37,6 +37,7 @@ describe('quote and QCR properties', () => {
             covers: Object.fromEntries(
               GPA_COVERS.map((cover, index) => [cover, terms[index]]),
             ) as GpaQuoteTerms['covers'],
+            customCovers: {},
           };
           const found = gpaDeviations(sheet, quote).map((item) => `${item.field}:${item.kind}`);
           const expected = GPA_COVERS.flatMap((cover, index) => {

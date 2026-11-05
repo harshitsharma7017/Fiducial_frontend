@@ -130,6 +130,17 @@ export function qcr(overrides: Partial<GhiQcr> = {}): GhiQcr {
         recommended: false,
         deviations: 1,
         missing: 0,
+        options: [
+          {
+            option: 1,
+            label: 'Option 1',
+            sumInsured: null,
+            basePremium: '100000.00',
+            gst: '18000.00',
+            totalPremium: '118000.00',
+            lowest: true,
+          },
+        ],
       },
       {
         quoteId: '4'.repeat(24),
@@ -143,8 +154,21 @@ export function qcr(overrides: Partial<GhiQcr> = {}): GhiQcr {
         recommended: true,
         deviations: 0,
         missing: 1,
+        options: [
+          {
+            option: 1,
+            label: 'Option 1',
+            sumInsured: null,
+            basePremium: '110000.00',
+            gst: '19800.00',
+            totalPremium: '129800.00',
+            lowest: false,
+          },
+        ],
       },
     ],
+    options: [{ option: 1, label: 'Option 1', sumInsured: null }],
+    recommendedOption: 1,
     rows: [
       {
         key: 'parentsCoPayPercent',

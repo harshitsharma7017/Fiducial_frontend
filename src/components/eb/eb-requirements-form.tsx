@@ -23,31 +23,29 @@ import { ApiError, apiFetch } from '@/lib/api-client';
 import { caseApi, useGhiMutation } from '@/lib/api/ghi';
 import {
   casePermission,
-  COVER_CHOICE_LABELS,
-  COVER_CHOICES,
   DEPENDANT_BASES,
   DEPENDANT_BASIS_LABELS,
   EbCaseRecordSchema,
   GHI_AGE_GROUP_LABELS,
   GHI_AGE_GROUPS,
   GHI_CLAIM_YEARS,
-  GPA_COVER_LABELS,
-  GPA_COVERS,
   GpaRequirementsInputSchema,
   GtliRequirementsInputSchema,
   NOMINEE_REQUIREMENT_LABELS,
   NOMINEE_REQUIREMENTS,
   planHasDependants,
   planRelationships,
-  type CoverChoice,
   type DependantBasisKind,
   type EbCaseRecord,
   type GpaRequirementsFormValues,
   type GtliRequirementsFormValues,
   type NomineeRequirement,
 } from '@/shared';
+import { CompanyDetailsExcel } from '@/components/ghi/company-details-excel';
 import { AwaitingNote } from './awaiting-confirmation';
+import { GpaCoversEditor } from './gpa-covers-editor';
 import { RelationshipRulesEditor } from './relationship-rules-editor';
+import { EbQuoteOptions } from './eb-quote-options';
 import { SumInsuredBasisFields } from './sum-insured-basis-fields';
 
 // The GPA and GTLI Data Sheets (Requirements 4, 5): checked by the same shared schema the API
@@ -194,11 +192,28 @@ export function EbRequirementsForm({ record }: { record: EbCaseRecord }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <CompanyDetailsExcel
+            caseId={record.id}
+            product={record.product}
+            disabled={disabled}
+            onImported={(result) => {
+              const company = { ...values.company };
+              for (const key of result.provided) {
+                if (key !== 'employeeCount') company[key] = result.company[key];
+              }
+              set({
+                company,
+                ...(result.provided.includes('employeeCount')
+                  ? { employeeCount: result.employeeCount }
+                  : {}),
+              });
+            }}
+          />
           {(
             [
               ['natureOfBusiness', 'Nature of business'],
               ['locations', 'Locations of the employees'],
-              ['contactName', 'HR contact'],
+              ['contactName', 'HR name'],
               ['contactEmail', 'HR contact email'],
               ['contactPhone', 'HR contact phone'],
             ] as const
@@ -248,6 +263,12 @@ export function EbRequirementsForm({ record }: { record: EbCaseRecord }) {
               maximum: errors['sumInsuredBasis.maximum'],
             }}
           />
+          <EbQuoteOptions
+            value={values.quoteOptions ?? []}
+            disabled={disabled}
+            errors={errors}
+            onChange={(next) => set({ quoteOptions: next as Values['quoteOptions'] })}
+          />
           {!gpa ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Free cover limit asked for (₹, optional)">
@@ -283,33 +304,27 @@ export function EbRequirementsForm({ record }: { record: EbCaseRecord }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            {GPA_COVERS.map((cover) => (
-              <Field key={cover} label={GPA_COVER_LABELS[cover]}>
-                <NativeSelect
-                  disabled={disabled}
-                  value={values.covers?.[cover] ?? ''}
-                  onChange={(event) =>
-                    set({
-                      covers: {
-                        ...values.covers,
-                        [cover]: (event.target.value || null) as CoverChoice | null,
-                      },
-                      ...(cover === 'temporaryTotal' && event.target.value !== 'REQUIRED'
-                        ? { temporaryTotal: { weeklyBenefit: null, weeks: null } }
-                        : {}),
-                    })
-                  }
-                >
-                  <option value="">Not chosen</option>
-                  {COVER_CHOICES.map((choice) => (
-                    <option key={choice} value={choice}>
-                      {COVER_CHOICE_LABELS[choice]}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </Field>
-            ))}
-            {values.covers?.temporaryTotal === 'REQUIRED' ? (
+            <GpaCoversEditor
+              disabled={disabled}
+              errors={errors}
+              value={{
+                covers: values.covers,
+                removedCovers: values.removedCovers ?? [],
+                customCovers: values.customCovers ?? [],
+              }}
+              onChange={(next) =>
+                set({
+                  covers: next.covers,
+                  removedCovers: next.removedCovers,
+                  customCovers: next.customCovers,
+                })
+              }
+              onTemporaryTotalCleared={() =>
+                set({ temporaryTotal: { weeklyBenefit: null, weeks: null } })
+              }
+            />
+            {values.covers?.temporaryTotal === 'REQUIRED' &&
+            !(values.removedCovers ?? []).includes('temporaryTotal') ? (
               <>
                 <Field label="Weekly benefit (₹, optional)">
                   <Input

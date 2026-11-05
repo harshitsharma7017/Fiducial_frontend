@@ -22,7 +22,7 @@ import {
   type GhiQuoteTermsInput,
 } from '@/shared';
 import { Field } from './case-actions';
-import { Fact, FilePicker, inr } from './ghi-ui';
+import { rupees, Fact, FilePicker, inr } from './ghi-ui';
 import { TermsFields } from './terms-fields';
 
 /**
@@ -54,7 +54,11 @@ export function FinalQcrPanel({ record }: { record: GhiCaseRecord }) {
         <CardHeader>
           <CardTitle>Accepted quote</CardTitle>
           <CardDescription>
-            From QCR v{state.accepted.qcrVersion}, as the client accepted it.
+            From QCR v{state.accepted.qcrVersion}, as the client accepted it
+            {state.accepted.option.sumInsured
+              ? `: ${state.accepted.option.label}, sum insured ${rupees(state.accepted.option.sumInsured)} (total ${inr(state.accepted.option.totalPremium)})`
+              : ''}
+            .
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -144,7 +148,10 @@ function FinalForm({
   onDone: () => void;
 }) {
   const start = state.current ?? state.accepted?.quote ?? null;
-  const [basePremium, setBasePremium] = useState(start?.basePremium ?? '');
+  // First final terms start from the premium of the option the client chose (3/11/2026).
+  const [basePremium, setBasePremium] = useState(
+    state.current?.basePremium ?? state.accepted?.option.basePremium ?? start?.basePremium ?? '',
+  );
   const [terms, setTerms] = useState<GhiQuoteTermsInput>(start!.terms);
   const [otherTerms, setOtherTerms] = useState(start?.otherTerms ?? '');
   const [note, setNote] = useState('');
@@ -172,7 +179,13 @@ function FinalForm({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <Field label="Final base premium before GST (₹)">
+        <Field
+          label={
+            state.accepted?.option.sumInsured
+              ? `Final base premium before GST (₹), ${state.accepted.option.label}`
+              : 'Final base premium before GST (₹)'
+          }
+        >
           <Input
             inputMode="decimal"
             className="max-w-60"

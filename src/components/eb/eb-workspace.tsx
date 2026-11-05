@@ -154,8 +154,8 @@ function Loaded({ record, initialTab }: { record: EbCaseRecord; initialTab?: str
           </AlertDescription>
         </Alert>
       ) : null}
-      <div className="mb-6 grid gap-4 *:min-w-0 lg:grid-cols-[1fr_auto]">
-        <div className="grid gap-3">
+      <div className="mb-6 grid gap-4 *:min-w-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-8">
+        <div className="grid content-start gap-3 *:min-w-0">
           <GhiStageStepper
             stage={record.stage}
             stages={EB_STAGES}
@@ -165,7 +165,7 @@ function Loaded({ record, initialTab }: { record: EbCaseRecord; initialTab?: str
           />
           {canEdit ? <CaseActions record={record} /> : null}
         </div>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4 lg:grid-cols-2">
+        <dl className="grid grid-cols-2 content-start gap-x-6 gap-y-2 text-sm sm:grid-cols-4 lg:grid-cols-2">
           <Fact label="Policy period">
             {record.policyStart
               ? `${formatDate(record.policyStart)} – ${record.policyEnd ? formatDate(record.policyEnd) : '1 year'}`

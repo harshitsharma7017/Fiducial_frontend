@@ -19,7 +19,13 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { apiFetch } from '@/lib/api-client';
 import { useClaimMutation } from '@/lib/api/claims';
 import { ClaimDetailSchema, ProposalOwnersResponseSchema, type ClaimDetail } from '@/shared';
-import { ClaimDetailsFields, fieldErrorsOf, type ClaimDetailsValues } from './claim-fields';
+import {
+  ClaimDetailsFields,
+  ClaimTrackingFields,
+  claimTrackingValues,
+  fieldErrorsOf,
+  type ClaimDetailsValues,
+} from './claim-fields';
 
 /** Corrects the claim's details; the timeline records each field's old and new value. */
 export function EditClaimDialog({ claim, onClose }: { claim: ClaimDetail; onClose: () => void }) {
@@ -33,9 +39,14 @@ export function EditClaimDialog({ claim, onClose }: { claim: ClaimDetail; onClos
     contactEmail: claim.contactEmail ?? '',
     contactPhone: claim.contactPhone ?? '',
   });
+  const [tracking, setTracking] = useState(() => claimTrackingValues(claim));
   const save = useClaimMutation(
     () =>
-      apiFetch(`claims/${claim.id}`, { method: 'PUT', body: values, schema: ClaimDetailSchema }),
+      apiFetch(`claims/${claim.id}`, {
+        method: 'PUT',
+        body: { ...values, ...tracking },
+        schema: ClaimDetailSchema,
+      }),
     () => ({ title: 'Claim saved' }),
   );
   return (
@@ -57,6 +68,11 @@ export function EditClaimDialog({ claim, onClose }: { claim: ClaimDetail; onClos
           <ClaimDetailsFields
             value={values}
             onChange={setValues}
+            errors={fieldErrorsOf(save.error)}
+          />
+          <ClaimTrackingFields
+            value={tracking}
+            onChange={setTracking}
             errors={fieldErrorsOf(save.error)}
           />
           {save.isError ? (

@@ -10,11 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermission } from '@/hooks/use-permission';
 import { apiFetch } from '@/lib/api-client';
 import { ghiQcrsQuery, ghiQuotesQuery, issuesText, useGhiMutation } from '@/lib/api/ghi';
 import {
+  ghiQuoteOptions,
   GHI_QCR_STATUS_LABELS,
   GhiQcrSchema,
   MAX_GHI_INSURERS,
@@ -26,7 +28,7 @@ import {
 import { Field } from './case-actions';
 import { ClientDecisionDialog, SendQcrDialog } from './qcr-dialogs';
 import { QcrTable } from './qcr-table';
-import { DownloadButton, inr } from './ghi-ui';
+import { rupees, DownloadButton, inr } from './ghi-ui';
 import { DispatchLog } from './rfq-insurers';
 
 const STATUS_VARIANT = {
@@ -127,13 +129,24 @@ function QcrForm({
   const [recommended, setRecommended] = useState<string | null>(
     reuse ? qcr.recommendedInsurerId : null,
   );
+  const [recommendedOption, setRecommendedOption] = useState<number>(
+    reuse ? qcr.recommendedOption : 1,
+  );
   const [remarks, setRemarks] = useState(reuse ? (qcr.remarks ?? '') : '');
+  // Options 2–4 (alteration 3/11/2026): the option recommended with the insurer.
+  const options = ghiQuoteOptions(record.requirements);
+  const recommendedQuote = latest.find((quote) => quote.insurerId === recommended);
   const chosen =
     quoteIds.length > 0 ? quoteIds : latest.slice(0, MAX_GHI_INSURERS).map((quote) => quote.id);
   const save = useGhiMutation(
     record.id,
     () => {
-      const body = { quoteIds: chosen, recommendedInsurerId: recommended, remarks };
+      const body = {
+        quoteIds: chosen,
+        recommendedInsurerId: recommended,
+        recommendedOption,
+        remarks,
+      };
       return reuse
         ? apiFetch(`ghi/cases/${record.id}/qcrs/${qcr.id}`, {
             method: 'PUT',
@@ -201,6 +214,33 @@ function QcrForm({
             })}
           </fieldset>
         )}
+        {options.length > 1 ? (
+          <Field label="Recommended option">
+            <NativeSelect
+              value={String(recommendedOption)}
+              onChange={(event) => setRecommendedOption(Number(event.target.value))}
+            >
+              {options.map((info) => {
+                const total = recommendedQuote?.options.find(
+                  (item) => item.option === info.option,
+                )?.totalPremium;
+                return (
+                  <option
+                    key={info.option}
+                    value={info.option}
+                    disabled={recommendedQuote !== undefined && !total}
+                  >
+                    {info.label}
+                    {info.sumInsured
+                      ? ` (sum insured ${rupees(info.sumInsured)})`
+                      : ' (as in the census)'}
+                    {recommendedQuote ? (total ? ` — total ${inr(total)}` : ' — not quoted') : ''}
+                  </option>
+                );
+              })}
+            </NativeSelect>
+          </Field>
+        ) : null}
         <Field label="Remarks and recommendation">
           <Textarea
             rows={3}

@@ -34,6 +34,8 @@ import {
 } from '@/shared';
 import {
   ClaimDetailsFields,
+  ClaimTrackingFields,
+  claimTrackingValues,
   emptyClaimDetails,
   fieldErrorsOf,
   type ClaimDetailsValues,
@@ -56,6 +58,7 @@ export function NewClaimForm() {
   const [employeeMemberId, setEmployeeId] = useState('');
   const [patientMemberId, setPatientId] = useState('');
   const [details, setDetails] = useState<ClaimDetailsValues>(emptyClaimDetails());
+  const [tracking, setTracking] = useState(() => claimTrackingValues());
   const [files, setFiles] = useState<Partial<Record<ClaimDocumentKind, File>>>({});
   const [uploadError, setUploadError] = useState<string | null>(null);
   const q = useDebouncedValue(employeeText, 250);
@@ -74,7 +77,7 @@ export function NewClaimForm() {
     async () => {
       const claim = await apiFetch('claims', {
         method: 'POST',
-        body: { clientId, ghiCaseId, employeeMemberId, patientMemberId, ...details },
+        body: { clientId, ghiCaseId, employeeMemberId, patientMemberId, ...details, ...tracking },
         schema: ClaimDetailSchema,
       });
       const failed: string[] = [];
@@ -237,7 +240,10 @@ export function NewClaimForm() {
           <CardTitle>Hospitalisation and claim</CardTitle>
         </CardHeader>
         <CardContent>
-          <ClaimDetailsFields value={details} onChange={setDetails} errors={errors} />
+          <div className="grid gap-4">
+            <ClaimDetailsFields value={details} onChange={setDetails} errors={errors} />
+            <ClaimTrackingFields value={tracking} onChange={setTracking} errors={errors} />
+          </div>
         </CardContent>
       </Card>
 

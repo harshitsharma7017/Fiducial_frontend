@@ -42,6 +42,7 @@ import {
 import { z } from 'zod';
 import { EbCensusImport } from './eb-census-import';
 import { EbMemberDialog } from './eb-member-dialog';
+import { CensusBreakup } from '@/components/ghi/census-breakup';
 import { TemplateDownloadDialog } from './template-download-dialog';
 
 /**
@@ -88,17 +89,22 @@ export function EbCensusPanel({ record }: { record: EbCaseRecord }) {
           ) : summary.isError ? (
             <ErrorState error={summary.error} onRetry={() => void summary.refetch()} />
           ) : (
-            <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-              <Fact label="Employees">{summary.data.employees}</Fact>
-              <Fact label="Lives">{summary.data.lives}</Fact>
-              <Fact label="Total sum insured">{rupees(summary.data.totalSumInsured)}</Fact>
-              <Fact label="Average age">{summary.data.averageAge ?? '—'}</Fact>
-              {record.product === 'GTLI' && summary.data.freeCoverLimit ? (
-                <Fact label={`Above the free cover limit (${rupees(summary.data.freeCoverLimit)})`}>
-                  {summary.data.aboveFreeCoverLimit ?? 0}
-                </Fact>
-              ) : null}
-            </dl>
+            <div className="grid gap-5">
+              <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+                <Fact label="Employees">{summary.data.employees}</Fact>
+                <Fact label="Lives">{summary.data.lives}</Fact>
+                <Fact label="Total sum insured">{rupees(summary.data.totalSumInsured)}</Fact>
+                <Fact label="Average age">{summary.data.averageAge ?? '—'}</Fact>
+                {record.product === 'GTLI' && summary.data.freeCoverLimit ? (
+                  <Fact
+                    label={`Above the free cover limit (${rupees(summary.data.freeCoverLimit)})`}
+                  >
+                    {summary.data.aboveFreeCoverLimit ?? 0}
+                  </Fact>
+                ) : null}
+              </dl>
+              <CensusBreakup summary={summary.data} />
+            </div>
           )}
         </CardContent>
       </Card>

@@ -24,7 +24,7 @@ import { todayIst } from '@/lib/dates';
 import { GhiQcrSchema, GhiSendOutcomeSchema, type GhiCaseRecord, type GhiQcr } from '@/shared';
 import { z } from 'zod';
 import { Field } from './case-actions';
-import { FilePicker, inr } from './ghi-ui';
+import { rupees, FilePicker, inr } from './ghi-ui';
 
 const SendResponseSchema = z.object({ result: GhiSendOutcomeSchema, qcr: GhiQcrSchema });
 
@@ -158,6 +158,12 @@ export function ClientDecisionDialog({
   const [insurerId, setInsurerId] = useState<string>(
     previous?.insurerId ?? qcr.recommendedInsurerId ?? qcr.columns[0]?.insurerId ?? '',
   );
+  const [wanted, setOption] = useState<number>(previous?.option ?? qcr.recommendedOption ?? 1);
+  // The options the chosen insurer quoted (Option 1 only on a case without other options).
+  const quoted = (
+    qcr.columns.find((column) => column.insurerId === insurerId)?.options ?? []
+  ).filter((item) => item.totalPremium !== null);
+  const option = quoted.some((item) => item.option === wanted) ? wanted : (quoted[0]?.option ?? 1);
   const [decidedOn, setDecidedOn] = useState(previous?.decidedOn ?? todayIst());
   const [confirmedBy, setConfirmedBy] = useState(
     previous?.confirmedBy ?? record.client.contacts[0]?.name ?? '',
@@ -173,6 +179,7 @@ export function ClientDecisionDialog({
         body: {
           decision,
           insurerId: decision === 'ACCEPTED' ? insurerId : null,
+          option,
           decidedOn,
           confirmedBy,
           note,
@@ -222,6 +229,24 @@ export function ClientDecisionDialog({
                 {qcr.columns.map((column) => (
                   <option key={column.insurerId} value={column.insurerId}>
                     {column.insurerName} — total {inr(column.totalPremium)}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+          ) : null}
+          {decision === 'ACCEPTED' && qcr.options.length > 1 ? (
+            <Field label="Option selected">
+              <NativeSelect
+                value={String(option)}
+                onChange={(event) => setOption(Number(event.target.value))}
+              >
+                {quoted.map((item) => (
+                  <option key={item.option} value={item.option}>
+                    {item.label}
+                    {item.sumInsured
+                      ? ` (sum insured ${rupees(item.sumInsured)})`
+                      : ' (as in the census)'}{' '}
+                    — total {inr(item.totalPremium)}
                   </option>
                 ))}
               </NativeSelect>

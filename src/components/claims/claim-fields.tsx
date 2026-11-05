@@ -27,6 +27,20 @@ export const emptyClaimDetails = (contactEmail = ''): ClaimDetailsValues => ({
   contactPhone: '',
 });
 
+/** Dates staff track on a claim (staff forms only, not the employee's link). */
+export interface ClaimTrackingValues {
+  formSubmissionDate: string;
+  settlementDate: string;
+}
+
+export const claimTrackingValues = (claim?: {
+  formSubmissionDate: string | null;
+  settlementDate: string | null;
+}): ClaimTrackingValues => ({
+  formSubmissionDate: claim?.formSubmissionDate ?? '',
+  settlementDate: claim?.settlementDate ?? '',
+});
+
 /** The API's message for a field ("hospital.name"), shown under it. */
 export type FieldErrors = Partial<Record<string, string>>;
 
@@ -135,6 +149,41 @@ export function ClaimDetailsFields({
           type="tel"
           value={value.contactPhone}
           onChange={(event) => set({ contactPhone: event.target.value })}
+        />
+      </Field>
+    </div>
+  );
+}
+
+/** Form submission and claim settlement dates (alteration 3/11/2026). Both optional. */
+export function ClaimTrackingFields({
+  value,
+  onChange,
+  errors,
+}: {
+  value: ClaimTrackingValues;
+  onChange: (value: ClaimTrackingValues) => void;
+  errors: FieldErrors;
+}) {
+  const set = (patch: Partial<ClaimTrackingValues>) => onChange({ ...value, ...patch });
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field label="Form submission date (optional)" error={errors.formSubmissionDate}>
+        <Input
+          type="date"
+          max={todayIst()}
+          value={value.formSubmissionDate}
+          onChange={(event) => set({ formSubmissionDate: event.target.value })}
+          aria-invalid={errors.formSubmissionDate ? true : undefined}
+        />
+      </Field>
+      <Field label="Claim settlement date (optional)" error={errors.settlementDate}>
+        <Input
+          type="date"
+          min={value.formSubmissionDate || undefined}
+          value={value.settlementDate}
+          onChange={(event) => set({ settlementDate: event.target.value })}
+          aria-invalid={errors.settlementDate ? true : undefined}
         />
       </Field>
     </div>

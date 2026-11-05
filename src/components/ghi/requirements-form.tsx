@@ -38,10 +38,12 @@ import { YesNo } from './ghi-ui';
 import {
   AgeLimits,
   ClaimsTable,
+  QuoteOptions,
   SumInsuredOptions,
   numberValue,
   type RequirementsForm as RequirementsFormApi,
 } from './requirements-parts';
+import { CompanyDetailsExcel } from './company-details-excel';
 
 /** The saved Data Sheet as form values (the claims ratio is the API's, not an input). */
 function valuesOf(record: GhiCaseRecord): GhiRequirementsFormValues {
@@ -153,11 +155,24 @@ export function RequirementsForm({ record }: { record: GhiCaseRecord }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
+          <CompanyDetailsExcel
+            caseId={record.id}
+            disabled={disabled}
+            onImported={(result) => {
+              for (const key of result.provided) {
+                if (key === 'employeeCount') {
+                  form.setValue('employeeCount', result.employeeCount, { shouldDirty: true });
+                } else {
+                  form.setValue(`company.${key}`, result.company[key], { shouldDirty: true });
+                }
+              }
+            }}
+          />
           {text('company.natureOfBusiness', 'Nature of business', {
             placeholder: record.client.natureOfBusiness,
           })}
           {text('company.locations', 'Locations of the employees')}
-          {text('company.contactName', 'HR contact')}
+          {text('company.contactName', 'HR name')}
           {text('company.contactEmail', 'HR contact email', { type: 'email' })}
           {text('company.contactPhone', 'HR contact phone', { type: 'tel' })}
           <Field label="Employees to be covered">
@@ -193,7 +208,7 @@ export function RequirementsForm({ record }: { record: GhiCaseRecord }) {
           <CardDescription>
             {record.plan
               ? `The family definition is taken from the plan ${record.plan.name} v${record.plan.versionNumber} (Plan and census tab); the family fields here do not apply while it is assigned.`
-              : 'Self, spouse, up to three children, and either parents or parents-in-law.'}
+              : 'Self, spouse, up to three children, and parents, in-laws, or both.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -259,6 +274,16 @@ export function RequirementsForm({ record }: { record: GhiCaseRecord }) {
                 })
               }
               error={errors.sumInsuredOptions?.message ?? errors.sumInsuredOptions?.[0]?.message}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <QuoteOptions
+              disabled={disabled}
+              value={useWatch({ control: form.control, name: 'quoteOptions' }) ?? []}
+              onChange={(value) =>
+                form.setValue('quoteOptions', value, { shouldDirty: true, shouldValidate: true })
+              }
+              error={errors.quoteOptions?.message ?? errors.quoteOptions?.[0]?.sumInsured?.message}
             />
           </div>
           <Field

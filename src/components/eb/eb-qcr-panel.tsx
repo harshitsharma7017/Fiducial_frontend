@@ -27,6 +27,8 @@ import { apiFetch } from '@/lib/api-client';
 import { caseApi, refreshGhiCase } from '@/lib/api/ghi';
 import { ebQcrsQuery } from '@/lib/eb/api';
 import {
+  basisText,
+  ebQuoteOptions,
   casePermission,
   EbQcrSchema,
   EbQcrSendResponseSchema,
@@ -51,6 +53,7 @@ export function EbQcrPanel({ record }: { record: EbCaseRecord }) {
   const canSend = usePermission(casePermission(record.product, 'send'));
   const qcrs = useQuery(ebQcrsQuery(record.product, record.id));
   const [recommended, setRecommended] = useState('');
+  const [recommendedOption, setRecommendedOption] = useState(1);
   const [remarks, setRemarks] = useState('');
   const [comment, setComment] = useState('');
   const base = caseApi(record.product, record.id);
@@ -59,7 +62,7 @@ export function EbQcrPanel({ record }: { record: EbCaseRecord }) {
     mutationFn: () =>
       apiFetch(`${base}/qcrs`, {
         method: 'POST',
-        body: { recommendedInsurerId: recommended || null, remarks },
+        body: { recommendedInsurerId: recommended || null, recommendedOption, remarks },
         schema: EbQcrSchema,
       }),
     onSuccess: () => {
@@ -128,6 +131,38 @@ export function EbQcrPanel({ record }: { record: EbCaseRecord }) {
                   ))}
                 </NativeSelect>
               </Field>
+              {(() => {
+                // Options 2–4 (client review 4/11/2026): the option recommended with the insurer.
+                const options = ebQuoteOptions(record.requirements);
+                if (options.length <= 1) return null;
+                const chosen = qcrs.data.candidates.find(
+                  (quote) => quote.insurerId === recommended,
+                );
+                return (
+                  <Field label="Recommended option">
+                    <NativeSelect
+                      value={String(recommendedOption)}
+                      onChange={(event) => setRecommendedOption(Number(event.target.value))}
+                    >
+                      {options.map((info) => {
+                        const total = chosen?.options.find(
+                          (item) => item.option === info.option,
+                        )?.totalPremium;
+                        return (
+                          <option
+                            key={info.option}
+                            value={info.option}
+                            disabled={chosen !== undefined && !total}
+                          >
+                            {info.label} ({basisText(info.basis)})
+                            {chosen ? (total ? ` — ${inr(total)}` : ' — not quoted') : ''}
+                          </option>
+                        );
+                      })}
+                    </NativeSelect>
+                  </Field>
+                );
+              })()}
               <Field label="Remarks (optional)">
                 <Textarea
                   rows={2}
@@ -283,19 +318,39 @@ function QcrView({ qcr }: { qcr: EbQcr }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(['basePremium', 'gst', 'totalPremium'] as const).map((key) => (
-              <TableRow key={key}>
-                <TableCell>
-                  {key === 'basePremium' ? 'Base premium' : key === 'gst' ? 'GST' : 'Total premium'}
-                </TableCell>
-                <TableCell />
-                {qcr.columns.map((column) => (
-                  <TableCell key={column.quoteId} className="tabular">
-                    {inr(column[key])}
+            {/* Each option's premium (client review 4/11/2026); one set with Option 1 only. */}
+            {qcr.options.map((option, at) => {
+              const several = qcr.options.length > 1;
+              return (['basePremium', 'gst', 'totalPremium'] as const).map((key) => (
+                <TableRow key={`${option.option}-${key}`}>
+                  <TableCell>
+                    {several ? `${option.label}: ` : ''}
+                    {key === 'basePremium'
+                      ? 'Base premium'
+                      : key === 'gst'
+                        ? 'GST'
+                        : 'Total premium'}
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
+                  <TableCell>{several && key === 'basePremium' ? option.basis : null}</TableCell>
+                  {qcr.columns.map((column) => {
+                    const item = column.options[at];
+                    const value = several ? (item?.[key] ?? null) : column[key];
+                    return (
+                      <TableCell key={column.quoteId} className="tabular">
+                        {value ? inr(value) : 'Not quoted'}
+                        {several && key === 'totalPremium' && item?.lowest ? ' (lowest)' : ''}
+                        {several &&
+                        key === 'totalPremium' &&
+                        column.recommended &&
+                        qcr.recommendedOption === option.option
+                          ? ' (recommended)'
+                          : ''}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ));
+            })}
             {qcr.rows.map((row) => (
               <TableRow key={row.key}>
                 <TableCell>{row.label}</TableCell>

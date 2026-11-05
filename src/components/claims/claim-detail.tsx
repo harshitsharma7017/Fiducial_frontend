@@ -144,6 +144,20 @@ function Loaded({ claim }: { claim: ClaimDetail }) {
                 </Fact>
                 <Fact label="Admission">{formatDate(claim.admissionDate)}</Fact>
                 <Fact label="Discharge">{formatDate(claim.dischargeDate)}</Fact>
+                <Fact label="Form submission">
+                  {claim.formSubmissionDate ? (
+                    formatDate(claim.formSubmissionDate)
+                  ) : (
+                    <span className="text-muted-foreground">Not entered</span>
+                  )}
+                </Fact>
+                <Fact label="Claim settlement">
+                  {claim.settlementDate ? (
+                    formatDate(claim.settlementDate)
+                  ) : (
+                    <span className="text-muted-foreground">Not entered</span>
+                  )}
+                </Fact>
                 <Fact label="Claim type">{CLAIM_TYPE_LABELS[claim.claimType]}</Fact>
                 <Fact label="Amount claimed">
                   <span className="font-semibold">{inr(claim.amountClaimed)}</span>

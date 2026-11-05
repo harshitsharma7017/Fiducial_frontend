@@ -34,18 +34,22 @@ import { caseApi, refreshGhiCase } from '@/lib/api/ghi';
 import { ebQuotesQuery } from '@/lib/eb/api';
 import {
   casePermission,
+  basisText,
   COVER_OFFER_LABELS,
   COVER_OFFERS,
   EbQuoteSchema,
   emptyGpaQuoteTerms,
   emptyGtliQuoteTerms,
   formatDateTime,
-  GPA_COVER_LABELS,
-  GPA_COVERS,
+  coverTermOf,
+  ebQuoteOptions,
+  gpaCoverList,
   type CoverOffer,
   type EbCaseRecord,
   type EbQuote,
+  type GpaCoverTerm,
   type GpaQuoteTerms,
+  type GpaRequirementsInput,
   type GtliQuoteTerms,
 } from '@/shared';
 import { z } from 'zod';
@@ -148,6 +152,11 @@ export function EbQuotesPanel({ record }: { record: EbCaseRecord }) {
                     </TableCell>
                     <TableCell className="text-right font-medium tabular">
                       {inr(quote.totalPremium)}
+                      {quote.options.slice(1).map((item) => (
+                        <span key={item.option} className="block text-xs font-normal">
+                          {item.label}: {item.totalPremium ? inr(item.totalPremium) : 'not quoted'}
+                        </span>
+                      ))}
                     </TableCell>
                     <TableCell>{quote.statedRate ?? '—'}</TableCell>
                     <TableCell className="text-xs">
@@ -228,6 +237,13 @@ function QuoteDialog({
   const sent = record.insurers.filter((insurer) => insurer.status !== 'NOT_SENT');
   const [insurerId, setInsurerId] = useState(quote?.insurerId ?? '');
   const [basePremium, setBasePremium] = useState(quote?.basePremium ?? '');
+  // Options 2–4 (client review 4/11/2026): a premium per option; blank: not quoted.
+  const extraOptions = ebQuoteOptions(record.requirements).slice(1);
+  const [optionPremiums, setOptionPremiums] = useState<string[]>(() =>
+    extraOptions.map(
+      (info) => quote?.options.find((item) => item.option === info.option)?.basePremium ?? '',
+    ),
+  );
   const [statedRate, setStatedRate] = useState(quote?.statedRate ?? '');
   const [terms, setTerms] = useState<GpaQuoteTerms | GtliQuoteTerms>(
     quote?.terms ?? (gpa ? emptyGpaQuoteTerms() : emptyGtliQuoteTerms()),
@@ -244,6 +260,7 @@ function QuoteDialog({
     mutationFn: (finalize: boolean) => {
       const body = {
         basePremium,
+        optionPremiums,
         statedRate,
         terms,
         otherTerms,
@@ -300,7 +317,13 @@ function QuoteDialog({
             </NativeSelect>
             {fieldError('insurerId')}
           </Field>
-          <Field label="Base premium before GST (₹)">
+          <Field
+            label={
+              extraOptions.length > 0
+                ? 'Option 1: base premium before GST (₹)'
+                : 'Base premium before GST (₹)'
+            }
+          >
             <Input
               inputMode="decimal"
               value={basePremium}
@@ -308,6 +331,24 @@ function QuoteDialog({
             />
             {fieldError('basePremium')}
           </Field>
+          {extraOptions.map((info, index) => (
+            <Field
+              key={info.option}
+              label={`${info.label} (${basisText(info.basis)}): base premium (₹, blank if not quoted)`}
+            >
+              <Input
+                inputMode="decimal"
+                value={optionPremiums[index] ?? ''}
+                onChange={(event) => {
+                  const amount = event.target.value.replace(/[₹,\s]/g, '');
+                  setOptionPremiums((current) =>
+                    current.map((value, at) => (at === index ? amount : value)),
+                  );
+                }}
+              />
+              {fieldError(`optionPremiums.${index}`)}
+            </Field>
+          ))}
           <Field
             label="Rate as the insurer states it (optional)"
             hint="Kept as text; used in no calculation."
@@ -324,63 +365,57 @@ function QuoteDialog({
         {gpa ? (
           <div className="grid gap-3">
             <AwaitingNote>Cover limits are shown as given (open question 10).</AwaitingNote>
-            {GPA_COVERS.map((cover) => (
-              <div key={cover} className="grid gap-2 rounded-md border p-3 sm:grid-cols-3">
-                <Field label={GPA_COVER_LABELS[cover]}>
-                  <NativeSelect
-                    value={gpaTerms.covers[cover].offer}
-                    onChange={(event) =>
-                      setTerms({
-                        covers: {
-                          ...gpaTerms.covers,
-                          [cover]: {
-                            ...gpaTerms.covers[cover],
-                            offer: event.target.value as CoverOffer,
-                          },
+            {/* The case's covers: standard ones not deleted, then those added (3/11/2026). */}
+            {gpaCoverList(record.requirements as GpaRequirementsInput).map((cover) => {
+              const term = coverTermOf(gpaTerms, cover);
+              const update = (patch: Partial<GpaCoverTerm>) =>
+                setTerms(
+                  cover.standard
+                    ? {
+                        ...gpaTerms,
+                        covers: { ...gpaTerms.covers, [cover.standard]: { ...term, ...patch } },
+                      }
+                    : {
+                        ...gpaTerms,
+                        customCovers: {
+                          ...gpaTerms.customCovers,
+                          [cover.customId ?? '']: { ...term, ...patch },
                         },
-                      })
-                    }
-                  >
-                    {COVER_OFFERS.map((offer) => (
-                      <option key={offer} value={offer}>
-                        {COVER_OFFER_LABELS[offer]}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <Field label="Limit (₹, optional)">
-                  <Input
-                    inputMode="numeric"
-                    value={gpaTerms.covers[cover].limitAmount ?? ''}
-                    onChange={(event) => {
-                      const amount = event.target.value.replace(/[₹,\s]/g, '');
-                      setTerms({
-                        covers: {
-                          ...gpaTerms.covers,
-                          [cover]: {
-                            ...gpaTerms.covers[cover],
-                            limitAmount: amount === '' ? null : amount,
-                          },
-                        },
-                      });
-                    }}
-                  />
-                </Field>
-                <Field label="Limit as text (optional)">
-                  <Input
-                    value={gpaTerms.covers[cover].limitText ?? ''}
-                    onChange={(event) =>
-                      setTerms({
-                        covers: {
-                          ...gpaTerms.covers,
-                          [cover]: { ...gpaTerms.covers[cover], limitText: event.target.value },
-                        },
-                      })
-                    }
-                  />
-                </Field>
-              </div>
-            ))}
+                      },
+                );
+              return (
+                <div key={cover.key} className="grid gap-2 rounded-md border p-3 sm:grid-cols-3">
+                  <Field label={cover.label}>
+                    <NativeSelect
+                      value={term.offer}
+                      onChange={(event) => update({ offer: event.target.value as CoverOffer })}
+                    >
+                      {COVER_OFFERS.map((offer) => (
+                        <option key={offer} value={offer}>
+                          {COVER_OFFER_LABELS[offer]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                  <Field label="Limit (₹, optional)">
+                    <Input
+                      inputMode="numeric"
+                      value={term.limitAmount ?? ''}
+                      onChange={(event) => {
+                        const amount = event.target.value.replace(/[₹,\s]/g, '');
+                        update({ limitAmount: amount === '' ? null : amount });
+                      }}
+                    />
+                  </Field>
+                  <Field label="Limit as text (optional)">
+                    <Input
+                      value={term.limitText ?? ''}
+                      onChange={(event) => update({ limitText: event.target.value })}
+                    />
+                  </Field>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">

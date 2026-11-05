@@ -37,6 +37,12 @@ export function ClientDecisionPanel({ record, qcr }: { record: EbCaseRecord; qcr
   const [confirmedBy, setConfirmedBy] = useState('');
   const [note, setNote] = useState('');
   const [fileIds, setFileIds] = useState<string[]>([]);
+  // The option the client chose (client review 4/11/2026): its total is the agreed premium.
+  const [wanted, setOption] = useState(qcr.recommendedOption);
+  const quoted = (
+    qcr.columns.find((column) => column.insurerId === insurerId)?.options ?? []
+  ).filter((item) => item.totalPremium !== null);
+  const option = quoted.some((item) => item.option === wanted) ? wanted : (quoted[0]?.option ?? 1);
   const record$ = useMutation({
     mutationFn: () =>
       apiFetch(`${caseApi(record.product, record.id)}/qcrs/${qcr.id}/client-decision`, {
@@ -46,6 +52,7 @@ export function ClientDecisionPanel({ record, qcr }: { record: EbCaseRecord; qcr
             ? {
                 decision: choice,
                 insurerId,
+                option,
                 decidedOn,
                 confirmedBy,
                 note,
@@ -86,7 +93,7 @@ export function ClientDecisionPanel({ record, qcr }: { record: EbCaseRecord; qcr
             <CircleCheck aria-hidden="true" />
             <AlertTitle>
               {decision.decision === 'ACCEPTED'
-                ? `Accepted: ${decision.insurerName ?? ''}, agreed premium ${inr(decision.agreedPremium)} (quote v${decision.quoteVersion ?? ''})`
+                ? `Accepted: ${decision.insurerName ?? ''}${qcr.options.length > 1 ? `, ${decision.optionLabel}` : ''}, agreed premium ${inr(decision.agreedPremium)} (quote v${decision.quoteVersion ?? ''})`
                 : 'Rejected by the client'}
             </AlertTitle>
             <AlertDescription>
@@ -136,6 +143,20 @@ export function ClientDecisionPanel({ record, qcr }: { record: EbCaseRecord; qcr
                   {qcr.columns.map((column) => (
                     <option key={column.insurerId} value={column.insurerId}>
                       {column.insurerName} · {inr(column.totalPremium)}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Field>
+            ) : null}
+            {choice === 'ACCEPTED' && qcr.options.length > 1 ? (
+              <Field label="Option chosen">
+                <NativeSelect
+                  value={String(option)}
+                  onChange={(event) => setOption(Number(event.target.value))}
+                >
+                  {quoted.map((item) => (
+                    <option key={item.option} value={item.option}>
+                      {item.label} ({item.basis}) · {inr(item.totalPremium)}
                     </option>
                   ))}
                 </NativeSelect>
