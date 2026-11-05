@@ -296,12 +296,10 @@ export function EbRequirementsForm({ record }: { record: EbCaseRecord }) {
         <Card>
           <CardHeader>
             <CardTitle>Covers</CardTitle>
-            <CardDescription>
-              <AwaitingNote>
-                The standard GPA covers and their limits await the client’s confirmation (open
-                question 10).
-              </AwaitingNote>
-            </CardDescription>
+            <AwaitingNote>
+              The standard GPA covers and their limits await the client’s confirmation (open
+              question 10).
+            </AwaitingNote>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <GpaCoversEditor

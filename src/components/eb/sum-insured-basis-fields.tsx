@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SumInsuredOptions } from '@/components/ghi/requirements-parts';
@@ -48,6 +49,8 @@ export function SumInsuredBasisFields({
   disabled: boolean;
   errors: Partial<Record<'kind' | 'amount' | 'amounts' | 'multiplier' | 'maximum', string>>;
 }) {
+  // Options 2–4 put several of these on one page; each needs its own radio group.
+  const group = useId();
   return (
     <div className="grid gap-3">
       <fieldset className="grid gap-2 sm:grid-cols-3" disabled={disabled}>
@@ -62,7 +65,7 @@ export function SumInsuredBasisFields({
           >
             <input
               type="radio"
-              name="sum-insured-basis"
+              name={`${group}-basis`}
               checked={value?.kind === kind}
               onChange={() => onChange(emptyOf(kind))}
               className="accent-[var(--primary)]"
@@ -103,7 +106,7 @@ export function SumInsuredBasisFields({
               <label key={input} className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
-                  name="salary-input"
+                  name={`${group}-salary`}
                   checked={(value.salaryInput ?? 'ANNUAL') === input}
                   onChange={() => onChange({ ...value, salaryInput: input })}
                   className="accent-[var(--primary)]"

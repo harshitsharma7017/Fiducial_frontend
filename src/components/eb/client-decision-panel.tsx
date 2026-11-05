@@ -7,7 +7,7 @@ import { FilePicker, inr } from '@/components/ghi/ghi-ui';
 import { errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
@@ -80,12 +80,10 @@ export function ClientDecisionPanel({ record, qcr }: { record: EbCaseRecord; qcr
     <Card>
       <CardHeader>
         <CardTitle>Client’s decision</CardTitle>
-        <CardDescription>
-          <AwaitingNote>
-            Recording the client’s decision before payment is a default awaiting the client’s
-            confirmation of the workflow (open question 1).
-          </AwaitingNote>
-        </CardDescription>
+        <AwaitingNote>
+          Recording the client’s decision before payment is a default awaiting the client’s
+          confirmation of the workflow (open question 1).
+        </AwaitingNote>
       </CardHeader>
       <CardContent className="grid gap-4">
         {decision ? (
