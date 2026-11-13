@@ -24,13 +24,13 @@ export function CensusBreakup({ summary }: { summary: GhiCensusSummary }) {
       {bands.length > 0 ? (
         <div
           role="region"
-          aria-label="Lives by age band and relationship"
+          aria-label="Lives by age and relationship"
           tabIndex={0}
           className="overflow-x-auto rounded-md border"
         >
           <Table>
             <caption className="px-3 pt-2 text-left text-sm font-medium">
-              Lives by age band and relationship
+              Lives by age and relationship
             </caption>
             <TableHeader>
               <TableRow>

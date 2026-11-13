@@ -82,59 +82,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     ],
   },
   {
-    title: 'Workflow',
-    items: [
-      { label: 'RFQ', href: '/rfq', icon: Send, permission: 'property.view' },
-      { label: 'Quotes and QCR', href: '/quotes', icon: Scale, permission: 'property.view' },
-      {
-        label: 'Placement Slips',
-        href: '/placement-slips',
-        icon: FileCheck2,
-        permission: 'property.view',
-      },
-    ],
-  },
-  {
-    // Employee Benefits (N1): one entry per product, beside Property's proposals.
-    title: 'Employee Benefits',
-    items: [
-      { label: 'GMC (Group Health)', href: '/ghi', icon: HeartPulse, permission: 'gmc.view' },
-      {
-        label: 'GPA (Personal Accident)',
-        href: '/eb/gpa',
-        icon: ShieldPlus,
-        permission: 'gpa.view',
-      },
-      { label: 'GTLI (Term Life)', href: '/eb/gtli', icon: Umbrella, permission: 'gtli.view' },
-    ],
-  },
-  {
-    title: 'Claims',
-    items: [
-      // Group health claims; hidden from Read-only users (medical information).
-      { label: 'Claims', href: '/claims', icon: Stethoscope, permission: 'claims.view' },
-    ],
-  },
-  {
-    // N8 and N10: analysis of a policy's claims, and of its years for a renewal.
-    title: 'Reports',
-    items: [
-      {
-        label: 'Claims analysis',
-        href: '/claims-analysis',
-        icon: ChartPie,
-        // Claims hold medical information: like Claims, hidden from Read-only users.
-        permission: 'claims_analysis.view',
-      },
-      {
-        label: 'Renewal analysis',
-        href: '/renewal',
-        icon: TrendingUp,
-        permission: 'renewal_analysis.view',
-      },
-    ],
-  },
-  {
     title: 'Masters',
     items: [
       {
@@ -214,6 +161,59 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         href: '/masters/age-bands',
         icon: ChartBarStacked,
         permission: 'age_bands.view',
+      },
+    ],
+  },
+  {
+    title: 'Workflow',
+    items: [
+      { label: 'RFQ', href: '/rfq', icon: Send, permission: 'property.view' },
+      { label: 'Quotes and QCR', href: '/quotes', icon: Scale, permission: 'property.view' },
+      {
+        label: 'Placement Slips',
+        href: '/placement-slips',
+        icon: FileCheck2,
+        permission: 'property.view',
+      },
+    ],
+  },
+  {
+    // Employee Benefits (N1): one entry per product, beside Property's proposals.
+    title: 'Employee Benefits',
+    items: [
+      { label: 'GMC (Group Health)', href: '/ghi', icon: HeartPulse, permission: 'gmc.view' },
+      {
+        label: 'GPA (Personal Accident)',
+        href: '/eb/gpa',
+        icon: ShieldPlus,
+        permission: 'gpa.view',
+      },
+      { label: 'GTLI (Term Life)', href: '/eb/gtli', icon: Umbrella, permission: 'gtli.view' },
+    ],
+  },
+  {
+    title: 'Claims',
+    items: [
+      // Group health claims; hidden from Read-only users (medical information).
+      { label: 'Claims', href: '/claims', icon: Stethoscope, permission: 'claims.view' },
+    ],
+  },
+  {
+    // N8 and N10: analysis of a policy's claims, and of its years for a renewal.
+    title: 'Reports',
+    items: [
+      {
+        label: 'Claims analysis',
+        href: '/claims-analysis',
+        icon: ChartPie,
+        // Claims hold medical information: like Claims, hidden from Read-only users.
+        permission: 'claims_analysis.view',
+      },
+      {
+        label: 'Renewal analysis',
+        href: '/renewal',
+        icon: TrendingUp,
+        permission: 'renewal_analysis.view',
       },
     ],
   },

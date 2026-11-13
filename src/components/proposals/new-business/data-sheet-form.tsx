@@ -6,6 +6,7 @@ import { CircleAlert, CircleCheck, LoaderCircle, Lock, Plus, Trash2 } from 'luci
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { DataSheetImportControl } from './data-sheet-import';
+import { ExistingOcrControl } from './existing-ocr';
 import { errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -232,6 +233,14 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
             record={record}
             getValues={() => form.getValues()}
             // The workbook's values are unsaved changes: checked, then saved as usual.
+            onApply={(values) => form.reset(values, { keepDefaultValues: true })}
+          />
+        )}
+
+        {readOnly ? null : (
+          <ExistingOcrControl
+            record={record}
+            getValues={() => form.getValues()}
             onApply={(values) => form.reset(values, { keepDefaultValues: true })}
           />
         )}

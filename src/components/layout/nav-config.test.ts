@@ -8,8 +8,9 @@ const labels = (permissions: readonly Permission[] | undefined) =>
 const labelsOf = (roles: readonly LegacyRole[]) => labels(legacyPermissionsOf(roles));
 
 // Property, Fire and Burglary, then Employee Benefits (GMC, GPA, GTLI), group health claims and the
-// claims and renewal analyses, then the masters both lines use.
-const PROPERTY = ['Dashboard', 'Proposals', 'RFQ', 'Quotes and QCR', 'Placement Slips'];
+// claims and renewal analyses; the masters both lines use come right after Proposals.
+const OVERVIEW = ['Dashboard', 'Proposals'];
+const WORKFLOW = ['RFQ', 'Quotes and QCR', 'Placement Slips'];
 const BENEFITS = ['GMC (Group Health)', 'GPA (Personal Accident)', 'GTLI (Term Life)'];
 // Claims and the claims analysis need claims permissions, so not for Read-only users (claims hold
 // medical information); the renewal analysis needs renewal_analysis.view.
@@ -31,15 +32,21 @@ const MASTERS = [
   'Family plans',
   'Age bands',
 ];
-const WORKING_ROLE = [...PROPERTY, ...BENEFITS, ...CLAIMS_AND_REPORTS, ...MASTERS];
-const VIEW_ONLY = [...PROPERTY, ...BENEFITS, 'Renewal analysis', ...MASTERS];
+const WORKING_ROLE = [...OVERVIEW, ...MASTERS, ...WORKFLOW, ...BENEFITS, ...CLAIMS_AND_REPORTS];
+const VIEW_ONLY = [...OVERVIEW, ...MASTERS, ...WORKFLOW, ...BENEFITS, 'Renewal analysis'];
 // Import data needs an import permission: Admins and Relationship Managers (clients.import).
 const MASTERS_WITH_IMPORT = MASTERS.toSpliced(
   MASTERS.indexOf('Email templates') + 1,
   0,
   'Import data',
 );
-const CLIENT_OWNER = [...PROPERTY, ...BENEFITS, ...CLAIMS_AND_REPORTS, ...MASTERS_WITH_IMPORT];
+const CLIENT_OWNER = [
+  ...OVERVIEW,
+  ...MASTERS_WITH_IMPORT,
+  ...WORKFLOW,
+  ...BENEFITS,
+  ...CLAIMS_AND_REPORTS,
+];
 
 describe('visibleGroups for the migrated legacy roles (unchanged navigation)', () => {
   it.each<[LegacyRole, string[]]>([

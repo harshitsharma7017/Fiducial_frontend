@@ -212,8 +212,8 @@ export function SummaryBody({ response }: { response: RfqSelectionSummaryRespons
         ) : null}
       </section>
 
-      <section aria-label="B. Lives by age band" className="grid gap-2">
-        <h3 className="font-medium">B. Lives by age band and {measure.toLowerCase()}</h3>
+      <section aria-label="B. Lives by age" className="grid gap-2">
+        <h3 className="font-medium">B. Lives by age and {measure.toLowerCase()}</h3>
         <div
           role="region"
           aria-label="Age band matrix"

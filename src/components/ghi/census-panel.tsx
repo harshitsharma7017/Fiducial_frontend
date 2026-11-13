@@ -126,7 +126,7 @@ function SummaryCard({ summary }: { summary: GhiCensusSummary }) {
             {summary.employees}.
           </p>
         ) : null}
-        {/* Lives by age band sits beside (to the right of) lives by relationship at every width
+        {/* Lives by age sits beside (to the right of) lives by relationship at every width
             but the narrowest (alteration 3/11/2026); the sum insured table follows. */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SmallTable
@@ -138,11 +138,7 @@ function SummaryCard({ summary }: { summary: GhiCensusSummary }) {
             ])}
           />
           <SmallTable
-            caption={
-              summary.ageBands
-                ? `Lives by age band (${summary.ageBands.name})`
-                : 'Lives by age band'
-            }
+            caption={summary.ageBands ? `Lives by age (${summary.ageBands.name})` : 'Lives by age'}
             head={['Age band', 'Lives']}
             rows={[
               ...summary.byAgeBand.map((band) => [band.label, String(band.lives)]),
