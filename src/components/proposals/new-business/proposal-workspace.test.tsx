@@ -397,6 +397,32 @@ describe('ProposalWorkspace', { timeout: 40_000 }, () => {
     );
   });
 
+  it('lets every section ticked have add-on covers added, not only Fire (16 Nov 2026)', async () => {
+    let sent: { sections: { code: string; covers: unknown }[] } | undefined;
+    const withAllRisk = record({
+      sections: record().sections.map((section) =>
+        section.code === 'ALL_RISK' ? { ...section, included: true, proposed1: '100000' } : section,
+      ),
+    });
+    serve(withAllRisk, (_url, body) => {
+      sent = body as typeof sent;
+      return withAllRisk;
+    });
+    const user = renderWorkspace();
+    // All Risk has no covers in the Coverage sections master, yet a cover can be added to it.
+    const input = await screen.findByLabelText(
+      `Another add-on cover for ${OTHER_SECTION_LABELS.ALL_RISK}`,
+    );
+    await user.type(input, 'Theft cover');
+    await user.click(within(input.closest('fieldset')!).getByRole('button', { name: 'Add cover' }));
+    await user.type(screen.getByLabelText('Item 6 sum insured'), '5000000');
+    await user.click(screen.getByRole('button', { name: 'Save Data Sheet' }));
+    await waitFor(() => expect(sent).toBeDefined());
+    expect(sent?.sections.find((section) => section.code === 'ALL_RISK')?.covers).toEqual([
+      { name: 'Theft cover', required: true },
+    ]);
+  });
+
   it('opens a renewal with last year’s policy and an Existing column', async () => {
     serve(
       record({

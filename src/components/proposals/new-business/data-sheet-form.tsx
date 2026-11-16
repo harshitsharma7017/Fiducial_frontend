@@ -705,8 +705,12 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
               const option2Value = contentsBased
                 ? fromContents.proposed2
                 : sectionOption2(section)?.trim() || null;
+              // Every section ticked can have add-on covers added (client, 16 Nov 2026), not only
+              // those the Coverage sections master lists covers for; read-only, only when it has
+              // some.
               const details =
-                included && (annexureSection || hasLines || hasBasis(code) || covers.length > 0);
+                included &&
+                (annexureSection || hasLines || hasBasis(code) || covers.length > 0 || !readOnly);
               const columnCount = renewal ? 4 : 3;
               return (
                 <Fragment key={code}>
