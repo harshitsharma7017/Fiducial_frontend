@@ -237,7 +237,8 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           />
         )}
 
-        {readOnly ? null : (
+        {/* Existing figures are a renewal's only (hard rule, client 16 Nov 2026). */}
+        {readOnly || record.type !== 'EXISTING' ? null : (
           <ExistingOcrControl
             record={record}
             getValues={() => form.getValues()}
@@ -292,7 +293,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           )}
         </section>
 
-        <ExistingPolicyFields record={record} />
+        {record.type === 'EXISTING' ? <ExistingPolicyFields record={record} /> : null}
         <FireOptions record={record} readOnly={readOnly} />
         <ProductAndAddons clientId={record.client.id} readOnly={readOnly} canEdit={canEdit} />
         <OtherSections record={record} readOnly={readOnly} />
@@ -540,6 +541,8 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
   const option3 = useWatch({ control: form.control, name: 'fireOption3' });
   const existingLines = useWatch({ control: form.control, name: 'existing.fireLines' });
+  // The Existing column is a renewal's only (hard rule, client 16 Nov 2026).
+  const renewal = record.type === 'EXISTING';
   const totals = fireGroupTotals(locations ?? []);
   const typedLines = (existingLines ?? [])
     .map((line) => line.amount?.trim() ?? '')
@@ -560,7 +563,7 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
           <TableHeader>
             <TableRow>
               <TableHead>Line</TableHead>
-              <TableHead className="text-right">Existing</TableHead>
+              {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
               <TableHead className="text-right">Proposed – Option 1</TableHead>
               <TableHead className="text-right">Proposed – Option 2</TableHead>
               <TableHead className="text-right">Proposed – Option 3</TableHead>
@@ -572,13 +575,15 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
                 <TableCell className="min-w-56 whitespace-normal">
                   {FIRE_GROUP_LABELS[group]}
                 </TableCell>
-                <TableCell className="align-top">
-                  <RupeesField
-                    name={`existing.fireLines.${index}.amount`}
-                    label={`Existing for ${FIRE_GROUP_LABELS[group]}`}
-                    hideLabel
-                  />
-                </TableCell>
+                {renewal ? (
+                  <TableCell className="align-top">
+                    <RupeesField
+                      name={`existing.fireLines.${index}.amount`}
+                      label={`Existing for ${FIRE_GROUP_LABELS[group]}`}
+                      hideLabel
+                    />
+                  </TableCell>
+                ) : null}
                 <TableCell className="text-right tabular whitespace-nowrap">
                   {formatInr(totals[group])}
                 </TableCell>
@@ -602,18 +607,20 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
           <TableFooter>
             <TableRow>
               <TableCell className="font-medium">Total sum insured</TableCell>
-              <TableCell className="text-right font-medium tabular whitespace-nowrap">
-                {typedLines.length > 0 ? (
-                  formatInr(sumRupeesOf(typedLines))
-                ) : (
-                  <RupeesField
-                    name="existing.fireTotal"
-                    label="Existing Fire total"
-                    hideLabel
-                    placeholder="Total"
-                  />
-                )}
-              </TableCell>
+              {renewal ? (
+                <TableCell className="text-right font-medium tabular whitespace-nowrap">
+                  {typedLines.length > 0 ? (
+                    formatInr(sumRupeesOf(typedLines))
+                  ) : (
+                    <RupeesField
+                      name="existing.fireTotal"
+                      label="Existing Fire total"
+                      hideLabel
+                      placeholder="Total"
+                    />
+                  )}
+                </TableCell>
+              ) : null}
               <TableCell className="text-right font-medium tabular whitespace-nowrap">
                 {formatInr(fireTotal(locations ?? []))}
               </TableCell>
@@ -647,6 +654,8 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
   const sections = useWatch({ control: form.control, name: 'sections' });
   const locations = useWatch({ control: form.control, name: 'locations' });
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
+  // The Existing column is a renewal's only (hard rule, client 16 Nov 2026).
+  const renewal = record.type === 'EXISTING';
   // Burglary covers "all the contents as per Fire section except building" (the RFQ schedule).
   const contents = contentsTotal(locations ?? []);
   const fromContents = contentsOptions(
@@ -668,7 +677,7 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
           <TableHeader>
             <TableRow>
               <TableHead>Section</TableHead>
-              <TableHead className="text-right">Existing</TableHead>
+              {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
               <TableHead className="text-right">Proposed – Option 1</TableHead>
               <TableHead className="text-right">Proposed – Option 2</TableHead>
             </TableRow>
@@ -698,7 +707,7 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
                 : sectionOption2(section)?.trim() || null;
               const details =
                 included && (annexureSection || hasLines || hasBasis(code) || covers.length > 0);
-              const columnCount = 4;
+              const columnCount = renewal ? 4 : 3;
               return (
                 <Fragment key={code}>
                   <TableRow className={details ? 'border-b-0' : undefined}>
@@ -723,13 +732,15 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
                         )}
                       />
                     </TableCell>
-                    <TableCell className="align-top">
-                      <RupeesField
-                        name={`sections.${index}.existing`}
-                        label={`${name} Existing`}
-                        hideLabel
-                      />
-                    </TableCell>
+                    {renewal ? (
+                      <TableCell className="align-top">
+                        <RupeesField
+                          name={`sections.${index}.existing`}
+                          label={`${name} Existing`}
+                          hideLabel
+                        />
+                      </TableCell>
+                    ) : null}
                     <TableCell className="align-top">
                       {included ? (
                         <div className="grid justify-items-end gap-1">
@@ -833,7 +844,7 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
                               readOnly={readOnly}
                             />
                           ) : hasLines ? (
-                            <SectionLines index={index} code={code} name={name} />
+                            <SectionLines index={index} code={code} name={name} renewal={renewal} />
                           ) : null}
                           <CoverToggles
                             path={`sections.${index}.covers`}

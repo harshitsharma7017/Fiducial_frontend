@@ -601,11 +601,22 @@ describe('ProposalWorkspace', { timeout: 40_000 }, () => {
     ).toBeInTheDocument();
   });
 
-  it('C-2: new business has the Existing column too, for the client’s current policy', async () => {
+  it('new business shows no Existing column or existing policy (hard rule, 16 Nov 2026)', async () => {
+    serve(record(), () => record());
+    renderWorkspace();
+    expect(
+      await screen.findByLabelText(`Proposed – Option 2 for ${FIRE_GROUP_LABELS.STOCKS}`),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(`Existing for ${FIRE_GROUP_LABELS.STOCKS}`)).toBeNull();
+    expect(screen.queryByLabelText('Insurer')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Read existing sum insured/ })).toBeNull();
+  });
+
+  it('a renewal has the Existing column, for last year’s policy', async () => {
     let sent: unknown;
-    serve(record(), (_url, body) => {
+    serve(record({ type: 'EXISTING' }), (_url, body) => {
       sent = body;
-      return record();
+      return record({ type: 'EXISTING' });
     });
     const user = renderWorkspace();
     // Existing, Proposed – Option 1 and Proposed – Option 2 on the Fire lines.

@@ -47,6 +47,7 @@ import { GpaCoversEditor } from './gpa-covers-editor';
 import { RelationshipRulesEditor } from './relationship-rules-editor';
 import { EbQuoteOptions } from './eb-quote-options';
 import { SumInsuredBasisFields } from './sum-insured-basis-fields';
+import { EbAddonsField } from './eb-addons-field';
 
 // The GPA and GTLI Data Sheets (Requirements 4, 5): checked by the same shared schema the API
 // uses, so each problem shows on its field before saving; a refusal by the API shows there too.
@@ -651,6 +652,23 @@ export function EbRequirementsForm({ record }: { record: EbCaseRecord }) {
               Add a year
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Add-on covers</CardTitle>
+          <CardDescription>
+            From the Employee Benefits list of the Add-on Covers master.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EbAddonsField
+            value={values.addons ?? []}
+            onChange={(addons) => set({ addons })}
+            disabled={disabled}
+          />
+          {err('addons')}
         </CardContent>
       </Card>
 

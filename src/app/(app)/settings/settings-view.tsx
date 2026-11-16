@@ -1,6 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/page-header';
+import { DocumentBrandCard } from '@/components/settings/document-brand-card';
 import { MailCard } from '@/components/settings/mail-card';
 import { MasterDataCard } from '@/components/settings/master-data-card';
 import { SystemStatusCard } from '@/components/settings/system-status-card';
@@ -31,6 +32,7 @@ export function SettingsView() {
         <SystemStatusCard />
         <MasterDataCard />
         <MailCard />
+        <DocumentBrandCard />
       </div>
     );
 
@@ -38,7 +40,7 @@ export function SettingsView() {
     <>
       <PageHeader
         title="Settings"
-        description="System status, the active master data and how mail is sent."
+        description="System status, the active master data, how mail is sent, and the documents’ header and footer."
       />
       {content}
     </>

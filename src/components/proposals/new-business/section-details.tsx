@@ -43,10 +43,13 @@ export function SectionLines({
   index,
   code,
   name,
+  renewal,
 }: {
   index: number;
   code: OtherSection;
   name: string;
+  /** The Existing column is a renewal's only (hard rule, client 16 Nov 2026). */
+  renewal: boolean;
 }) {
   const lines = SECTION_LINES[code as SectionWithLines] ?? [];
   return (
@@ -55,7 +58,7 @@ export function SectionLines({
       <TableHeader>
         <TableRow>
           <TableHead>Line</TableHead>
-          <TableHead className="text-right">Existing</TableHead>
+          {renewal ? <TableHead className="text-right">Existing</TableHead> : null}
           <TableHead className="text-right">Proposed – Option 1</TableHead>
           <TableHead className="text-right">Proposed – Option 2</TableHead>
         </TableRow>
@@ -86,8 +89,8 @@ export function SectionLines({
                 {label}
                 {isSumInsured ? (
                   <span className="block text-xs text-muted-foreground">
-                    The {name} sum insured; its Existing and Proposed – Option 2 are in the
-                    section’s row.
+                    The {name} sum insured; its {renewal ? 'Existing and ' : ''}Proposed – Option 2
+                    are in the section’s row.
                   </span>
                 ) : addsUp ? (
                   <span className="block text-xs text-muted-foreground">
@@ -95,11 +98,13 @@ export function SectionLines({
                   </span>
                 ) : null}
               </TableCell>
-              <TableCell className="align-top">
-                {isSumInsured
-                  ? null
-                  : field(`sections.${index}.existingLines.${line.key}`, `${label} Existing`)}
-              </TableCell>
+              {renewal ? (
+                <TableCell className="align-top">
+                  {isSumInsured
+                    ? null
+                    : field(`sections.${index}.existingLines.${line.key}`, `${label} Existing`)}
+                </TableCell>
+              ) : null}
               <TableCell className="align-top">
                 {field(`sections.${index}.lines.${line.key}`, label)}
               </TableCell>

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CircleAlert, LoaderCircle, Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { errorMessage } from '@/components/states';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,7 @@ import {
   type GhiRequirementsFormValues,
   type GhiRequirementsInput,
 } from '@/shared';
+import { EbAddonsField } from '@/components/eb/eb-addons-field';
 import { Field } from './case-actions';
 import { YesNo } from './ghi-ui';
 import {
@@ -457,6 +458,22 @@ export function RequirementsForm({ record }: { record: GhiCaseRecord }) {
             />
           </Field>
           <AgeLimits form={form} disabled={disabled} />
+          <Field
+            label="Add-on covers"
+            hint="From the Employee Benefits list of the Add-on Covers master."
+          >
+            <Controller
+              control={form.control}
+              name="addons"
+              render={({ field }) => (
+                <EbAddonsField
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                />
+              )}
+            />
+          </Field>
           <Field label="Other requirements">
             <Textarea
               rows={3}

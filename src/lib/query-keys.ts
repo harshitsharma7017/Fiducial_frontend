@@ -28,6 +28,7 @@ export const queryKeys = {
   auditLog: (filters: unknown) => ['audit', filters] as const,
   emailTemplates: ['email-templates'] as const,
   mailStatus: ['mail', 'status'] as const,
+  documentBrand: ['templates', 'document-brand'] as const,
   notifications: ['notifications'] as const,
   proposals: {
     list: (params: unknown) => ['proposals', 'list', params] as const,
