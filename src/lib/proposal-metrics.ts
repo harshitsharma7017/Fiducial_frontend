@@ -20,7 +20,7 @@ const OPTION_KEY = {
 
 /** The option columns a proposal shows: a new proposal has no Existing column. */
 export function coverageColumns(proposal: Proposal): SumInsuredOption[] {
-  return proposal.type === 'EXISTING'
+  return proposal.type !== 'NEW'
     ? ['EXISTING', 'PROPOSED_1', 'PROPOSED_2']
     : ['PROPOSED_1', 'PROPOSED_2'];
 }
@@ -120,7 +120,7 @@ function statusCounts(proposal: Proposal): ProposalSummary['insurerStatusCounts'
 
 export function toSummary(proposal: Proposal, today: string): ProposalSummary {
   const placed = proposal.stage === 'PLACED';
-  const date = proposal.type === 'EXISTING' ? proposal.existingPolicy.expiresOn : proposal.dueDate;
+  const date = proposal.type !== 'NEW' ? proposal.existingPolicy.expiresOn : proposal.dueDate;
   return {
     id: proposal.id,
     reference: proposal.reference,
@@ -136,7 +136,7 @@ export function toSummary(proposal: Proposal, today: string): ProposalSummary {
     owner: proposal.owner,
     date,
     daysToExpiry:
-      proposal.type === 'EXISTING' ? daysBetween(today, proposal.existingPolicy.expiresOn) : null,
+      proposal.type !== 'NEW' ? daysBetween(today, proposal.existingPolicy.expiresOn) : null,
     placed,
   };
 }

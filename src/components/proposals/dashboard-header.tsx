@@ -42,12 +42,16 @@ export function DashboardHeader({ type }: { type: ProposalType }) {
     ? 'Demo mode: sample proposals.'
     : type === 'EXISTING'
       ? 'Renewals.'
-      : 'New business proposals.';
+      : type === 'ROLLOVER'
+        ? 'Roll overs.'
+        : 'New business proposals.';
 
   const action =
     type === 'EXISTING'
       ? { label: 'Start renewal', href: '/proposals/new?type=existing', icon: RefreshCcw }
-      : { label: 'New proposal', href: '/proposals/new?type=new', icon: FilePlus2 };
+      : type === 'ROLLOVER'
+        ? { label: 'Start roll over', href: '/proposals/new?type=rollover', icon: RefreshCcw }
+        : { label: 'New proposal', href: '/proposals/new?type=new', icon: FilePlus2 };
   const ActionIcon = action.icon;
 
   return (

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { useProposal } from '@/lib/api/proposals';
 import { clientQuery } from '@/lib/client-query';
+import { wcCaseQuery } from '@/lib/wc/api';
 import { cn } from '@/lib/utils';
 import { NAV_GROUPS } from './nav-config';
 
@@ -22,6 +23,11 @@ function proposalIdFromPath(pathname: string): string | null {
   const match = /^\/proposals\/([^/]+)$/.exec(pathname);
   if (!match || match[1] === 'new') return null;
   return match[1] ?? null;
+}
+
+/** The case id for a `/wc/{id}` route (not `/wc/new`), else null. */
+function wcCaseIdFromPath(pathname: string): string | null {
+  return /^\/wc\/([a-f0-9]{24})$/i.exec(pathname)?.[1] ?? null;
 }
 
 /** The client id for a `/masters/clients/{id}` route, else null. */
@@ -54,13 +60,22 @@ export function breadcrumbTrail(
   if (fixed) return fixed;
 
   const renewal = search.get('type') === 'existing';
+  const rollover = search.get('type') === 'rollover';
   if (pathname === '/proposals') {
-    return [{ label: 'Proposals' }, { label: renewal ? 'Existing proposals' : 'New proposals' }];
+    return [
+      { label: 'Proposals' },
+      {
+        label: rollover ? 'Roll over proposals' : renewal ? 'Existing proposals' : 'New proposals',
+      },
+    ];
   }
   if (pathname === '/proposals/new') {
     return [
-      { label: 'Proposals', href: `/proposals?type=${renewal ? 'existing' : 'new'}` },
-      { label: renewal ? 'Start renewal' : 'New proposal' },
+      {
+        label: 'Proposals',
+        href: `/proposals?type=${rollover ? 'rollover' : renewal ? 'existing' : 'new'}`,
+      },
+      { label: rollover ? 'Start roll over' : renewal ? 'Start renewal' : 'New proposal' },
     ];
   }
   if (pathname === '/proposals/deleted') {
@@ -101,7 +116,11 @@ export function Breadcrumbs({ className }: { className?: string }) {
   const clientId = clientIdFromPath(pathname);
   const client = useQuery({ ...clientQuery(clientId), enabled: false });
   const clientLabel = clientId ? client.data?.name : undefined;
-  const trail = breadcrumbTrail(pathname, search, proposalLabel ?? clientLabel);
+  // A workmen compensation case: its client's name, from the case the page loaded.
+  const wcCaseId = wcCaseIdFromPath(pathname);
+  const wcCase = useQuery({ ...wcCaseQuery(wcCaseId ?? ''), enabled: false });
+  const wcLabel = wcCaseId ? wcCase.data?.client.name : undefined;
+  const trail = breadcrumbTrail(pathname, search, proposalLabel ?? clientLabel ?? wcLabel);
   if (trail.length === 0) return <div className={className} />;
 
   return (

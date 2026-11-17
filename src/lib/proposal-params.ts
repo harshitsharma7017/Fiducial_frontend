@@ -13,9 +13,9 @@ const SLUG_TO_STAGE = new Map<string, Stage>(
   Object.entries(STAGE_SLUGS).map(([stage, slug]) => [slug, stage as Stage]),
 );
 
-/** The type for a `type` value: EXISTING only for exactly "existing", NEW otherwise. */
+/** The type for a `type` value: "existing" and "rollover", NEW otherwise. */
 export function parseType(value: string | null): ProposalType {
-  return value === 'existing' ? 'EXISTING' : 'NEW';
+  return value === 'existing' ? 'EXISTING' : value === 'rollover' ? 'ROLLOVER' : 'NEW';
 }
 
 /** The stage for a `stage` slug, or null when missing or unknown. */
@@ -31,6 +31,7 @@ export function parseProposalParams(search: URLSearchParams): ProposalParams {
 export function proposalParamsToSearch({ type, stage }: ProposalParams): string {
   const params = new URLSearchParams();
   if (type === 'EXISTING') params.set('type', 'existing');
+  if (type === 'ROLLOVER') params.set('type', 'rollover');
   if (stage) params.set('stage', STAGE_SLUGS[stage]);
   const query = params.toString();
   return query ? `?${query}` : '';

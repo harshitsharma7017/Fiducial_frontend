@@ -66,6 +66,11 @@ const TYPE_CHOICES: { value: ProposalType; label: string; hint: string }[] = [
     label: 'Renewal',
     hint: 'Last year’s policy is copied from the policy software as the Existing column.',
   },
+  {
+    value: 'ROLLOVER',
+    label: 'Roll over',
+    hint: 'A policy in force elsewhere, taken over: handled as a renewal, with the Existing column.',
+  },
 ];
 
 /**
@@ -93,7 +98,8 @@ export function NewProposalForm({ initialType = 'NEW' }: { initialType?: Proposa
     },
   });
   const type = useWatch({ control: form.control, name: 'type' }) ?? 'NEW';
-  const renewal = type === 'EXISTING';
+  // A roll over is handled as a renewal.
+  const renewal = type !== 'NEW';
 
   // The signed-in user is the assigned staff unless someone else is chosen.
   useEffect(() => {
@@ -109,7 +115,12 @@ export function NewProposalForm({ initialType = 'NEW' }: { initialType?: Proposa
       queryClient.setQueryData(queryKeys.proposals.record(record.id), record);
       void queryClient.invalidateQueries({ queryKey: ['proposals'] });
       toast({
-        title: record.type === 'EXISTING' ? 'Renewal created' : 'Proposal created',
+        title:
+          record.type === 'ROLLOVER'
+            ? 'Roll over created'
+            : record.type === 'EXISTING'
+              ? 'Renewal created'
+              : 'Proposal created',
         description: record.reference,
         variant: 'success',
       });

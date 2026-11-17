@@ -39,7 +39,7 @@ export function SummarySection({ proposal }: { proposal: Proposal }) {
             {proposal.client.city}
           </span>
         </Field>
-        {proposal.type === 'EXISTING' ? (
+        {proposal.type !== 'NEW' ? (
           <>
             <Field label="Existing insurer">{proposal.existingPolicy.insurer}</Field>
             <Field label="Policy number">

@@ -31,6 +31,8 @@ describe('isAllowedProxyPath', () => {
     [['ghi', 'cases', '0123456789abcdef01234567', 'census', 'imports']],
     [['eb', 'cases']],
     [['eb', 'gpa', 'cases', '0123456789abcdef01234567', 'rfq']],
+    [['wc', 'cases']],
+    [['wc', 'cases', '0123456789abcdef01234567', 'documents', 'rfq']],
     [['family-plans']],
     [['family-plans', '0123456789abcdef01234567', 'versions']],
     [['age-bands', '0123456789abcdef01234567', 'cases']],

@@ -149,7 +149,7 @@ function SlipRow({ row }: { row: PlacementSlipSummary }) {
         >
           {row.reference}
         </Link>
-        {row.type === 'EXISTING' ? (
+        {row.type !== 'NEW' ? (
           <Badge variant="accent" className="ml-2">
             Renewal
           </Badge>

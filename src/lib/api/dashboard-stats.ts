@@ -73,7 +73,7 @@ export function computeDashboardStats(
       placedFire.push(fire);
     }
 
-    if (type === 'EXISTING' && proposal.type === 'EXISTING' && open) {
+    if (type !== 'NEW' && proposal.type === type && open) {
       const days = daysBetween(today, proposal.existingPolicy.expiresOn);
       if (days <= 30) {
         dueIn30 += 1;

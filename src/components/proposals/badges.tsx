@@ -16,7 +16,7 @@ type Variant = React.ComponentProps<typeof Badge>['variant'];
 
 export function TypeBadge({ type }: { type: ProposalType }) {
   return (
-    <Badge variant={type === 'EXISTING' ? 'accent' : 'default'}>{PROPOSAL_TYPE_LABELS[type]}</Badge>
+    <Badge variant={type === 'NEW' ? 'default' : 'accent'}>{PROPOSAL_TYPE_LABELS[type]}</Badge>
   );
 }
 

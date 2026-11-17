@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { ProposalType } from '@/types/proposal';
 
 /**
- * The dashboard's two-option control. Radix Tabs give a tablist with roving focus and arrow-key
+ * The dashboard's type control (new, renewal, roll over). Radix Tabs give a tablist with roving focus and arrow-key
  * movement; selecting a tab changes the whole dashboard and the URL (handled by the parent).
  */
 export function TypeSwitch({
@@ -13,7 +13,7 @@ export function TypeSwitch({
   onChange,
 }: {
   type: ProposalType;
-  counts: { NEW: number | null; EXISTING: number | null };
+  counts: Record<ProposalType, number | null>;
   onChange: (type: ProposalType) => void;
 }) {
   return (
@@ -30,6 +30,10 @@ export function TypeSwitch({
         <TabsTrigger value="EXISTING">
           Existing proposals (renewals)
           <Count value={counts.EXISTING} />
+        </TabsTrigger>
+        <TabsTrigger value="ROLLOVER">
+          Roll over proposals
+          <Count value={counts.ROLLOVER} />
         </TabsTrigger>
       </TabsList>
     </Tabs>

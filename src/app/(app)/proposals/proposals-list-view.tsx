@@ -23,18 +23,25 @@ export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
 
   const newStats = useDashboardStats('NEW');
   const existingStats = useDashboardStats('EXISTING');
+  const rolloverStats = useDashboardStats('ROLLOVER');
 
   const action =
     type === 'EXISTING'
       ? { label: 'Start renewal', href: '/proposals/new?type=existing', Icon: RefreshCcw }
-      : { label: 'New proposal', href: '/proposals/new?type=new', Icon: FilePlus2 };
+      : type === 'ROLLOVER'
+        ? { label: 'Start roll over', href: '/proposals/new?type=rollover', Icon: RefreshCcw }
+        : { label: 'New proposal', href: '/proposals/new?type=new', Icon: FilePlus2 };
 
   return (
     <>
       <PageHeader
         title="Proposals"
         description={
-          type === 'EXISTING' ? 'Renewals of existing policies.' : 'New business proposals.'
+          type === 'EXISTING'
+            ? 'Renewals of existing policies.'
+            : type === 'ROLLOVER'
+              ? 'Roll overs of policies in force elsewhere.'
+              : 'New business proposals.'
         }
         actions={
           canCreate || canDelete ? (
@@ -65,6 +72,7 @@ export function ProposalsListView({ serverSearch }: { serverSearch: string }) {
           counts={{
             NEW: newStats.data?.total ?? null,
             EXISTING: existingStats.data?.total ?? null,
+            ROLLOVER: rolloverStats.data?.total ?? null,
           }}
           onChange={(next) => replace(proposalParamsToSearch(withType(next)))}
         />

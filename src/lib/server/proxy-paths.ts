@@ -25,6 +25,8 @@ const ALLOWED_AREAS = new Set([
   'ghi',
   // Employee Benefits: GPA and GTLI cases, cases of every product, templates, company employees.
   'eb',
+  // Workmen compensation cases, their Data Sheet, quotes and documents.
+  'wc',
   // The Family Plan Master.
   'family-plans',
   // The Age Band Master (N4).

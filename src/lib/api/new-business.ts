@@ -144,7 +144,7 @@ export function toScreenProposal(record: ProposalRecord): Proposal {
     ? { start: record.policyStart, end: record.policyEnd ?? addDays(record.policyStart, 364) }
     : null;
 
-  if (record.type === 'EXISTING') {
+  if (record.type !== 'NEW') {
     // The Existing column: typed on the Data Sheet, else the policy software's copy (C-2).
     const existing = record.existing;
     const existingOf = (code: string) =>
@@ -156,7 +156,7 @@ export function toScreenProposal(record: ProposalRecord): Proposal {
     const start = record.policyStart ?? record.dueDate;
     return {
       ...base,
-      type: 'EXISTING',
+      type: record.type,
       policyPeriod: period ?? { start, end: addDays(start, 364) },
       existingPolicy: {
         insurer: existing?.insurer ?? 'Not yet fetched',

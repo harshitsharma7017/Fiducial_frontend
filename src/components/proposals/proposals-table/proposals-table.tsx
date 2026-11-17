@@ -124,7 +124,7 @@ export function ProposalsTable({
               />
               <SortableHead
                 column="date"
-                label={type === 'EXISTING' ? 'Renewal' : 'Due'}
+                label={type === 'NEW' ? 'Due' : 'Renewal'}
                 sort={sort}
                 onSort={toggleSort}
               />
@@ -194,7 +194,7 @@ export function ProposalsTable({
                   </TableCell>
                   <TableCell className="tabular whitespace-nowrap">
                     {formatDate(item.date)}
-                    {item.type === 'EXISTING' && item.daysToExpiry !== null ? (
+                    {item.type !== 'NEW' && item.daysToExpiry !== null ? (
                       <ExpiryChip
                         daysToExpiry={item.daysToExpiry}
                         placed={item.placed}

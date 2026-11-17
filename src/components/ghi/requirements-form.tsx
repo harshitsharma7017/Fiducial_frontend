@@ -425,7 +425,7 @@ export function RequirementsForm({ record }: { record: GhiCaseRecord }) {
         <CardHeader>
           <CardTitle>Previous three years: premium and claims</CardTitle>
           <CardDescription>
-            {record.type === 'RENEWAL'
+            {record.type !== 'NEW'
               ? 'A renewal needs at least the last year.'
               : 'If the group had a policy before.'}
           </CardDescription>

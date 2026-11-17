@@ -638,6 +638,15 @@ describe('ProposalWorkspace', { timeout: 40_000 }, () => {
     expect(screen.queryByRole('button', { name: /Read existing sum insured/ })).toBeNull();
   });
 
+  it('a roll over has the Existing column, as a renewal', async () => {
+    serve(record({ type: 'ROLLOVER' }), () => record({ type: 'ROLLOVER' }));
+    renderWorkspace();
+    expect(
+      await screen.findByLabelText(`Existing for ${FIRE_GROUP_LABELS.STOCKS}`),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Insurer')).toBeInTheDocument();
+  });
+
   it('a renewal has the Existing column, for last year’s policy', async () => {
     let sent: unknown;
     serve(record({ type: 'EXISTING' }), (_url, body) => {

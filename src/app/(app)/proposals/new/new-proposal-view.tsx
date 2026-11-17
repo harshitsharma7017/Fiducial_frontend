@@ -14,14 +14,15 @@ import { EB_PRODUCTS, casePermission, hasPermission, isEbProduct } from '@/share
 
 /**
  * Creates a case (D-1): new business, or a renewal that starts from last year's policy (D-2).
- * ?type=existing opens it as a renewal (Start renewal). New business starts with the line of
+ * ?type=existing opens it as a renewal (Start renewal), ?type=rollover as a roll over. New business starts with the line of
  * business (Requirement 1.1): Property, or Employee Benefits (GMC, GPA, GTLI), as the user may
  * create them; a user who may create only one line goes straight to its form.
  * ?line=eb&product=GPA opens Employee Benefits with the product chosen (the lists' New case).
  */
 export function NewProposalView({ serverSearch }: { serverSearch: string }) {
   const { params } = useUrlSearchParams(serverSearch);
-  const renewal = parseType(params.get('type')) === 'EXISTING';
+  const initialType = parseType(params.get('type'));
+  const renewal = initialType !== 'NEW';
   const me = useCurrentUser();
   const permissions = me.data?.permissions;
   const canProperty = hasPermission(permissions, 'property.create');
@@ -41,17 +42,25 @@ export function NewProposalView({ serverSearch }: { serverSearch: string }) {
   return (
     <>
       <PageHeader
-        title={renewal ? 'Start renewal' : 'New proposal'}
+        title={
+          initialType === 'ROLLOVER'
+            ? 'Start roll over'
+            : renewal
+              ? 'Start renewal'
+              : 'New proposal'
+        }
         description={
-          renewal
-            ? 'Renewal: last year’s policy is copied from the policy software as the Existing column. Choose the client, the policy period and who works on it.'
-            : 'New business: choose the line of business, the insured, the policy period and who works on it. Then fill the Data Sheet and send the RFQ.'
+          initialType === 'ROLLOVER'
+            ? 'Roll over: a policy in force elsewhere, handled as a renewal with its Existing column. Choose the client, the policy period and who works on it.'
+            : renewal
+              ? 'Renewal: last year’s policy is copied from the policy software as the Existing column. Choose the client, the policy period and who works on it.'
+              : 'New business: choose the line of business, the insured, the policy period and who works on it. Then fill the Data Sheet and send the RFQ.'
         }
       />
       <DemoModeGate>
         {renewal ? (
           canProperty ? (
-            <NewProposalForm key="EXISTING" initialType="EXISTING" />
+            <NewProposalForm key={initialType} initialType={initialType} />
           ) : (
             denied
           )

@@ -12,11 +12,12 @@ import {
  * API exists. Amounts are whole-rupee digit strings, never floats.
  */
 
-export const PROPOSAL_TYPES = ['NEW', 'EXISTING'] as const;
+export const PROPOSAL_TYPES = ['NEW', 'EXISTING', 'ROLLOVER'] as const;
 export type ProposalType = (typeof PROPOSAL_TYPES)[number];
 export const PROPOSAL_TYPE_LABELS: Record<ProposalType, string> = {
   NEW: 'New',
   EXISTING: 'Renewal',
+  ROLLOVER: 'Roll over',
 };
 
 /** The 9 stages of every case, from the shared contract (Fiducial_backend src/shared). */
@@ -172,7 +173,8 @@ export const NewProposalSchema = ProposalBaseSchema.extend({
 export type NewProposal = z.infer<typeof NewProposalSchema>;
 
 export const RenewalProposalSchema = ProposalBaseSchema.extend({
-  type: z.literal('EXISTING'),
+  // A roll over is handled exactly as a renewal.
+  type: z.enum(['EXISTING', 'ROLLOVER']),
   // Chosen at the QCR, as for new business; a renewal from the API has none yet.
   product: z.enum(PRODUCTS).nullable(),
   addOns: z

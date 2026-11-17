@@ -90,7 +90,7 @@ export function RfqPreview({
   editing?: PreviewEditing;
 }) {
   const record = applyRfqEdits(caseRecord, edits);
-  const renewal = record.type === 'EXISTING';
+  const renewal = record.type !== 'NEW';
   const title = rfqTitleOf(record, edits);
   const options = quoteOptionsOf(record);
   const included = record.sections.filter((section) => section.included);

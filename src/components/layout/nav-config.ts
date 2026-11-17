@@ -7,6 +7,7 @@ import {
   FileSpreadsheet,
   FileText,
   FileUp,
+  HardHat,
   HeartPulse,
   History,
   Landmark,
@@ -189,6 +190,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permission: 'gpa.view',
       },
       { label: 'GTLI (Term Life)', href: '/eb/gtli', icon: Umbrella, permission: 'gtli.view' },
+      { label: 'WC (Workmen Compensation)', href: '/wc', icon: HardHat, permission: 'wc.view' },
     ],
   },
   {
@@ -257,6 +259,7 @@ const OTHER_PAGES: readonly { path: string; permission: PagePermission }[] = [
   { path: '/proposals/deleted', permission: 'property.delete' },
   // A new Employee Benefits case (GMC unless ?product= names another).
   { path: '/ghi/new', permission: ['gmc.create', 'gpa.create', 'gtli.create'] },
+  { path: '/wc/new', permission: 'wc.create' },
   { path: '/claims/new', permission: 'claims.create' },
   { path: '/claims/links', permission: 'claims.links' },
   { path: '/claims/settings', permission: 'claims.settings' },

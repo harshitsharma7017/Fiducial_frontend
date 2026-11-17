@@ -124,7 +124,7 @@ function Loaded({ record, initialTab }: { record: EbCaseRecord; initialTab?: str
             {record.client.name}
           </h1>
           <Badge variant="accent">{EB_PRODUCT_LABELS[record.product]}</Badge>
-          <Badge variant={record.type === 'RENEWAL' ? 'accent' : 'default'}>
+          <Badge variant={record.type !== 'NEW' ? 'accent' : 'default'}>
             {GHI_CASE_TYPE_LABELS[record.type]}
           </Badge>
           <GhiStageBadge stage={record.stage} type={record.type} placed={record.placed} />

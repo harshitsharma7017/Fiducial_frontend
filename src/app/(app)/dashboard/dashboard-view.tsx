@@ -33,6 +33,7 @@ export function DashboardView({ serverSearch }: { serverSearch: string }) {
   // Counts for the type switch come from each type's stats.
   const newStats = useDashboardStats('NEW');
   const existingStats = useDashboardStats('EXISTING');
+  const rolloverStats = useDashboardStats('ROLLOVER');
 
   return (
     <>
@@ -43,6 +44,7 @@ export function DashboardView({ serverSearch }: { serverSearch: string }) {
           counts={{
             NEW: newStats.data?.total ?? null,
             EXISTING: existingStats.data?.total ?? null,
+            ROLLOVER: rolloverStats.data?.total ?? null,
           }}
           onChange={(next) => replace(proposalParamsToSearch(withType(next)))}
         />

@@ -277,7 +277,7 @@ function RfqRow({ record }: { record: ProposalRecord }) {
         >
           {record.reference}
         </Link>
-        {record.type === 'EXISTING' ? (
+        {record.type !== 'NEW' ? (
           <Badge variant="accent" className="ml-2">
             Renewal
           </Badge>

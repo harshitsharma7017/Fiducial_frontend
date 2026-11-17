@@ -238,7 +238,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
         )}
 
         {/* Existing figures are a renewal's only (hard rule, client 16 Nov 2026). */}
-        {readOnly || record.type !== 'EXISTING' ? null : (
+        {readOnly || record.type === 'NEW' ? null : (
           <ExistingOcrControl
             record={record}
             getValues={() => form.getValues()}
@@ -293,7 +293,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           )}
         </section>
 
-        {record.type === 'EXISTING' ? <ExistingPolicyFields record={record} /> : null}
+        {record.type !== 'NEW' ? <ExistingPolicyFields record={record} /> : null}
         <FireOptions record={record} readOnly={readOnly} />
         <ProductAndAddons clientId={record.client.id} readOnly={readOnly} canEdit={canEdit} />
         <OtherSections record={record} readOnly={readOnly} />
@@ -495,7 +495,7 @@ function AddLocationsDialog({
  */
 function ExistingPolicyFields({ record }: { record: ProposalRecord }) {
   const copy = record.existingPolicy;
-  const renewal = record.type === 'EXISTING';
+  const renewal = record.type !== 'NEW';
   return (
     <Card>
       <CardHeader>
@@ -542,7 +542,7 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
   const option3 = useWatch({ control: form.control, name: 'fireOption3' });
   const existingLines = useWatch({ control: form.control, name: 'existing.fireLines' });
   // The Existing column is a renewal's only (hard rule, client 16 Nov 2026).
-  const renewal = record.type === 'EXISTING';
+  const renewal = record.type !== 'NEW';
   const totals = fireGroupTotals(locations ?? []);
   const typedLines = (existingLines ?? [])
     .map((line) => line.amount?.trim() ?? '')
@@ -655,7 +655,7 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
   const locations = useWatch({ control: form.control, name: 'locations' });
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
   // The Existing column is a renewal's only (hard rule, client 16 Nov 2026).
-  const renewal = record.type === 'EXISTING';
+  const renewal = record.type !== 'NEW';
   // Burglary covers "all the contents as per Fire section except building" (the RFQ schedule).
   const contents = contentsTotal(locations ?? []);
   const fromContents = contentsOptions(

@@ -11,7 +11,12 @@ const labelsOf = (roles: readonly LegacyRole[]) => labels(legacyPermissionsOf(ro
 // claims and renewal analyses; the masters both lines use come right after Proposals.
 const OVERVIEW = ['Dashboard', 'Proposals'];
 const WORKFLOW = ['RFQ', 'Quotes and QCR', 'Placement Slips'];
-const BENEFITS = ['GMC (Group Health)', 'GPA (Personal Accident)', 'GTLI (Term Life)'];
+const BENEFITS = [
+  'GMC (Group Health)',
+  'GPA (Personal Accident)',
+  'GTLI (Term Life)',
+  'WC (Workmen Compensation)',
+];
 // Claims and the claims analysis need claims permissions, so not for Read-only users (claims hold
 // medical information); the renewal analysis needs renewal_analysis.view.
 const CLAIMS_AND_REPORTS = ['Claims', 'Claims analysis', 'Renewal analysis'];

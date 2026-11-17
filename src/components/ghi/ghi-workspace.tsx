@@ -111,7 +111,7 @@ function Loaded({ record, initialTab }: { record: GhiCaseRecord; initialTab?: st
             {record.client.name}
           </h1>
           <Badge variant="accent">Group Health</Badge>
-          <Badge variant={record.type === 'RENEWAL' ? 'accent' : 'default'}>
+          <Badge variant={record.type !== 'NEW' ? 'accent' : 'default'}>
             {GHI_CASE_TYPE_LABELS[record.type]}
           </Badge>
           <GhiStageBadge stage={record.stage} type={record.type} placed={record.placed} />

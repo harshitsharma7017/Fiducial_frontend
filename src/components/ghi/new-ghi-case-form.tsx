@@ -53,6 +53,10 @@ const Schema = CreateGhiCaseRequestSchema.safeExtend({
 const TYPES: Array<{ value: GhiCaseType; hint: string }> = [
   { value: 'NEW', hint: 'The group has no policy with us yet.' },
   { value: 'RENEWAL', hint: 'The group’s expiring policy is renewed; give its insurer.' },
+  {
+    value: 'ROLLOVER',
+    hint: 'A policy in force elsewhere, taken over: handled as a renewal; give its insurer.',
+  },
 ];
 
 /**
@@ -229,7 +233,7 @@ export function NewGhiCaseForm({ product = 'GMC' }: { product?: EbProduct }) {
                   <FormItem>
                     <FormLabel>
                       Policy period {name === 'policyStart' ? 'from' : 'to'}
-                      {type === 'RENEWAL' ? '' : ' (optional)'}
+                      {type !== 'NEW' ? '' : ' (optional)'}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -293,7 +297,7 @@ export function NewGhiCaseForm({ product = 'GMC' }: { product?: EbProduct }) {
                 </FormItem>
               )}
             />
-            {type === 'RENEWAL' ? (
+            {type !== 'NEW' ? (
               <>
                 <FormField
                   control={form.control}
@@ -345,7 +349,7 @@ export function NewGhiCaseForm({ product = 'GMC' }: { product?: EbProduct }) {
   );
 }
 
-function ClientSearch({ onChoose }: { onChoose: (client: Client) => void }) {
+export function ClientSearch({ onChoose }: { onChoose: (client: Client) => void }) {
   const [text, setText] = useState('');
   const q = useDebouncedValue(text.trim(), 250);
   const results = useQuery({

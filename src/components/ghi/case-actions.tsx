@@ -148,7 +148,7 @@ function EditDetails({ record }: { record: ActionCase }) {
                 ))}
               </NativeSelect>
             </Field>
-            {record.type === 'RENEWAL' ? (
+            {record.type !== 'NEW' ? (
               <>
                 <Field label="Expiring policy’s insurer">
                   <Input

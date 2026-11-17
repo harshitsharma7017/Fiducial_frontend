@@ -86,7 +86,7 @@ export function QcrPanel({ record }: { record: ProposalRecord }) {
         canSend={canSend && record.stage !== 'CLOSED'}
         unsaved={dirty}
       />
-      <QcrComparison qcr={data} renewal={record.type === 'EXISTING'} />
+      <QcrComparison qcr={data} renewal={record.type !== 'NEW'} />
       <BrokerCard record={record} qcr={data} readOnly={!canEdit} onDirty={setDirty} />
       {data.sends.length > 0 ? <Sends qcr={data} /> : null}
     </div>

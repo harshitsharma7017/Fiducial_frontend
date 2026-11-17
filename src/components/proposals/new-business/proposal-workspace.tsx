@@ -198,9 +198,7 @@ function Loaded({ record, initialTab }: { record: ProposalRecord; initialTab?: s
           forceMount
           className="grid min-w-0 gap-6 *:min-w-0 data-[state=inactive]:hidden"
         >
-          {record.type === 'EXISTING' ? (
-            <ExistingPolicyCard record={record} canEdit={canEdit} />
-          ) : null}
+          {record.type !== 'NEW' ? <ExistingPolicyCard record={record} canEdit={canEdit} /> : null}
           <DataSheetForm record={record} canEdit={canEdit} />
         </TabsContent>
         <TabsContent value="review" className="min-w-0">

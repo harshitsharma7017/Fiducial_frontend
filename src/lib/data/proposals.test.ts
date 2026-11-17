@@ -35,7 +35,8 @@ function checkRules(proposals: Proposal[], now: Date) {
     expect(ProposalSchema.safeParse(proposal).success).toBe(true);
   }
 
-  for (const type of PROPOSAL_TYPES) {
+  // The demo samples hold new business and renewals; roll overs (added 17 Nov 2026) have none.
+  for (const type of PROPOSAL_TYPES.filter((value) => value !== 'ROLLOVER')) {
     const ofType = proposals.filter((p) => p.type === type);
     expect(ofType).toHaveLength(7);
     // The demo samples cover the original six stages; Client Approval, Placement Slip and Closed

@@ -15,6 +15,8 @@ const parse = (query: string) => parseProposalParams(new URLSearchParams(query))
 describe('proposal params', () => {
   it('reads type and stage leniently', () => {
     expect(parseType('existing')).toBe('EXISTING');
+    expect(parseType('rollover')).toBe('ROLLOVER');
+    expect(proposalParamsToSearch({ type: 'ROLLOVER', stage: null })).toBe('?type=rollover');
     expect(parseType('new')).toBe('NEW');
     expect(parseType('EXISTING')).toBe('NEW'); // only exactly "existing"
     expect(parseType(null)).toBe('NEW');
