@@ -467,6 +467,7 @@ export function RequirementsForm({ record }: { record: GhiCaseRecord }) {
               name="addons"
               render={({ field }) => (
                 <EbAddonsField
+                  list="GHI"
                   value={field.value ?? []}
                   onChange={field.onChange}
                   disabled={disabled}
