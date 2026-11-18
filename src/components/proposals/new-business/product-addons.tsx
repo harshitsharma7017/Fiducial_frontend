@@ -299,9 +299,10 @@ function AddonPicker({
             <ul aria-label="Chosen add-on covers" className="flex flex-wrap gap-1.5">
               {chosen
                 .filter((addon) => lists.includes(addon.list))
-                .map((addon) => (
+                .map((addon, index) => (
                   <li key={addonKey(addon)}>
                     <Badge variant="muted" className="gap-1 py-1 pr-1 font-normal">
+                      <span className="tabular text-xs font-semibold mr-0.5">{index + 1}.</span>
                       {addon.name}
                       {readOnly ? null : (
                         <button
@@ -361,7 +362,7 @@ function AddonPicker({
                 {master.isPending ? 'Loading add-ons…' : 'No add-on matches.'}
               </li>
             ) : (
-              shown.map((item) => {
+              shown.map((item, index) => {
                 const key = addonKey(item);
                 const id = `addon-${key.replace(/[^a-z0-9]+/gi, '-')}`;
                 const favourite = favouriteKeys.has(key);
@@ -378,8 +379,9 @@ function AddonPicker({
                       onCheckedChange={(value) => toggle(item, value === true)}
                     />
                     <Label htmlFor={id} className="grid flex-1 gap-0.5 font-normal">
-                      <span>
-                        {item.name}
+                      <span className="flex items-baseline gap-1.5">
+                        <span className="tabular text-xs text-muted-foreground">{index + 1}.</span>
+                        <span>{item.name}</span>
                         {item.retired ? (
                           <Badge variant="outline" className="ml-2">
                             No longer in the master
