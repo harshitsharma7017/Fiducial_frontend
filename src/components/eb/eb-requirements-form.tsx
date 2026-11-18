@@ -664,6 +664,7 @@ export function EbRequirementsForm({ record }: { record: EbCaseRecord }) {
         </CardHeader>
         <CardContent>
           <EbAddonsField
+            list={record.product === 'GPA' ? 'GPI' : 'GTLI'}
             value={values.addons ?? []}
             onChange={(addons) => set({ addons })}
             disabled={disabled}

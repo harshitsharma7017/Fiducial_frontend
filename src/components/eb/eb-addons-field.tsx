@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { catalogQuery } from '@/lib/api/catalog';
-import { EB_ADDON_LIST } from '@/shared';
+import type { AddonList } from '@/shared';
 
 const key = (name: string) => name.trim().toLowerCase();
 
@@ -17,10 +17,12 @@ export function EbAddonsField({
   value,
   onChange,
   disabled,
+  list = 'GHI',
 }: {
   value: readonly string[];
   onChange: (value: string[]) => void;
   disabled: boolean;
+  list?: AddonList;
 }) {
   const addons = useQuery(catalogQuery('addons'));
   if (addons.isPending) {
@@ -35,7 +37,7 @@ export function EbAddonsField({
   }
   const chosen = new Set(value.map(key));
   const listed = addons.data
-    .filter((item) => item.list === EB_ADDON_LIST && (item.active || chosen.has(key(item.name))))
+    .filter((item) => item.list === list && (item.active || chosen.has(key(item.name))))
     .map((item) => item.name);
   // A cover saved on the case that the master no longer has at all.
   const orphans = value.filter((name) => !listed.some((item) => key(item) === key(name)));

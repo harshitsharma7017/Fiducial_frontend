@@ -8,7 +8,10 @@ export const ADDON_LISTS = [
   'PAR',
   'SFSP',
   'BSUS_BLUS',
-  'EMPLOYEE_BENEFITS',
+  'GHI',
+  'GPI',
+  'GTLI',
+  'WC',
 ] as const;
 export type AddonList = (typeof ADDON_LISTS)[number];
 export const ADDON_LIST_LABELS: Record<AddonList, string> = {
@@ -16,11 +19,12 @@ export const ADDON_LIST_LABELS: Record<AddonList, string> = {
   PAR: 'PAR',
   SFSP: 'SFSP',
   BSUS_BLUS: 'BSUS & BLUS',
-  EMPLOYEE_BENEFITS: 'Employee Benefits',
+  GHI: 'GHI',
+  GPI: 'GPI',
+  GTLI: 'GTLI',
+  WC: 'WC',
 };
 
-/** The add-on list the Employee Benefits cases (GMC, GPA, GTLI) choose their covers from. */
-export const EB_ADDON_LIST = 'EMPLOYEE_BENEFITS' satisfies AddonList;
 export const MAX_EB_ADDONS = 50;
 
 /**

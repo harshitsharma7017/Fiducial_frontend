@@ -27,19 +27,19 @@ export function CommandProposals({
   const loading = !enabled || (proposals.isPending && proposals.fetchStatus !== 'idle');
   const items = enabled ? (proposals.data?.items ?? []) : [];
 
+  if (!loading && items.length === 0) return null;
+
   return (
     <CommandGroup heading="Proposals">
       {loading ? (
-        <p className="px-2 py-2 text-sm text-muted-foreground">Searching…</p>
+        <p className="px-2 py-2 text-sm text-muted-foreground">Searching proposals…</p>
       ) : proposals.isError ? (
         <p className="px-2 py-2 text-sm text-destructive">Could not search proposals.</p>
-      ) : items.length === 0 ? (
-        <p className="px-2 py-2 text-sm text-muted-foreground">No proposals match.</p>
       ) : (
         items.map((item) => (
           <CommandItem key={item.id} value={`proposal-${item.id}`} onSelect={() => onOpen(item.id)}>
             <FileText aria-hidden="true" />
-            <span className="tabular">{item.reference}</span>
+            <span className="tabular font-medium">{item.reference}</span>
             <span className="truncate">{item.client.name}</span>
             <span className="ml-auto text-xs text-muted-foreground">
               {STAGE_LABELS[item.stage]}
