@@ -237,8 +237,7 @@ export function DataSheetForm({ record, canEdit }: { record: ProposalRecord; can
           />
         )}
 
-        {/* Existing figures are a renewal's only (hard rule, client 16 Nov 2026). */}
-        {readOnly || record.type === 'NEW' ? null : (
+        {readOnly ? null : (
           <ExistingOcrControl
             record={record}
             getValues={() => form.getValues()}
