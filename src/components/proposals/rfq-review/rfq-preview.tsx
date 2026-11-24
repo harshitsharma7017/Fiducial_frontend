@@ -347,11 +347,11 @@ export function RfqPreview({
         {record.addons.length > 0 ? (
           <div className="grid gap-1 text-sm">
             <p className="font-medium">Additional add-on covers (attached list)</p>
-            <ul className="list-disc pl-5">
+            <ol className="list-decimal pl-5">
               {record.addons.map((addon) => (
                 <li key={`${addon.list}-${addon.name}`}>{addon.name}</li>
               ))}
-            </ul>
+            </ol>
           </div>
         ) : null}
       </Sheet>

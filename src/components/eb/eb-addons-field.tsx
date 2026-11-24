@@ -53,7 +53,7 @@ export function EbAddonsField({
     onChange(on ? [...value, name] : value.filter((item) => key(item) !== key(name)));
   return (
     <ul className="grid gap-2 sm:grid-cols-2" aria-label="Add-on covers">
-      {names.map((name) => {
+      {names.map((name, index) => {
         const id = `eb-addon-${key(name).replace(/[^a-z0-9]+/g, '-')}`;
         return (
           <li key={name} className="flex items-center gap-2">
@@ -63,8 +63,9 @@ export function EbAddonsField({
               disabled={disabled}
               onCheckedChange={(checked) => toggle(name, checked === true)}
             />
-            <Label htmlFor={id} className="font-normal">
-              {name}
+            <Label htmlFor={id} className="font-normal flex items-baseline gap-1.5">
+              <span className="tabular text-xs text-muted-foreground">{index + 1}.</span>
+              <span>{name}</span>
             </Label>
           </li>
         );

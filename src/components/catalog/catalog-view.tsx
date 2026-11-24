@@ -44,7 +44,12 @@ import {
 interface DisplayColumn<M extends CatalogMaster> {
   header: string;
   className?: string;
-  cell: (item: CatalogItem<M>, all: readonly CatalogItem<M>[]) => ReactNode;
+  cell: (
+    item: CatalogItem<M>,
+    all: readonly CatalogItem<M>[],
+    index?: number,
+    shown?: readonly CatalogItem<M>[],
+  ) => ReactNode;
 }
 
 const rupees = (value: string | null) =>
@@ -87,7 +92,11 @@ const DISPLAY: { [M in CatalogMaster]: DisplayColumn<M>[] } = {
   ],
   addons: [
     { header: 'List', cell: (a) => ADDON_LIST_LABELS[a.list] },
-    { header: 'S No', className: 'tabular text-right', cell: (a) => a.seq },
+    {
+      header: 'S No',
+      className: 'tabular text-right',
+      cell: (a, _all, index) => (typeof index === 'number' ? index + 1 : a.seq),
+    },
     { header: 'Add-on cover', className: 'min-w-56 font-medium', cell: (a) => a.name },
     {
       header: 'Type',
@@ -108,7 +117,11 @@ const DISPLAY: { [M in CatalogMaster]: DisplayColumn<M>[] } = {
     { header: 'Active', cell: (a) => yesNo(a.active) },
   ],
   'addon-rules': [
-    { header: 'S No', className: 'tabular text-right', cell: (r) => r.seq },
+    {
+      header: 'S No',
+      className: 'tabular text-right',
+      cell: (r, _all, index) => (typeof index === 'number' ? index + 1 : r.seq),
+    },
     { header: 'Add-on cover', className: 'min-w-44 font-medium', cell: (r) => r.name },
     {
       header: 'Limit — Sookshma (BSUS)',
@@ -368,15 +381,15 @@ export function CatalogTable<M extends CatalogMaster>({
       </TableRow>
     );
   } else {
-    body = shown.map((item) => {
-      const index = all.indexOf(item);
+    body = shown.map((item, index) => {
+      const allIndex = all.indexOf(item);
       const pinned = isPinned(item);
       return (
         <TableRow key={item.id}>
           {reorderable ? (
             <TableCell className="whitespace-nowrap">
               <span className="mr-1 inline-block w-5 text-right text-xs text-muted-foreground tabular">
-                {index + 1}
+                {allIndex + 1}
               </span>
               <Button
                 variant="ghost"
@@ -384,8 +397,8 @@ export function CatalogTable<M extends CatalogMaster>({
                 className="size-7"
                 disabled={
                   pinned ||
-                  index === 0 ||
-                  isPinned(all[index - 1] ?? item) ||
+                  allIndex === 0 ||
+                  isPinned(all[allIndex - 1] ?? item) ||
                   reorder.isPending ||
                   words.length > 0
                 }
@@ -399,7 +412,7 @@ export function CatalogTable<M extends CatalogMaster>({
                 size="icon"
                 className="size-7"
                 disabled={
-                  pinned || index === all.length - 1 || reorder.isPending || words.length > 0
+                  pinned || allIndex === all.length - 1 || reorder.isPending || words.length > 0
                 }
                 onClick={() => move(item, 1)}
               >
@@ -413,7 +426,7 @@ export function CatalogTable<M extends CatalogMaster>({
               key={column.header}
               className={cn('align-top whitespace-normal', column.className)}
             >
-              {column.cell(item, all)}
+              {column.cell(item, all, index, shown)}
             </TableCell>
           ))}
           {canManage ? (
