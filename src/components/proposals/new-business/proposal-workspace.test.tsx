@@ -570,9 +570,9 @@ describe('ProposalWorkspace', { timeout: 40_000 }, () => {
     );
 
     // FLOP: the annual gross profit is its sum insured.
-    await user.click(screen.getByRole('checkbox', { name: 'Fire Loss of Profit' }));
+    await user.click(screen.getByRole('checkbox', { name: /Fire Loss of Profit/ }));
     await user.type(screen.getByLabelText('1. Annual Gross Profit'), '8000000');
-    expect(screen.getByLabelText('Fire Loss of Profit Proposed – Option 1')).toHaveTextContent(
+    expect(screen.getByLabelText(/Fire Loss of Profit.*Proposed – Option 1/)).toHaveTextContent(
       '₹80,00,000.00',
     );
 
