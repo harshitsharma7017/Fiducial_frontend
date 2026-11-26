@@ -531,16 +531,18 @@ function optionTotal(lines: readonly { amount?: string | null }[] | undefined): 
 }
 
 /**
- * The RFQ's Fire lines in four options (C-2): Existing (the policy in force), Option 1 adding
- * up the locations, and Options 2 and 3 typed per line; then Fire's add-on covers (C-6).
+ * The RFQ's Fire lines in four options (C-2): Existing (the policy in force), Option 1 (editable
+ * input for renewal/roll-on, auto-calculated from locations for new business), and Options 2 and 3
+ * typed per line; then Fire's add-on covers (C-6).
  */
 function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: boolean }) {
   const form = useFormContext<DataSheetFormValues>();
   const locations = useWatch({ control: form.control, name: 'locations' });
+  const option1 = useWatch({ control: form.control, name: 'fireOption1' });
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
   const option3 = useWatch({ control: form.control, name: 'fireOption3' });
   const existingLines = useWatch({ control: form.control, name: 'existing.fireLines' });
-  // The Existing column is a renewal's only (hard rule, client 16 Nov 2026).
+  // The Existing column and the editable Option 1 are renewal/roll-on only.
   const renewal = record.type !== 'NEW';
   const totals = fireGroupTotals(locations ?? []);
   const typedLines = (existingLines ?? [])
@@ -583,9 +585,19 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
                     />
                   </TableCell>
                 ) : null}
-                <TableCell className="text-right tabular whitespace-nowrap">
-                  {formatInr(totals[group])}
-                </TableCell>
+                {renewal ? (
+                  <TableCell className="align-top">
+                    <RupeesField
+                      name={`fireOption1.${index}.amount`}
+                      label={`Proposed – Option 1 for ${FIRE_GROUP_LABELS[group]}`}
+                      hideLabel
+                    />
+                  </TableCell>
+                ) : (
+                  <TableCell className="text-right tabular whitespace-nowrap">
+                    {formatInr(totals[group])}
+                  </TableCell>
+                )}
                 <TableCell className="align-top">
                   <RupeesField
                     name={`fireOption2.${index}.amount`}
@@ -621,7 +633,7 @@ function FireOptions({ record, readOnly }: { record: ProposalRecord; readOnly: b
                 </TableCell>
               ) : null}
               <TableCell className="text-right font-medium tabular whitespace-nowrap">
-                {formatInr(fireTotal(locations ?? []))}
+                {renewal ? optionTotal(option1) : formatInr(fireTotal(locations ?? []))}
               </TableCell>
               <TableCell className="text-right font-medium tabular whitespace-nowrap">
                 {optionTotal(option2)}
@@ -652,7 +664,9 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
   const form = useFormContext<DataSheetFormValues>();
   const sections = useWatch({ control: form.control, name: 'sections' });
   const locations = useWatch({ control: form.control, name: 'locations' });
+  const option1 = useWatch({ control: form.control, name: 'fireOption1' });
   const option2 = useWatch({ control: form.control, name: 'fireOption2' });
+  const existingLines = useWatch({ control: form.control, name: 'existing.fireLines' });
   // The Existing column is a renewal's only (hard rule, client 16 Nov 2026).
   const renewal = record.type !== 'NEW';
   // Burglary covers "all the contents as per Fire section except building" (the RFQ schedule).
@@ -660,6 +674,9 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
   const fromContents = contentsOptions(
     locations ?? [],
     (option2 ?? []).map((line) => ({ group: line.group, amount: line.amount ?? null })),
+    (option1 ?? []).map((line) => ({ group: line.group, amount: line.amount ?? null })),
+    (existingLines ?? []).map((line) => ({ group: line.group, amount: line.amount ?? null })),
+    renewal,
   );
 
   return (
@@ -737,11 +754,25 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
                     </TableCell>
                     {renewal ? (
                       <TableCell className="align-top">
-                        <RupeesField
-                          name={`sections.${index}.existing`}
-                          label={`${name} Existing`}
-                          hideLabel
-                        />
+                        {contentsBased ? (
+                          <div className="grid justify-items-end gap-1">
+                            <span
+                              className="py-2 text-right text-sm font-medium tabular"
+                              aria-label={`${name} Existing`}
+                            >
+                              {fromContents.existing ? formatInr(fromContents.existing) : '—'}
+                              <span className="block text-xs font-normal text-muted-foreground">
+                                Fire contents
+                              </span>
+                            </span>
+                          </div>
+                        ) : (
+                          <RupeesField
+                            name={`sections.${index}.existing`}
+                            label={`${name} Existing`}
+                            hideLabel
+                          />
+                        )}
                       </TableCell>
                     ) : null}
                     <TableCell className="align-top">
@@ -752,7 +783,7 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
                               className="py-2 text-right text-sm font-medium tabular"
                               aria-label={`${name} Proposed – Option 1`}
                             >
-                              {formatInr(option1 ?? '0')}
+                              {option1 ? formatInr(option1) : '—'}
                               <span className="block text-xs font-normal text-muted-foreground">
                                 {contentsBased
                                   ? 'Fire contents'
@@ -829,10 +860,14 @@ function OtherSections({ record, readOnly }: { record: ProposalRecord; readOnly:
                               allowTyped={
                                 savedSection?.basis === null && savedSection.proposed1 !== null
                               }
+                              renewal={renewal}
                               amounts={
                                 basis
                                   ? {
-                                      proposed1: onBasis(option1, basis),
+                                      existing: fromContents.existing
+                                        ? onBasis(fromContents.existing, basis)
+                                        : null,
+                                      proposed1: option1 ? onBasis(option1, basis) : null,
                                       proposed2: onBasis(option2Value, basis),
                                     }
                                   : null

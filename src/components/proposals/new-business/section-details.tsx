@@ -130,12 +130,14 @@ export function BasisField({
   name,
   amounts,
   allowTyped,
+  renewal,
 }: {
   index: number;
   name: string;
-  amounts: { proposed1: string | null; proposed2: string | null } | null;
+  amounts: { existing?: string | null; proposed1: string | null; proposed2: string | null } | null;
   /** A Burglary saved with a typed amount and no basis may stay so. */
   allowTyped: boolean;
+  renewal?: boolean;
 }) {
   const form = useFormContext<DataSheetForm>();
   const id = `basis-${index}`;
@@ -145,8 +147,9 @@ export function BasisField({
       <FormBasis id={id} index={index} allowTyped={allowTyped} disabled={form.formState.disabled} />
       {amounts ? (
         <p className="text-xs text-muted-foreground tabular" aria-live="polite">
-          On this basis: Proposed – Option 1{' '}
-          {amounts.proposed1 !== null ? formatInr(amounts.proposed1) : '—'}
+          On this basis:{' '}
+          {renewal && amounts.existing ? `Existing ${formatInr(amounts.existing)}, ` : ''}
+          Proposed – Option 1 {amounts.proposed1 !== null ? formatInr(amounts.proposed1) : '—'}
           {amounts.proposed2 !== null
             ? `, Proposed – Option 2 ${formatInr(amounts.proposed2)}`
             : ''}

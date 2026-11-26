@@ -190,6 +190,7 @@ describe('contentsTotal (D3 — Burglary Option A)', () => {
     expect(contentsTotal([location])).toBe('6500000');
     // Option 2 keeps each Fire line's second figure; buildings have none.
     expect(contentsOptions([location], [{ group: 'STOCKS', amount: '7000000' }])).toEqual({
+      existing: null,
       proposed1: '6500000',
       proposed2: '7000000',
     });
@@ -202,6 +203,7 @@ function requestOf(overrides: Partial<DataSheetInput> = {}): DataSheetInput {
     policyStart: '2026-12-01',
     policyEnd: '2027-11-30',
     locations: [],
+    fireOption1: [],
     fireOption2: [],
     fireOption3: [],
     fireCovers: [],

@@ -147,15 +147,31 @@ export function contentsTotal(locations: readonly LocationFigures[]): Rupees {
   return paiseToRupees(totalPaise(locations.flatMap((location) => location.fire)));
 }
 
+/** Non-building sum of lines (contents for Burglary). */
+export function fireLinesContents(
+  lines: readonly { group: FireGroup; amount?: string | null }[] | undefined,
+): Rupees | null {
+  const values = (lines ?? [])
+    .filter((line) => line.group !== 'BUILDING')
+    .map((line) => text(line.amount))
+    .filter((value) => WHOLE_RUPEES.test(value));
+  return values.length > 0 ? add(values) : null;
+}
+
 /**
  * The Fire contents Burglary covers with a basis (C-3, D3 Option A): Option 1 is Total Fire minus
  * buildings (i.e. all Fire items, civil-structure items included). Option 2 adds the Fire lines'
  * second figures when given (null when none is); buildings carry no Option 2.
+ * For renewal/roll-on, Option 1 comes from the typed fireOption1 (null when untyped), and
+ * Existing comes from the typed/copied existing non-building lines.
  */
 export function contentsOptions(
   locations: readonly LocationFigures[],
   option2: readonly { group: FireGroup; amount: string | null }[],
-): { proposed1: Rupees; proposed2: Rupees | null } {
+  option1?: readonly { group: FireGroup; amount: string | null }[],
+  existingLines?: readonly { group: FireGroup; amount: string | null }[],
+  renewal = false,
+): { existing: Rupees | null; proposed1: Rupees | null; proposed2: Rupees | null } {
   // Option 2 is entered per Fire line, not per item: the Building line's Option 2 is one typed
   // figure for the whole building line (buildings included) and cannot be split into a
   // buildings-only part, so it stays out of the Burglary base — the same as before D3. Mirrors the
@@ -164,8 +180,11 @@ export function contentsOptions(
     .filter((line) => line.group !== 'BUILDING')
     .map((line) => text(line.amount))
     .filter((value) => WHOLE_RUPEES.test(value));
+  const existing = fireLinesContents(existingLines);
+  const proposed1 = renewal ? fireLinesContents(option1) : contentsTotal(locations);
   return {
-    proposed1: contentsTotal(locations),
+    existing,
+    proposed1,
     proposed2: seconds.length > 0 ? add(seconds) : null,
   };
 }
@@ -252,6 +271,10 @@ function existingForm(record: ProposalRecord): DataSheetForm['existing'] {
 export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
   const option2 = new Map(record.fire.groups.map((line) => [line.group, line.proposed2]));
   const option3 = new Map(record.fire.groups.map((line) => [line.group, line.proposed3]));
+  // Renewal/roll-on: load the typed Option 1 overrides (typedOption1 from the record).
+  const option1 = new Map(
+    record.fire.groups.map((line) => [line.group, line.typedOption1 ?? null]),
+  );
   return {
     dueDate: record.dueDate,
     policyStart: record.policyStart ?? '',
@@ -283,6 +306,7 @@ export function toDataSheetForm(record: ProposalRecord): DataSheetForm {
         ) as LocationForm['risk'],
       };
     }),
+    fireOption1: FIRE_GROUPS.map((group) => ({ group, amount: option1.get(group) ?? '' })),
     fireOption2: FIRE_GROUPS.map((group) => ({ group, amount: option2.get(group) ?? '' })),
     fireOption3: FIRE_GROUPS.map((group) => ({ group, amount: option3.get(group) ?? '' })),
     fireCovers: answered(record.fire.covers),
@@ -416,7 +440,14 @@ export function toDataSheetRequest(values: DataSheetInput): DataSheetInput {
     values.existing && (values.existing.insurer !== null || hasExistingFigures(values))
       ? values.existing
       : null;
-  const contents = contentsOptions(values.locations, values.fireOption2);
+  const isRenewal = Boolean(values.existing);
+  const contents = contentsOptions(
+    values.locations,
+    values.fireOption2,
+    values.fireOption1,
+    values.existing?.fireLines,
+    isRenewal,
+  );
   return {
     ...values,
     existing,
@@ -431,6 +462,7 @@ export function toDataSheetRequest(values: DataSheetInput): DataSheetInput {
       const fromContents = section.code === 'BURGLARY' && section.basis !== null;
       return {
         ...section,
+        existing: fromContents ? (contents.existing ?? section.existing) : section.existing,
         proposed1: fromContents ? contents.proposed1 : sectionSumInsured(section),
         proposed2: fromContents ? contents.proposed2 : sectionOption2(section),
         basis: hasBasis(section.code) ? section.basis : null,
