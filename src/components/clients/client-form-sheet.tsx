@@ -70,8 +70,8 @@ function toFormValues(client: Client | undefined): DefaultValues<CreateClientFor
       email: contact.email ?? '',
       phone: contact.phone ?? '',
     })),
-    natureOfBusiness: client.natureOfBusiness,
-    occupancyCode: client.occupancy.tacCode,
+    natureOfBusiness: client.natureOfBusiness ?? '',
+    occupancyCode: client.occupancy?.tacCode ?? '',
   };
 }
 
@@ -173,9 +173,14 @@ function ClientForm({ client, onSaved }: { client?: Client; onSaved: (saved: Cli
             name="natureOfBusiness"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nature of business</FormLabel>
+                <FormLabel>Nature of business (optional)</FormLabel>
                 <FormControl>
-                  <Input autoComplete="off" placeholder="For example Textile weaving" {...field} />
+                  <Input
+                    autoComplete="off"
+                    placeholder="For example Textile weaving"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -186,16 +191,17 @@ function ClientForm({ client, onSaved }: { client?: Client; onSaved: (saved: Cli
             name="occupancyCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Occupancy</FormLabel>
+                <FormLabel>Occupancy (optional)</FormLabel>
                 <OccupancyField
                   ref={field.ref}
-                  initialValue={client?.occupancy}
+                  initialValue={client?.occupancy ?? undefined}
                   onBlur={field.onBlur}
                   onSelect={(choice) => field.onChange(choice?.tacCode ?? '')}
                 />
                 <FormDescription>
                   From the active IIB occupancy master. Risk locations use it unless they have their
-                  own.
+                  own. Leave blank if not known yet: it must be added before a Property proposal can
+                  be started, and once recorded it can be changed but not removed.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

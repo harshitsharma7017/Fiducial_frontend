@@ -213,8 +213,14 @@ function LocationForm({
               className="mt-0.5"
             />
             <Label htmlFor={ownOccupancyId} className="leading-snug font-normal">
-              This location has a different occupancy from the client&apos;s (
-              {client.occupancy.tacCode} — {client.occupancy.description})
+              {client.occupancy ? (
+                <>
+                  This location has a different occupancy from the client&apos;s (
+                  {client.occupancy.tacCode} — {client.occupancy.description})
+                </>
+              ) : (
+                <>This location has its own occupancy (the client has none recorded yet)</>
+              )}
             </Label>
           </div>
           {ownOccupancy ? (

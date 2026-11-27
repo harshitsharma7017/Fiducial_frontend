@@ -61,7 +61,9 @@ describe('ClientFormSheet', () => {
     await user.click(screen.getByRole('button', { name: 'Create client' }));
 
     expect(await screen.findByText('Enter the insured name')).toBeInTheDocument();
-    expect(screen.getByText('Describe the nature of business')).toBeInTheDocument();
+    // Nature of business and occupancy are optional (they can be added later).
+    expect(screen.queryByText('Describe the nature of business')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enter an occupancy code')).not.toBeInTheDocument();
     expect(screen.getByText('Choose a state or union territory')).toBeInTheDocument();
     expect(screen.getByText('Enter a 6-digit pincode')).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();

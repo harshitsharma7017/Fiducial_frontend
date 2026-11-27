@@ -223,7 +223,13 @@ export function RfqPreview({
           <dt className="font-medium">Nature of business</dt>
           <dd>{client?.natureOfBusiness ?? '…'}</dd>
           <dt className="font-medium">Occupancy</dt>
-          <dd>{client ? `${client.occupancy.tacCode} — ${client.occupancy.description}` : '…'}</dd>
+          <dd>
+            {client
+              ? client.occupancy
+                ? `${client.occupancy.tacCode} — ${client.occupancy.description}`
+                : '—'
+              : '…'}
+          </dd>
           {record.product ? (
             <>
               <dt className="font-medium">Policy</dt>
