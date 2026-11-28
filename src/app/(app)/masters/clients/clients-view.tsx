@@ -107,10 +107,14 @@ export function ClientsView() {
           {client.address.city}, {client.address.state}
         </TableCell>
         <TableCell className="max-w-xs">
-          <span className="line-clamp-2">
-            <span className="tabular">{client.occupancy.tacCode}</span> —{' '}
-            {client.occupancy.description}
-          </span>
+          {client.occupancy ? (
+            <span className="line-clamp-2">
+              <span className="tabular">{client.occupancy.tacCode}</span> —{' '}
+              {client.occupancy.description}
+            </span>
+          ) : (
+            <Badge variant="muted">Not recorded</Badge>
+          )}
         </TableCell>
         <TableCell className="tabular text-right">{client.locationCount}</TableCell>
       </TableRow>

@@ -66,10 +66,20 @@ export function ClientDetailsCard({ client }: { client: Client }) {
                 <Badge variant="muted">No GSTIN</Badge>
               )}
             </Field>
-            <Field label="Nature of business">{client.natureOfBusiness}</Field>
+            <Field label="Nature of business">
+              {client.natureOfBusiness ?? <Badge variant="muted">Not recorded</Badge>}
+            </Field>
             <Field label="Occupancy">
-              <span className="tabular">{client.occupancy.tacCode}</span> —{' '}
-              {client.occupancy.description}
+              {client.occupancy ? (
+                <>
+                  <span className="tabular">{client.occupancy.tacCode}</span> —{' '}
+                  {client.occupancy.description}
+                </>
+              ) : (
+                <Badge variant="muted">
+                  Not recorded: needed before a Property proposal can start
+                </Badge>
+              )}
             </Field>
             <Field label="Communication address">
               <AddressLines address={client.address} />

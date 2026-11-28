@@ -283,7 +283,10 @@ export function NewProposalForm({ initialType = 'NEW' }: { initialType?: Proposa
         ) : null}
 
         <div className="flex flex-wrap gap-2">
-          <Button type="submit" disabled={create.isPending}>
+          <Button
+            type="submit"
+            disabled={create.isPending || (client !== null && client.occupancy === null)}
+          >
             {create.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : null}
             {renewal ? 'Create renewal' : 'Create proposal'}
           </Button>
@@ -546,8 +549,16 @@ function ChosenClient({ client, onChange }: { client: Client; onChange: () => vo
         <span className="font-medium">{client.name}</span>
         <span className="text-xs text-muted-foreground">
           {client.gstin ?? 'No GSTIN'} · {client.address.city}, {client.address.state} · Occupancy{' '}
-          {client.occupancy.tacCode} — {client.occupancy.description}
+          {client.occupancy
+            ? `${client.occupancy.tacCode} — ${client.occupancy.description}`
+            : 'not recorded'}
         </span>
+        {client.occupancy ? null : (
+          <span role="alert" className="text-xs text-destructive">
+            This client has no occupancy recorded. Add it in Masters → Clients before starting a
+            Property proposal.
+          </span>
+        )}
       </div>
       <Button type="button" variant="outline" size="sm" onClick={onChange}>
         Change client
